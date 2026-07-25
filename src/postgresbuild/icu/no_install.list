@@ -1,0 +1,6 @@
+{libdir}/icu
+{libdir}/icu/**
+{libdir}/libicuio*
+{libdir}/libicutest*
+{libdir}/libicutu*
+{datadir}/icu/**

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - run: uv sync --frozen --no-default-groups --group=check
+      - run: uv run --frozen --no-default-groups --group=check ruff format --check src tests scripts
+      - run: uv run --frozen --no-default-groups --group=check ruff check src/postgresbuild tests scripts pyproject.toml
+      - run: uv run --frozen --no-default-groups --group=check mypy
+      - run: uv run --frozen --no-default-groups --group=check ty check
+      - run: uv run --frozen --no-default-groups --group=check zizmor --offline .github/workflows
+      - run: uv run --frozen --no-default-groups --group=check ggbuild ci check-workflow
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - run: uv sync --frozen --no-default-groups --group=test
+      - run: uv run --frozen --no-default-groups --group=test ggt tests
