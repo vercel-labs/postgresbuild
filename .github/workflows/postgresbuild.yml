@@ -13,128 +13,3673 @@ permissions:
 jobs:
   planning:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.plan.outputs.matrix }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       - uses: ./.github/actions/postgresbuild-setup
-      - id: plan
-        name: Create runtime build plan
+      - name: Create canonical build plan
         run: >-
           uv run ggbuild ci plan
+          --expected-digest f0f862d37d89deb974aebaadb252ee74ee9077cb78e2ce86f620bdeb7d92577a
           --output .cache/ggbuild-plan.json
-          --github-output "$GITHUB_OUTPUT"
       - name: Upload canonical plan
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ggbuild-plan-v3
           path: .cache/ggbuild-plan.json
           if-no-files-found: error
           retention-days: 1
 
-  build:
+  bundle_aarch64_apple_darwin_gettext_0_26:
+    name: gettext 0.26 (aarch64-apple-darwin)
     needs: [planning]
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-      matrix:
-        include: ${{ fromJSON(needs.planning.outputs.matrix) }}
-    runs-on: ${{ matrix.runner }}
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/postgresbuild-setup
-        if: matrix.execution == 'host'
       - name: Download canonical plan
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: ggbuild-plan-v3
           path: .cache
-      - name: Restore exact bundle closure
-        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: |
-            .cache/bundles
-            .cache/uv
-          key: ggbuild-v3-${{ matrix.target }}-${{ matrix.closure_digest }}
-          restore-keys: |
-            ggbuild-v3-${{ matrix.target }}-
-      - name: Build host root closure
-        if: matrix.execution == 'host'
+          path: .cache/bundles/ggbuild-v3-5eb20f36b738292fa48f577e17cf795efb34b10a2404283744cad5bff59179ea.tar.zst
+          key: ggbuild-v3-5eb20f36b738292fa48f577e17cf795efb34b10a2404283744cad5bff59179ea
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
         run: >-
           uv run ggbuild ci execute-node
           --plan .cache/ggbuild-plan.json
-          --node "${{ matrix.node_id }}"
+          --node bundle_aarch64_apple_darwin_gettext_0_26
           --bundle-dir .cache
           --output-dir dist
           --work-dir .cache/work
-          --max-parallel 4
-      - name: Build root closure in x86_64-unknown-linux-gnu
-        if: matrix.target == 'x86_64-unknown-linux-gnu'
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-5eb20f36b738292fa48f577e17cf795efb34b10a2404283744cad5bff59179ea
+          path: .cache/bundles/ggbuild-v3-5eb20f36b738292fa48f577e17cf795efb34b10a2404283744cad5bff59179ea.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_icu_78_3:
+    name: icu 78.3 (aarch64-apple-darwin)
+    needs: [planning]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-f3219d2aafc68a802646245e6c5f4a2bd1873fb097854375914f685f21363f42.tar.zst
+          key: ggbuild-v3-f3219d2aafc68a802646245e6c5f4a2bd1873fb097854375914f685f21363f42
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_icu_78_3
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-f3219d2aafc68a802646245e6c5f4a2bd1873fb097854375914f685f21363f42
+          path: .cache/bundles/ggbuild-v3-f3219d2aafc68a802646245e6c5f4a2bd1873fb097854375914f685f21363f42.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_kerberos_1_22_2:
+    name: kerberos 1.22.2 (aarch64-apple-darwin)
+    needs: [planning]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-7dd6700566ba9e93131bc63fd1dd0e6d054e0267e58c1915447bf9797a933389.tar.zst
+          key: ggbuild-v3-7dd6700566ba9e93131bc63fd1dd0e6d054e0267e58c1915447bf9797a933389
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_kerberos_1_22_2
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-7dd6700566ba9e93131bc63fd1dd0e6d054e0267e58c1915447bf9797a933389
+          path: .cache/bundles/ggbuild-v3-7dd6700566ba9e93131bc63fd1dd0e6d054e0267e58c1915447bf9797a933389.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_lz4_1_10_0:
+    name: lz4 1.10.0 (aarch64-apple-darwin)
+    needs: [planning]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-94ce9839cfb44351235a96eaa90cb393f9a24c558e76f249a3adf6260a311f64.tar.zst
+          key: ggbuild-v3-94ce9839cfb44351235a96eaa90cb393f9a24c558e76f249a3adf6260a311f64
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_lz4_1_10_0
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-94ce9839cfb44351235a96eaa90cb393f9a24c558e76f249a3adf6260a311f64
+          path: .cache/bundles/ggbuild-v3-94ce9839cfb44351235a96eaa90cb393f9a24c558e76f249a3adf6260a311f64.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_ncurses_6_6:
+    name: ncurses 6.6 (aarch64-apple-darwin)
+    needs: [planning]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-b709a2c3d91701739eb2214b5e21b906a376f59bc578d0fc9f0300ee97d00222.tar.zst
+          key: ggbuild-v3-b709a2c3d91701739eb2214b5e21b906a376f59bc578d0fc9f0300ee97d00222
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_ncurses_6_6
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-b709a2c3d91701739eb2214b5e21b906a376f59bc578d0fc9f0300ee97d00222
+          path: .cache/bundles/ggbuild-v3-b709a2c3d91701739eb2214b5e21b906a376f59bc578d0fc9f0300ee97d00222.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_openssl_3_5_7:
+    name: openssl 3.5.7 (aarch64-apple-darwin)
+    needs: [planning]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-ec7c0ec67f1134bfa3e75406d4b9f214c27f1f8e2d58a30965d53d100216b1d1.tar.zst
+          key: ggbuild-v3-ec7c0ec67f1134bfa3e75406d4b9f214c27f1f8e2d58a30965d53d100216b1d1
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_openssl_3_5_7
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-ec7c0ec67f1134bfa3e75406d4b9f214c27f1f8e2d58a30965d53d100216b1d1
+          path: .cache/bundles/ggbuild-v3-ec7c0ec67f1134bfa3e75406d4b9f214c27f1f8e2d58a30965d53d100216b1d1.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_uuid_2_42_2:
+    name: uuid 2.42.2 (aarch64-apple-darwin)
+    needs: [planning]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-27020e0e3e834c484f242ab73e2a9ab28394813fd73086c41b6987a0c9fa96e5.tar.zst
+          key: ggbuild-v3-27020e0e3e834c484f242ab73e2a9ab28394813fd73086c41b6987a0c9fa96e5
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_uuid_2_42_2
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-27020e0e3e834c484f242ab73e2a9ab28394813fd73086c41b6987a0c9fa96e5
+          path: .cache/bundles/ggbuild-v3-27020e0e3e834c484f242ab73e2a9ab28394813fd73086c41b6987a0c9fa96e5.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_zlib_1_3_2:
+    name: zlib 1.3.2 (aarch64-apple-darwin)
+    needs: [planning]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-a2a477c1140cfb78720e9cb29e553ebe6ef617c4cc3312329cdde4f139088756.tar.zst
+          key: ggbuild-v3-a2a477c1140cfb78720e9cb29e553ebe6ef617c4cc3312329cdde4f139088756
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_zlib_1_3_2
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-a2a477c1140cfb78720e9cb29e553ebe6ef617c4cc3312329cdde4f139088756
+          path: .cache/bundles/ggbuild-v3-a2a477c1140cfb78720e9cb29e553ebe6ef617c4cc3312329cdde4f139088756.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_zstd_1_5_7:
+    name: zstd 1.5.7 (aarch64-apple-darwin)
+    needs: [planning]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-fdf0a264e56587195690484f6984ce5e826361a6bdd1ddca74782d2b6eeaf75d.tar.zst
+          key: ggbuild-v3-fdf0a264e56587195690484f6984ce5e826361a6bdd1ddca74782d2b6eeaf75d
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_zstd_1_5_7
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-fdf0a264e56587195690484f6984ce5e826361a6bdd1ddca74782d2b6eeaf75d
+          path: .cache/bundles/ggbuild-v3-fdf0a264e56587195690484f6984ce5e826361a6bdd1ddca74782d2b6eeaf75d.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_gettext_0_26:
+    name: gettext 0.26 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-4621711deddc7233466d5c1faf04c6b57284cee0521c5230d6d2a5bc0c9de702.tar.zst
+          key: ggbuild-v3-4621711deddc7233466d5c1faf04c6b57284cee0521c5230d6d2a5bc0c9de702
+      - name: Build dependency in aarch64-unknown-linux-gnu
         uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
         env:
-          GGBUILD_REF: 32e5782a92c095f2ee97cc483c71ea82deee2f78
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
         with:
           args: >-
             ci execute-node
             --plan .cache/ggbuild-plan.json
-            --node ${{ matrix.node_id }}
+            --node bundle_aarch64_unknown_linux_gnu_gettext_0_26
             --bundle-dir .cache
             --output-dir dist
             --work-dir .cache/work
-            --max-parallel 4
-            --prepared-target x86_64-unknown-linux-gnu
-      - name: Build root closure in aarch64-unknown-linux-gnu
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
-        env:
-          GGBUILD_REF: 32e5782a92c095f2ee97cc483c71ea82deee2f78
-        with:
-          args: >-
-            ci execute-node
-            --plan .cache/ggbuild-plan.json
-            --node ${{ matrix.node_id }}
-            --bundle-dir .cache
-            --output-dir dist
-            --work-dir .cache/work
-            --max-parallel 4
+            --max-parallel 1
             --prepared-target aarch64-unknown-linux-gnu
-      - name: Build root closure in x86_64-unknown-linux-musl
-        if: matrix.target == 'x86_64-unknown-linux-musl'
-        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-4621711deddc7233466d5c1faf04c6b57284cee0521c5230d6d2a5bc0c9de702
+          path: .cache/bundles/ggbuild-v3-4621711deddc7233466d5c1faf04c6b57284cee0521c5230d6d2a5bc0c9de702.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_icu_78_3:
+    name: icu 78.3 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-f47ec0b3a5f19dedfb045823a0f2e6712e300dc2632108c7b93c61278976b68d.tar.zst
+          key: ggbuild-v3-f47ec0b3a5f19dedfb045823a0f2e6712e300dc2632108c7b93c61278976b68d
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
         env:
-          GGBUILD_REF: 32e5782a92c095f2ee97cc483c71ea82deee2f78
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
         with:
           args: >-
             ci execute-node
             --plan .cache/ggbuild-plan.json
-            --node ${{ matrix.node_id }}
+            --node bundle_aarch64_unknown_linux_gnu_icu_78_3
             --bundle-dir .cache
             --output-dir dist
             --work-dir .cache/work
-            --max-parallel 4
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-f47ec0b3a5f19dedfb045823a0f2e6712e300dc2632108c7b93c61278976b68d
+          path: .cache/bundles/ggbuild-v3-f47ec0b3a5f19dedfb045823a0f2e6712e300dc2632108c7b93c61278976b68d.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_kerberos_1_22_2:
+    name: kerberos 1.22.2 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-e6b79ac69d5e5c66e025fef965c3d4acc62873801c397a7075f4555140eab7cf.tar.zst
+          key: ggbuild-v3-e6b79ac69d5e5c66e025fef965c3d4acc62873801c397a7075f4555140eab7cf
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_kerberos_1_22_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-e6b79ac69d5e5c66e025fef965c3d4acc62873801c397a7075f4555140eab7cf
+          path: .cache/bundles/ggbuild-v3-e6b79ac69d5e5c66e025fef965c3d4acc62873801c397a7075f4555140eab7cf.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_lz4_1_10_0:
+    name: lz4 1.10.0 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-d0a9af5d9df8ae404faa737acb179896e61274e19c7ae6ee060598fd95fb720f.tar.zst
+          key: ggbuild-v3-d0a9af5d9df8ae404faa737acb179896e61274e19c7ae6ee060598fd95fb720f
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_lz4_1_10_0
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-d0a9af5d9df8ae404faa737acb179896e61274e19c7ae6ee060598fd95fb720f
+          path: .cache/bundles/ggbuild-v3-d0a9af5d9df8ae404faa737acb179896e61274e19c7ae6ee060598fd95fb720f.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_ncurses_6_6:
+    name: ncurses 6.6 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-7d71f31da7cb8bf36d4cbf32a43bbfdcf1af648bc67c86f28be9e5f472c3ddef.tar.zst
+          key: ggbuild-v3-7d71f31da7cb8bf36d4cbf32a43bbfdcf1af648bc67c86f28be9e5f472c3ddef
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_ncurses_6_6
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-7d71f31da7cb8bf36d4cbf32a43bbfdcf1af648bc67c86f28be9e5f472c3ddef
+          path: .cache/bundles/ggbuild-v3-7d71f31da7cb8bf36d4cbf32a43bbfdcf1af648bc67c86f28be9e5f472c3ddef.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_openssl_3_5_7:
+    name: openssl 3.5.7 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-e404ed74d54f71fe57189ecc82af66dc783d7f29c3d22128771298d56b2de974.tar.zst
+          key: ggbuild-v3-e404ed74d54f71fe57189ecc82af66dc783d7f29c3d22128771298d56b2de974
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_openssl_3_5_7
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-e404ed74d54f71fe57189ecc82af66dc783d7f29c3d22128771298d56b2de974
+          path: .cache/bundles/ggbuild-v3-e404ed74d54f71fe57189ecc82af66dc783d7f29c3d22128771298d56b2de974.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_uuid_2_42_2:
+    name: uuid 2.42.2 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-b5b4c7c4c303ece1c23031bf98de67c8fa218f93f3b0b5e9989d5822778d1281.tar.zst
+          key: ggbuild-v3-b5b4c7c4c303ece1c23031bf98de67c8fa218f93f3b0b5e9989d5822778d1281
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_uuid_2_42_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-b5b4c7c4c303ece1c23031bf98de67c8fa218f93f3b0b5e9989d5822778d1281
+          path: .cache/bundles/ggbuild-v3-b5b4c7c4c303ece1c23031bf98de67c8fa218f93f3b0b5e9989d5822778d1281.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_zlib_1_3_2:
+    name: zlib 1.3.2 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-653b31ac3cb58af01dcc81469d45fc69932de4f84dbaeebe8aa051870b733496.tar.zst
+          key: ggbuild-v3-653b31ac3cb58af01dcc81469d45fc69932de4f84dbaeebe8aa051870b733496
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_zlib_1_3_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-653b31ac3cb58af01dcc81469d45fc69932de4f84dbaeebe8aa051870b733496
+          path: .cache/bundles/ggbuild-v3-653b31ac3cb58af01dcc81469d45fc69932de4f84dbaeebe8aa051870b733496.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_zstd_1_5_7:
+    name: zstd 1.5.7 (aarch64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-e0bdf1481a24a115e7fc25e9615c438ac62c03a48df00faa6b07e5a258a3eef2.tar.zst
+          key: ggbuild-v3-e0bdf1481a24a115e7fc25e9615c438ac62c03a48df00faa6b07e5a258a3eef2
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_zstd_1_5_7
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-e0bdf1481a24a115e7fc25e9615c438ac62c03a48df00faa6b07e5a258a3eef2
+          path: .cache/bundles/ggbuild-v3-e0bdf1481a24a115e7fc25e9615c438ac62c03a48df00faa6b07e5a258a3eef2.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_gettext_0_26:
+    name: gettext 0.26 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-cd1bbcab2e39d4e6e4ab8827a6295b15d6503695d195873af8137432246c20a7.tar.zst
+          key: ggbuild-v3-cd1bbcab2e39d4e6e4ab8827a6295b15d6503695d195873af8137432246c20a7
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_gettext_0_26
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-cd1bbcab2e39d4e6e4ab8827a6295b15d6503695d195873af8137432246c20a7
+          path: .cache/bundles/ggbuild-v3-cd1bbcab2e39d4e6e4ab8827a6295b15d6503695d195873af8137432246c20a7.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_icu_78_3:
+    name: icu 78.3 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-eb4ed90b424b8b4c191ab0a462d347ce585201cbb15a77944fcac1bedce8776d.tar.zst
+          key: ggbuild-v3-eb4ed90b424b8b4c191ab0a462d347ce585201cbb15a77944fcac1bedce8776d
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_icu_78_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-eb4ed90b424b8b4c191ab0a462d347ce585201cbb15a77944fcac1bedce8776d
+          path: .cache/bundles/ggbuild-v3-eb4ed90b424b8b4c191ab0a462d347ce585201cbb15a77944fcac1bedce8776d.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_kerberos_1_22_2:
+    name: kerberos 1.22.2 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-c76f12e8a60219df7931688beeccfa9506b3f7ab27632c718bb89b0ddc486b5f.tar.zst
+          key: ggbuild-v3-c76f12e8a60219df7931688beeccfa9506b3f7ab27632c718bb89b0ddc486b5f
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_kerberos_1_22_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-c76f12e8a60219df7931688beeccfa9506b3f7ab27632c718bb89b0ddc486b5f
+          path: .cache/bundles/ggbuild-v3-c76f12e8a60219df7931688beeccfa9506b3f7ab27632c718bb89b0ddc486b5f.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_lz4_1_10_0:
+    name: lz4 1.10.0 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-01672e2f20b1d067cb87ae5a7759e3fa84f210948d59fc1f4a41eccb00689c6a.tar.zst
+          key: ggbuild-v3-01672e2f20b1d067cb87ae5a7759e3fa84f210948d59fc1f4a41eccb00689c6a
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_lz4_1_10_0
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-01672e2f20b1d067cb87ae5a7759e3fa84f210948d59fc1f4a41eccb00689c6a
+          path: .cache/bundles/ggbuild-v3-01672e2f20b1d067cb87ae5a7759e3fa84f210948d59fc1f4a41eccb00689c6a.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_ncurses_6_6:
+    name: ncurses 6.6 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-a8ea1a522adcf160fc5c5d415cae67e505cb09af1c4db9765f2a99a333386043.tar.zst
+          key: ggbuild-v3-a8ea1a522adcf160fc5c5d415cae67e505cb09af1c4db9765f2a99a333386043
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_ncurses_6_6
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-a8ea1a522adcf160fc5c5d415cae67e505cb09af1c4db9765f2a99a333386043
+          path: .cache/bundles/ggbuild-v3-a8ea1a522adcf160fc5c5d415cae67e505cb09af1c4db9765f2a99a333386043.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_openssl_3_5_7:
+    name: openssl 3.5.7 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-261a8d0f3d51afb8b30a9d493a8aa53f390a6ec70a20ed324cab7227f6a2b959.tar.zst
+          key: ggbuild-v3-261a8d0f3d51afb8b30a9d493a8aa53f390a6ec70a20ed324cab7227f6a2b959
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_openssl_3_5_7
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-261a8d0f3d51afb8b30a9d493a8aa53f390a6ec70a20ed324cab7227f6a2b959
+          path: .cache/bundles/ggbuild-v3-261a8d0f3d51afb8b30a9d493a8aa53f390a6ec70a20ed324cab7227f6a2b959.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_uuid_2_42_2:
+    name: uuid 2.42.2 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-0fbe6229397b358e7a63a09a6505fb4ef4b6db2f753f7d431d18b07f1d242f14.tar.zst
+          key: ggbuild-v3-0fbe6229397b358e7a63a09a6505fb4ef4b6db2f753f7d431d18b07f1d242f14
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_uuid_2_42_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-0fbe6229397b358e7a63a09a6505fb4ef4b6db2f753f7d431d18b07f1d242f14
+          path: .cache/bundles/ggbuild-v3-0fbe6229397b358e7a63a09a6505fb4ef4b6db2f753f7d431d18b07f1d242f14.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_zlib_1_3_2:
+    name: zlib 1.3.2 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-833773d7e9e32b2232d7b25167001e4b8b2095d0ff23cefd5c10b5f88c64bf6b.tar.zst
+          key: ggbuild-v3-833773d7e9e32b2232d7b25167001e4b8b2095d0ff23cefd5c10b5f88c64bf6b
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_zlib_1_3_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-833773d7e9e32b2232d7b25167001e4b8b2095d0ff23cefd5c10b5f88c64bf6b
+          path: .cache/bundles/ggbuild-v3-833773d7e9e32b2232d7b25167001e4b8b2095d0ff23cefd5c10b5f88c64bf6b.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_zstd_1_5_7:
+    name: zstd 1.5.7 (aarch64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-deb1dfebfe319cd06972869734b417663b3f0a5f9c704459bd58f903ee6bbc03.tar.zst
+          key: ggbuild-v3-deb1dfebfe319cd06972869734b417663b3f0a5f9c704459bd58f903ee6bbc03
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_zstd_1_5_7
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-deb1dfebfe319cd06972869734b417663b3f0a5f9c704459bd58f903ee6bbc03
+          path: .cache/bundles/ggbuild-v3-deb1dfebfe319cd06972869734b417663b3f0a5f9c704459bd58f903ee6bbc03.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_gettext_0_26:
+    name: gettext 0.26 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-95c4d09da08143d06e4f9c41cd5ee9301e9eb430b3b7098558dd00ee564c2796.tar.zst
+          key: ggbuild-v3-95c4d09da08143d06e4f9c41cd5ee9301e9eb430b3b7098558dd00ee564c2796
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_gettext_0_26
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-95c4d09da08143d06e4f9c41cd5ee9301e9eb430b3b7098558dd00ee564c2796
+          path: .cache/bundles/ggbuild-v3-95c4d09da08143d06e4f9c41cd5ee9301e9eb430b3b7098558dd00ee564c2796.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_icu_78_3:
+    name: icu 78.3 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-f330e92f9158ac4237f4d049bf6a22966c2c5a22e0e566381ffa0a598e1558a4.tar.zst
+          key: ggbuild-v3-f330e92f9158ac4237f4d049bf6a22966c2c5a22e0e566381ffa0a598e1558a4
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_icu_78_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-f330e92f9158ac4237f4d049bf6a22966c2c5a22e0e566381ffa0a598e1558a4
+          path: .cache/bundles/ggbuild-v3-f330e92f9158ac4237f4d049bf6a22966c2c5a22e0e566381ffa0a598e1558a4.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_kerberos_1_22_2:
+    name: kerberos 1.22.2 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-1c9fe54e39bbdfd6932d07783c4ceb8c8eb4b2f93a2342bf3d6b6e77fd69c452.tar.zst
+          key: ggbuild-v3-1c9fe54e39bbdfd6932d07783c4ceb8c8eb4b2f93a2342bf3d6b6e77fd69c452
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_kerberos_1_22_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-1c9fe54e39bbdfd6932d07783c4ceb8c8eb4b2f93a2342bf3d6b6e77fd69c452
+          path: .cache/bundles/ggbuild-v3-1c9fe54e39bbdfd6932d07783c4ceb8c8eb4b2f93a2342bf3d6b6e77fd69c452.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_lz4_1_10_0:
+    name: lz4 1.10.0 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-92d887501cff0322e1efe5813968367d71f28b2a87857d3886e2ab8dc571a12a.tar.zst
+          key: ggbuild-v3-92d887501cff0322e1efe5813968367d71f28b2a87857d3886e2ab8dc571a12a
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_lz4_1_10_0
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-92d887501cff0322e1efe5813968367d71f28b2a87857d3886e2ab8dc571a12a
+          path: .cache/bundles/ggbuild-v3-92d887501cff0322e1efe5813968367d71f28b2a87857d3886e2ab8dc571a12a.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_ncurses_6_6:
+    name: ncurses 6.6 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-af5c4eed8a0603ed8930d593ab17b4e7d2a77c0320a885e53dc0ed9ee8b4ebdd.tar.zst
+          key: ggbuild-v3-af5c4eed8a0603ed8930d593ab17b4e7d2a77c0320a885e53dc0ed9ee8b4ebdd
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_ncurses_6_6
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-af5c4eed8a0603ed8930d593ab17b4e7d2a77c0320a885e53dc0ed9ee8b4ebdd
+          path: .cache/bundles/ggbuild-v3-af5c4eed8a0603ed8930d593ab17b4e7d2a77c0320a885e53dc0ed9ee8b4ebdd.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_openssl_3_5_7:
+    name: openssl 3.5.7 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-6792ab5309e42c66c9c11e056e69c6c08d9941af6519ee040727b95c665498f5.tar.zst
+          key: ggbuild-v3-6792ab5309e42c66c9c11e056e69c6c08d9941af6519ee040727b95c665498f5
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_openssl_3_5_7
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-6792ab5309e42c66c9c11e056e69c6c08d9941af6519ee040727b95c665498f5
+          path: .cache/bundles/ggbuild-v3-6792ab5309e42c66c9c11e056e69c6c08d9941af6519ee040727b95c665498f5.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_uuid_2_42_2:
+    name: uuid 2.42.2 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-cac1530672dbc263af2c4f11b0c515286cb21de82d4de83a97fdeea80b08002e.tar.zst
+          key: ggbuild-v3-cac1530672dbc263af2c4f11b0c515286cb21de82d4de83a97fdeea80b08002e
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_uuid_2_42_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-cac1530672dbc263af2c4f11b0c515286cb21de82d4de83a97fdeea80b08002e
+          path: .cache/bundles/ggbuild-v3-cac1530672dbc263af2c4f11b0c515286cb21de82d4de83a97fdeea80b08002e.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_zlib_1_3_2:
+    name: zlib 1.3.2 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-31efcebbc7a9aab1fb3c3ce6a8ce3dbf9d8dfec45298994fbb26ac285d11d095.tar.zst
+          key: ggbuild-v3-31efcebbc7a9aab1fb3c3ce6a8ce3dbf9d8dfec45298994fbb26ac285d11d095
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_zlib_1_3_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-31efcebbc7a9aab1fb3c3ce6a8ce3dbf9d8dfec45298994fbb26ac285d11d095
+          path: .cache/bundles/ggbuild-v3-31efcebbc7a9aab1fb3c3ce6a8ce3dbf9d8dfec45298994fbb26ac285d11d095.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_zstd_1_5_7:
+    name: zstd 1.5.7 (x86_64-unknown-linux-gnu)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-723db73f75e32f8afd5befc392739ee26cf152b95725ce0459bc01e512d39f69.tar.zst
+          key: ggbuild-v3-723db73f75e32f8afd5befc392739ee26cf152b95725ce0459bc01e512d39f69
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_zstd_1_5_7
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-723db73f75e32f8afd5befc392739ee26cf152b95725ce0459bc01e512d39f69
+          path: .cache/bundles/ggbuild-v3-723db73f75e32f8afd5befc392739ee26cf152b95725ce0459bc01e512d39f69.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_gettext_0_26:
+    name: gettext 0.26 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-a5416c30b19e09d1f6369f93372b1b6161100088ef1b27baad71c173eebe2a97.tar.zst
+          key: ggbuild-v3-a5416c30b19e09d1f6369f93372b1b6161100088ef1b27baad71c173eebe2a97
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_gettext_0_26
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
             --prepared-target x86_64-unknown-linux-musl
-      - name: Build root closure in aarch64-unknown-linux-musl
-        if: matrix.target == 'aarch64-unknown-linux-musl'
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-a5416c30b19e09d1f6369f93372b1b6161100088ef1b27baad71c173eebe2a97
+          path: .cache/bundles/ggbuild-v3-a5416c30b19e09d1f6369f93372b1b6161100088ef1b27baad71c173eebe2a97.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_icu_78_3:
+    name: icu 78.3 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-63a44bb79a11d12bf71f1942e90089f457f770c3fff7f5c8315e38cd080354e5.tar.zst
+          key: ggbuild-v3-63a44bb79a11d12bf71f1942e90089f457f770c3fff7f5c8315e38cd080354e5
+      - name: Build dependency in x86_64-unknown-linux-musl
         uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
         env:
-          GGBUILD_REF: 32e5782a92c095f2ee97cc483c71ea82deee2f78
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
         with:
           args: >-
             ci execute-node
             --plan .cache/ggbuild-plan.json
-            --node ${{ matrix.node_id }}
+            --node bundle_x86_64_unknown_linux_musl_icu_78_3
             --bundle-dir .cache
             --output-dir dist
             --work-dir .cache/work
-            --max-parallel 4
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-63a44bb79a11d12bf71f1942e90089f457f770c3fff7f5c8315e38cd080354e5
+          path: .cache/bundles/ggbuild-v3-63a44bb79a11d12bf71f1942e90089f457f770c3fff7f5c8315e38cd080354e5.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_kerberos_1_22_2:
+    name: kerberos 1.22.2 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-870aaa75f760aa4d2995831b75457e3a320cb6af8da1ef6e046c3121538108a6.tar.zst
+          key: ggbuild-v3-870aaa75f760aa4d2995831b75457e3a320cb6af8da1ef6e046c3121538108a6
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_kerberos_1_22_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-870aaa75f760aa4d2995831b75457e3a320cb6af8da1ef6e046c3121538108a6
+          path: .cache/bundles/ggbuild-v3-870aaa75f760aa4d2995831b75457e3a320cb6af8da1ef6e046c3121538108a6.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_lz4_1_10_0:
+    name: lz4 1.10.0 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-5e2a4fc7d4b37b64756f37bcade49983718e67bcee1e7acc8b8ad134fd947743.tar.zst
+          key: ggbuild-v3-5e2a4fc7d4b37b64756f37bcade49983718e67bcee1e7acc8b8ad134fd947743
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_lz4_1_10_0
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-5e2a4fc7d4b37b64756f37bcade49983718e67bcee1e7acc8b8ad134fd947743
+          path: .cache/bundles/ggbuild-v3-5e2a4fc7d4b37b64756f37bcade49983718e67bcee1e7acc8b8ad134fd947743.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_ncurses_6_6:
+    name: ncurses 6.6 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-07e8696270edd3729895c46be075bc5d67858fec10fd818a8e8d73e8f4c05e54.tar.zst
+          key: ggbuild-v3-07e8696270edd3729895c46be075bc5d67858fec10fd818a8e8d73e8f4c05e54
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_ncurses_6_6
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-07e8696270edd3729895c46be075bc5d67858fec10fd818a8e8d73e8f4c05e54
+          path: .cache/bundles/ggbuild-v3-07e8696270edd3729895c46be075bc5d67858fec10fd818a8e8d73e8f4c05e54.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_openssl_3_5_7:
+    name: openssl 3.5.7 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-7ae35d52c0fba5a4dc50cb9f57f0a90d5a9bda9ec27eabe629bb0e3d231f5068.tar.zst
+          key: ggbuild-v3-7ae35d52c0fba5a4dc50cb9f57f0a90d5a9bda9ec27eabe629bb0e3d231f5068
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_openssl_3_5_7
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-7ae35d52c0fba5a4dc50cb9f57f0a90d5a9bda9ec27eabe629bb0e3d231f5068
+          path: .cache/bundles/ggbuild-v3-7ae35d52c0fba5a4dc50cb9f57f0a90d5a9bda9ec27eabe629bb0e3d231f5068.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_uuid_2_42_2:
+    name: uuid 2.42.2 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-533ce53c01b0b7ef4d49ec633f9b60c8e06f2e6e3cf9e024db4ededff93b0568.tar.zst
+          key: ggbuild-v3-533ce53c01b0b7ef4d49ec633f9b60c8e06f2e6e3cf9e024db4ededff93b0568
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_uuid_2_42_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-533ce53c01b0b7ef4d49ec633f9b60c8e06f2e6e3cf9e024db4ededff93b0568
+          path: .cache/bundles/ggbuild-v3-533ce53c01b0b7ef4d49ec633f9b60c8e06f2e6e3cf9e024db4ededff93b0568.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_zlib_1_3_2:
+    name: zlib 1.3.2 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-311edc5cbd5adbfbf839fc45bb0d907a81cc277cfbe1246b2918e31a0dbbbecf.tar.zst
+          key: ggbuild-v3-311edc5cbd5adbfbf839fc45bb0d907a81cc277cfbe1246b2918e31a0dbbbecf
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_zlib_1_3_2
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-311edc5cbd5adbfbf839fc45bb0d907a81cc277cfbe1246b2918e31a0dbbbecf
+          path: .cache/bundles/ggbuild-v3-311edc5cbd5adbfbf839fc45bb0d907a81cc277cfbe1246b2918e31a0dbbbecf.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_zstd_1_5_7:
+    name: zstd 1.5.7 (x86_64-unknown-linux-musl)
+    needs: [planning]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-829bad0e6354e4c28744d9720e1978cc0893bde4febfb705c5e5f9f98470c9db.tar.zst
+          key: ggbuild-v3-829bad0e6354e4c28744d9720e1978cc0893bde4febfb705c5e5f9f98470c9db
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_zstd_1_5_7
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-829bad0e6354e4c28744d9720e1978cc0893bde4febfb705c5e5f9f98470c9db
+          path: .cache/bundles/ggbuild-v3-829bad0e6354e4c28744d9720e1978cc0893bde4febfb705c5e5f9f98470c9db.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_libxml2_2_15_3:
+    name: libxml2 2.15.3 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_zlib_1_3_2]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-a2a477c1140cfb78720e9cb29e553ebe6ef617c4cc3312329cdde4f139088756
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-0d864eb26ceca9e7f8550664d392be95c31afb94fe71182a13ee1f17f3c216dc.tar.zst
+          key: ggbuild-v3-0d864eb26ceca9e7f8550664d392be95c31afb94fe71182a13ee1f17f3c216dc
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_libxml2_2_15_3
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-0d864eb26ceca9e7f8550664d392be95c31afb94fe71182a13ee1f17f3c216dc
+          path: .cache/bundles/ggbuild-v3-0d864eb26ceca9e7f8550664d392be95c31afb94fe71182a13ee1f17f3c216dc.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_openldap_2_6_10:
+    name: openldap 2.6.10 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_openssl_3_5_7]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download openssl bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-ec7c0ec67f1134bfa3e75406d4b9f214c27f1f8e2d58a30965d53d100216b1d1
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-8ccd93dde001ef5f886a66ff89a402580834199c98a718bfee8f7df45648a2a5.tar.zst
+          key: ggbuild-v3-8ccd93dde001ef5f886a66ff89a402580834199c98a718bfee8f7df45648a2a5
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_openldap_2_6_10
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-8ccd93dde001ef5f886a66ff89a402580834199c98a718bfee8f7df45648a2a5
+          path: .cache/bundles/ggbuild-v3-8ccd93dde001ef5f886a66ff89a402580834199c98a718bfee8f7df45648a2a5.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_readline_8_3:
+    name: readline 8.3 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_ncurses_6_6]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download ncurses bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-b709a2c3d91701739eb2214b5e21b906a376f59bc578d0fc9f0300ee97d00222
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-156f9f3c37dd93e863881e80e0b9b7bd2129190dd852678175292c136bf6186a.tar.zst
+          key: ggbuild-v3-156f9f3c37dd93e863881e80e0b9b7bd2129190dd852678175292c136bf6186a
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_readline_8_3
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-156f9f3c37dd93e863881e80e0b9b7bd2129190dd852678175292c136bf6186a
+          path: .cache/bundles/ggbuild-v3-156f9f3c37dd93e863881e80e0b9b7bd2129190dd852678175292c136bf6186a.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_libxml2_2_15_3:
+    name: libxml2 2.15.3 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_zlib_1_3_2]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-653b31ac3cb58af01dcc81469d45fc69932de4f84dbaeebe8aa051870b733496
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-5b69e7b6dfe671e09b942923388450077853ff0d88c46e0ab5502da9577aac7d.tar.zst
+          key: ggbuild-v3-5b69e7b6dfe671e09b942923388450077853ff0d88c46e0ab5502da9577aac7d
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_libxml2_2_15_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-5b69e7b6dfe671e09b942923388450077853ff0d88c46e0ab5502da9577aac7d
+          path: .cache/bundles/ggbuild-v3-5b69e7b6dfe671e09b942923388450077853ff0d88c46e0ab5502da9577aac7d.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_openldap_2_6_10:
+    name: openldap 2.6.10 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_openssl_3_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download openssl bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-e404ed74d54f71fe57189ecc82af66dc783d7f29c3d22128771298d56b2de974
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-3a78e58a567dba593747b27bc30782105a8c0faffe4d1e18bdc41854515e26a4.tar.zst
+          key: ggbuild-v3-3a78e58a567dba593747b27bc30782105a8c0faffe4d1e18bdc41854515e26a4
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_openldap_2_6_10
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-3a78e58a567dba593747b27bc30782105a8c0faffe4d1e18bdc41854515e26a4
+          path: .cache/bundles/ggbuild-v3-3a78e58a567dba593747b27bc30782105a8c0faffe4d1e18bdc41854515e26a4.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_readline_8_3:
+    name: readline 8.3 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_ncurses_6_6]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download ncurses bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-7d71f31da7cb8bf36d4cbf32a43bbfdcf1af648bc67c86f28be9e5f472c3ddef
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-f9f7090d0dd2ebf2c8c100185548fe09e2437bf8493b285034e8fafca14e9558.tar.zst
+          key: ggbuild-v3-f9f7090d0dd2ebf2c8c100185548fe09e2437bf8493b285034e8fafca14e9558
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_readline_8_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-f9f7090d0dd2ebf2c8c100185548fe09e2437bf8493b285034e8fafca14e9558
+          path: .cache/bundles/ggbuild-v3-f9f7090d0dd2ebf2c8c100185548fe09e2437bf8493b285034e8fafca14e9558.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_libxml2_2_15_3:
+    name: libxml2 2.15.3 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_zlib_1_3_2]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-833773d7e9e32b2232d7b25167001e4b8b2095d0ff23cefd5c10b5f88c64bf6b
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-7473547ada875a195ceaece9c52b21bd95c58190872c292a0e304e40b4647876.tar.zst
+          key: ggbuild-v3-7473547ada875a195ceaece9c52b21bd95c58190872c292a0e304e40b4647876
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_libxml2_2_15_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-7473547ada875a195ceaece9c52b21bd95c58190872c292a0e304e40b4647876
+          path: .cache/bundles/ggbuild-v3-7473547ada875a195ceaece9c52b21bd95c58190872c292a0e304e40b4647876.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_openldap_2_6_10:
+    name: openldap 2.6.10 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_openssl_3_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download openssl bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-261a8d0f3d51afb8b30a9d493a8aa53f390a6ec70a20ed324cab7227f6a2b959
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-ac4a3f0c4d60006520f0c30645915c3c2031d344a6e9c3fdf47b89a61facf746.tar.zst
+          key: ggbuild-v3-ac4a3f0c4d60006520f0c30645915c3c2031d344a6e9c3fdf47b89a61facf746
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_openldap_2_6_10
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-ac4a3f0c4d60006520f0c30645915c3c2031d344a6e9c3fdf47b89a61facf746
+          path: .cache/bundles/ggbuild-v3-ac4a3f0c4d60006520f0c30645915c3c2031d344a6e9c3fdf47b89a61facf746.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_readline_8_3:
+    name: readline 8.3 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_ncurses_6_6]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download ncurses bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-a8ea1a522adcf160fc5c5d415cae67e505cb09af1c4db9765f2a99a333386043
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-b9ed1039c5c7e2784fab9998c8a62bc69b2db1a9ed7d6902f22ceb0e9f866201.tar.zst
+          key: ggbuild-v3-b9ed1039c5c7e2784fab9998c8a62bc69b2db1a9ed7d6902f22ceb0e9f866201
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_readline_8_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-b9ed1039c5c7e2784fab9998c8a62bc69b2db1a9ed7d6902f22ceb0e9f866201
+          path: .cache/bundles/ggbuild-v3-b9ed1039c5c7e2784fab9998c8a62bc69b2db1a9ed7d6902f22ceb0e9f866201.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_libxml2_2_15_3:
+    name: libxml2 2.15.3 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_zlib_1_3_2]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-31efcebbc7a9aab1fb3c3ce6a8ce3dbf9d8dfec45298994fbb26ac285d11d095
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-7026fa882dee225c89b23778759f8916eac969ed6e2afe6c61f7c6c1ddee6696.tar.zst
+          key: ggbuild-v3-7026fa882dee225c89b23778759f8916eac969ed6e2afe6c61f7c6c1ddee6696
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_libxml2_2_15_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-7026fa882dee225c89b23778759f8916eac969ed6e2afe6c61f7c6c1ddee6696
+          path: .cache/bundles/ggbuild-v3-7026fa882dee225c89b23778759f8916eac969ed6e2afe6c61f7c6c1ddee6696.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_openldap_2_6_10:
+    name: openldap 2.6.10 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_openssl_3_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download openssl bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-6792ab5309e42c66c9c11e056e69c6c08d9941af6519ee040727b95c665498f5
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-464c8058bb7cda0e6a9dc88b0d88a7bd0c14b8ef2a3df8287efb5c7d33137f84.tar.zst
+          key: ggbuild-v3-464c8058bb7cda0e6a9dc88b0d88a7bd0c14b8ef2a3df8287efb5c7d33137f84
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_openldap_2_6_10
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-464c8058bb7cda0e6a9dc88b0d88a7bd0c14b8ef2a3df8287efb5c7d33137f84
+          path: .cache/bundles/ggbuild-v3-464c8058bb7cda0e6a9dc88b0d88a7bd0c14b8ef2a3df8287efb5c7d33137f84.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_readline_8_3:
+    name: readline 8.3 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_ncurses_6_6]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download ncurses bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-af5c4eed8a0603ed8930d593ab17b4e7d2a77c0320a885e53dc0ed9ee8b4ebdd
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-02ba7df6a7f298c93188774e34bbccd8f76e7db28ed717dd6544209ab77efc07.tar.zst
+          key: ggbuild-v3-02ba7df6a7f298c93188774e34bbccd8f76e7db28ed717dd6544209ab77efc07
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_readline_8_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-02ba7df6a7f298c93188774e34bbccd8f76e7db28ed717dd6544209ab77efc07
+          path: .cache/bundles/ggbuild-v3-02ba7df6a7f298c93188774e34bbccd8f76e7db28ed717dd6544209ab77efc07.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_libxml2_2_15_3:
+    name: libxml2 2.15.3 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_zlib_1_3_2]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-311edc5cbd5adbfbf839fc45bb0d907a81cc277cfbe1246b2918e31a0dbbbecf
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-c3f07a94f8e1cea5231e3aa094861bd273dfd5fad89a925a2ba642909d175c32.tar.zst
+          key: ggbuild-v3-c3f07a94f8e1cea5231e3aa094861bd273dfd5fad89a925a2ba642909d175c32
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_libxml2_2_15_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-c3f07a94f8e1cea5231e3aa094861bd273dfd5fad89a925a2ba642909d175c32
+          path: .cache/bundles/ggbuild-v3-c3f07a94f8e1cea5231e3aa094861bd273dfd5fad89a925a2ba642909d175c32.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_openldap_2_6_10:
+    name: openldap 2.6.10 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_openssl_3_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download openssl bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-7ae35d52c0fba5a4dc50cb9f57f0a90d5a9bda9ec27eabe629bb0e3d231f5068
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-9b55f2a8ca1588576c597055d01f456d498f41a8c020b2a1bd8c4d8bd1fc8a56.tar.zst
+          key: ggbuild-v3-9b55f2a8ca1588576c597055d01f456d498f41a8c020b2a1bd8c4d8bd1fc8a56
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_openldap_2_6_10
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-9b55f2a8ca1588576c597055d01f456d498f41a8c020b2a1bd8c4d8bd1fc8a56
+          path: .cache/bundles/ggbuild-v3-9b55f2a8ca1588576c597055d01f456d498f41a8c020b2a1bd8c4d8bd1fc8a56.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_readline_8_3:
+    name: readline 8.3 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_ncurses_6_6]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download ncurses bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-07e8696270edd3729895c46be075bc5d67858fec10fd818a8e8d73e8f4c05e54
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-8ece4cdcb5368f695f4335fee2bdd8b82e1529df6450022615a2cde51ecb5b8e.tar.zst
+          key: ggbuild-v3-8ece4cdcb5368f695f4335fee2bdd8b82e1529df6450022615a2cde51ecb5b8e
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_readline_8_3
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-8ece4cdcb5368f695f4335fee2bdd8b82e1529df6450022615a2cde51ecb5b8e
+          path: .cache/bundles/ggbuild-v3-8ece4cdcb5368f695f4335fee2bdd8b82e1529df6450022615a2cde51ecb5b8e.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_apple_darwin_libxslt_1_1_45:
+    name: libxslt 1.1.45 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_libxml2_2_15_3]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download libxml2 bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-0d864eb26ceca9e7f8550664d392be95c31afb94fe71182a13ee1f17f3c216dc
+          path: .cache/bundles
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-a2a477c1140cfb78720e9cb29e553ebe6ef617c4cc3312329cdde4f139088756
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-b15848196eec65faa9f8ba228fd253f38f7effc50a65c29d99def8b4eaa4e49a.tar.zst
+          key: ggbuild-v3-b15848196eec65faa9f8ba228fd253f38f7effc50a65c29d99def8b4eaa4e49a
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build dependency
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node bundle_aarch64_apple_darwin_libxslt_1_1_45
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-apple-darwin-b15848196eec65faa9f8ba228fd253f38f7effc50a65c29d99def8b4eaa4e49a
+          path: .cache/bundles/ggbuild-v3-b15848196eec65faa9f8ba228fd253f38f7effc50a65c29d99def8b4eaa4e49a.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_gnu_libxslt_1_1_45:
+    name: libxslt 1.1.45 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_libxml2_2_15_3]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download libxml2 bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-5b69e7b6dfe671e09b942923388450077853ff0d88c46e0ab5502da9577aac7d
+          path: .cache/bundles
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-653b31ac3cb58af01dcc81469d45fc69932de4f84dbaeebe8aa051870b733496
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-817985fa558551d301f23a86d72d34721437baf8b8eb8d56db62bd6d74015380.tar.zst
+          key: ggbuild-v3-817985fa558551d301f23a86d72d34721437baf8b8eb8d56db62bd6d74015380
+      - name: Build dependency in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_gnu_libxslt_1_1_45
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-817985fa558551d301f23a86d72d34721437baf8b8eb8d56db62bd6d74015380
+          path: .cache/bundles/ggbuild-v3-817985fa558551d301f23a86d72d34721437baf8b8eb8d56db62bd6d74015380.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_aarch64_unknown_linux_musl_libxslt_1_1_45:
+    name: libxslt 1.1.45 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_libxml2_2_15_3]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download libxml2 bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-7473547ada875a195ceaece9c52b21bd95c58190872c292a0e304e40b4647876
+          path: .cache/bundles
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-833773d7e9e32b2232d7b25167001e4b8b2095d0ff23cefd5c10b5f88c64bf6b
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-f1b68a7889e3d69eadab6928d38baa188a33564c75b217941a603317395efbef.tar.zst
+          key: ggbuild-v3-f1b68a7889e3d69eadab6928d38baa188a33564c75b217941a603317395efbef
+      - name: Build dependency in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_aarch64_unknown_linux_musl_libxslt_1_1_45
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-f1b68a7889e3d69eadab6928d38baa188a33564c75b217941a603317395efbef
+          path: .cache/bundles/ggbuild-v3-f1b68a7889e3d69eadab6928d38baa188a33564c75b217941a603317395efbef.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_gnu_libxslt_1_1_45:
+    name: libxslt 1.1.45 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_libxml2_2_15_3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download libxml2 bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-7026fa882dee225c89b23778759f8916eac969ed6e2afe6c61f7c6c1ddee6696
+          path: .cache/bundles
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-31efcebbc7a9aab1fb3c3ce6a8ce3dbf9d8dfec45298994fbb26ac285d11d095
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-a2aaed430c718214a5b0224a496d319f367f90fd7411ef85e28b1dc767233160.tar.zst
+          key: ggbuild-v3-a2aaed430c718214a5b0224a496d319f367f90fd7411ef85e28b1dc767233160
+      - name: Build dependency in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_gnu_libxslt_1_1_45
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-a2aaed430c718214a5b0224a496d319f367f90fd7411ef85e28b1dc767233160
+          path: .cache/bundles/ggbuild-v3-a2aaed430c718214a5b0224a496d319f367f90fd7411ef85e28b1dc767233160.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  bundle_x86_64_unknown_linux_musl_libxslt_1_1_45:
+    name: libxslt 1.1.45 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_libxml2_2_15_3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download libxml2 bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-c3f07a94f8e1cea5231e3aa094861bd273dfd5fad89a925a2ba642909d175c32
+          path: .cache/bundles
+      - name: Download zlib bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-311edc5cbd5adbfbf839fc45bb0d907a81cc277cfbe1246b2918e31a0dbbbecf
+          path: .cache/bundles
+      - name: Restore exact bundle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .cache/bundles/ggbuild-v3-ae86d32bf4cd2449cbdf260c24edaf2e58ddf152026f0b04580abefce9b89e0f.tar.zst
+          key: ggbuild-v3-ae86d32bf4cd2449cbdf260c24edaf2e58ddf152026f0b04580abefce9b89e0f
+      - name: Build dependency in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node bundle_x86_64_unknown_linux_musl_libxslt_1_1_45
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-ae86d32bf4cd2449cbdf260c24edaf2e58ddf152026f0b04580abefce9b89e0f
+          path: .cache/bundles/ggbuild-v3-ae86d32bf4cd2449cbdf260c24edaf2e58ddf152026f0b04580abefce9b89e0f.tar.zst
+          if-no-files-found: error
+          retention-days: 1
+
+  test_aarch64_apple_darwin_postgresql_14_24:
+    name: postgresql 14.24 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_gettext_0_26, bundle_aarch64_apple_darwin_icu_78_3, bundle_aarch64_apple_darwin_kerberos_1_22_2, bundle_aarch64_apple_darwin_libxml2_2_15_3, bundle_aarch64_apple_darwin_libxslt_1_1_45, bundle_aarch64_apple_darwin_lz4_1_10_0, bundle_aarch64_apple_darwin_openldap_2_6_10, bundle_aarch64_apple_darwin_openssl_3_5_7, bundle_aarch64_apple_darwin_readline_8_3, bundle_aarch64_apple_darwin_uuid_2_42_2, bundle_aarch64_apple_darwin_zlib_1_3_2, bundle_aarch64_apple_darwin_zstd_1_5_7]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-apple-darwin-*
+          path: .cache/bundles
+          merge-multiple: true
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build root artifact and tests
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node test_aarch64_apple_darwin_postgresql_14_24
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-apple-darwin-14.24
+          path: dist/aarch64-apple-darwin/14.24/
+          if-no-files-found: error
+
+  test_aarch64_apple_darwin_postgresql_15_19:
+    name: postgresql 15.19 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_gettext_0_26, bundle_aarch64_apple_darwin_icu_78_3, bundle_aarch64_apple_darwin_kerberos_1_22_2, bundle_aarch64_apple_darwin_libxml2_2_15_3, bundle_aarch64_apple_darwin_libxslt_1_1_45, bundle_aarch64_apple_darwin_lz4_1_10_0, bundle_aarch64_apple_darwin_openldap_2_6_10, bundle_aarch64_apple_darwin_openssl_3_5_7, bundle_aarch64_apple_darwin_readline_8_3, bundle_aarch64_apple_darwin_uuid_2_42_2, bundle_aarch64_apple_darwin_zlib_1_3_2, bundle_aarch64_apple_darwin_zstd_1_5_7]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-apple-darwin-*
+          path: .cache/bundles
+          merge-multiple: true
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build root artifact and tests
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node test_aarch64_apple_darwin_postgresql_15_19
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-apple-darwin-15.19
+          path: dist/aarch64-apple-darwin/15.19/
+          if-no-files-found: error
+
+  test_aarch64_apple_darwin_postgresql_16_15:
+    name: postgresql 16.15 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_gettext_0_26, bundle_aarch64_apple_darwin_icu_78_3, bundle_aarch64_apple_darwin_kerberos_1_22_2, bundle_aarch64_apple_darwin_libxml2_2_15_3, bundle_aarch64_apple_darwin_libxslt_1_1_45, bundle_aarch64_apple_darwin_lz4_1_10_0, bundle_aarch64_apple_darwin_openldap_2_6_10, bundle_aarch64_apple_darwin_openssl_3_5_7, bundle_aarch64_apple_darwin_readline_8_3, bundle_aarch64_apple_darwin_uuid_2_42_2, bundle_aarch64_apple_darwin_zlib_1_3_2, bundle_aarch64_apple_darwin_zstd_1_5_7]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-apple-darwin-*
+          path: .cache/bundles
+          merge-multiple: true
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build root artifact and tests
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node test_aarch64_apple_darwin_postgresql_16_15
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-apple-darwin-16.15
+          path: dist/aarch64-apple-darwin/16.15/
+          if-no-files-found: error
+
+  test_aarch64_apple_darwin_postgresql_17_10:
+    name: postgresql 17.10 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_gettext_0_26, bundle_aarch64_apple_darwin_icu_78_3, bundle_aarch64_apple_darwin_kerberos_1_22_2, bundle_aarch64_apple_darwin_libxml2_2_15_3, bundle_aarch64_apple_darwin_libxslt_1_1_45, bundle_aarch64_apple_darwin_lz4_1_10_0, bundle_aarch64_apple_darwin_openldap_2_6_10, bundle_aarch64_apple_darwin_openssl_3_5_7, bundle_aarch64_apple_darwin_readline_8_3, bundle_aarch64_apple_darwin_uuid_2_42_2, bundle_aarch64_apple_darwin_zlib_1_3_2, bundle_aarch64_apple_darwin_zstd_1_5_7]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-apple-darwin-*
+          path: .cache/bundles
+          merge-multiple: true
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build root artifact and tests
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node test_aarch64_apple_darwin_postgresql_17_10
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-apple-darwin-17.10
+          path: dist/aarch64-apple-darwin/17.10/
+          if-no-files-found: error
+
+  test_aarch64_apple_darwin_postgresql_18_4:
+    name: postgresql 18.4 (aarch64-apple-darwin)
+    needs: [planning, bundle_aarch64_apple_darwin_gettext_0_26, bundle_aarch64_apple_darwin_icu_78_3, bundle_aarch64_apple_darwin_kerberos_1_22_2, bundle_aarch64_apple_darwin_libxml2_2_15_3, bundle_aarch64_apple_darwin_libxslt_1_1_45, bundle_aarch64_apple_darwin_lz4_1_10_0, bundle_aarch64_apple_darwin_openldap_2_6_10, bundle_aarch64_apple_darwin_openssl_3_5_7, bundle_aarch64_apple_darwin_readline_8_3, bundle_aarch64_apple_darwin_uuid_2_42_2, bundle_aarch64_apple_darwin_zlib_1_3_2, bundle_aarch64_apple_darwin_zstd_1_5_7]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-apple-darwin-*
+          path: .cache/bundles
+          merge-multiple: true
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Build root artifact and tests
+        run: >-
+          uv run ggbuild ci execute-node
+          --plan .cache/ggbuild-plan.json
+          --node test_aarch64_apple_darwin_postgresql_18_4
+          --bundle-dir .cache
+          --output-dir dist
+          --work-dir .cache/work
+          --max-parallel 1
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-apple-darwin-18.4
+          path: dist/aarch64-apple-darwin/18.4/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_gnu_postgresql_14_24:
+    name: postgresql 14.24 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_gettext_0_26, bundle_aarch64_unknown_linux_gnu_icu_78_3, bundle_aarch64_unknown_linux_gnu_kerberos_1_22_2, bundle_aarch64_unknown_linux_gnu_libxml2_2_15_3, bundle_aarch64_unknown_linux_gnu_libxslt_1_1_45, bundle_aarch64_unknown_linux_gnu_lz4_1_10_0, bundle_aarch64_unknown_linux_gnu_openldap_2_6_10, bundle_aarch64_unknown_linux_gnu_openssl_3_5_7, bundle_aarch64_unknown_linux_gnu_readline_8_3, bundle_aarch64_unknown_linux_gnu_uuid_2_42_2, bundle_aarch64_unknown_linux_gnu_zlib_1_3_2, bundle_aarch64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_gnu_postgresql_14_24
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-gnu-14.24
+          path: dist/aarch64-unknown-linux-gnu/14.24/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_gnu_postgresql_15_19:
+    name: postgresql 15.19 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_gettext_0_26, bundle_aarch64_unknown_linux_gnu_icu_78_3, bundle_aarch64_unknown_linux_gnu_kerberos_1_22_2, bundle_aarch64_unknown_linux_gnu_libxml2_2_15_3, bundle_aarch64_unknown_linux_gnu_libxslt_1_1_45, bundle_aarch64_unknown_linux_gnu_lz4_1_10_0, bundle_aarch64_unknown_linux_gnu_openldap_2_6_10, bundle_aarch64_unknown_linux_gnu_openssl_3_5_7, bundle_aarch64_unknown_linux_gnu_readline_8_3, bundle_aarch64_unknown_linux_gnu_uuid_2_42_2, bundle_aarch64_unknown_linux_gnu_zlib_1_3_2, bundle_aarch64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_gnu_postgresql_15_19
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-gnu-15.19
+          path: dist/aarch64-unknown-linux-gnu/15.19/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_gnu_postgresql_16_15:
+    name: postgresql 16.15 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_gettext_0_26, bundle_aarch64_unknown_linux_gnu_icu_78_3, bundle_aarch64_unknown_linux_gnu_kerberos_1_22_2, bundle_aarch64_unknown_linux_gnu_libxml2_2_15_3, bundle_aarch64_unknown_linux_gnu_libxslt_1_1_45, bundle_aarch64_unknown_linux_gnu_lz4_1_10_0, bundle_aarch64_unknown_linux_gnu_openldap_2_6_10, bundle_aarch64_unknown_linux_gnu_openssl_3_5_7, bundle_aarch64_unknown_linux_gnu_readline_8_3, bundle_aarch64_unknown_linux_gnu_uuid_2_42_2, bundle_aarch64_unknown_linux_gnu_zlib_1_3_2, bundle_aarch64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_gnu_postgresql_16_15
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-gnu-16.15
+          path: dist/aarch64-unknown-linux-gnu/16.15/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_gnu_postgresql_17_10:
+    name: postgresql 17.10 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_gettext_0_26, bundle_aarch64_unknown_linux_gnu_icu_78_3, bundle_aarch64_unknown_linux_gnu_kerberos_1_22_2, bundle_aarch64_unknown_linux_gnu_libxml2_2_15_3, bundle_aarch64_unknown_linux_gnu_libxslt_1_1_45, bundle_aarch64_unknown_linux_gnu_lz4_1_10_0, bundle_aarch64_unknown_linux_gnu_openldap_2_6_10, bundle_aarch64_unknown_linux_gnu_openssl_3_5_7, bundle_aarch64_unknown_linux_gnu_readline_8_3, bundle_aarch64_unknown_linux_gnu_uuid_2_42_2, bundle_aarch64_unknown_linux_gnu_zlib_1_3_2, bundle_aarch64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_gnu_postgresql_17_10
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-gnu-17.10
+          path: dist/aarch64-unknown-linux-gnu/17.10/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_gnu_postgresql_18_4:
+    name: postgresql 18.4 (aarch64-unknown-linux-gnu)
+    needs: [planning, bundle_aarch64_unknown_linux_gnu_gettext_0_26, bundle_aarch64_unknown_linux_gnu_icu_78_3, bundle_aarch64_unknown_linux_gnu_kerberos_1_22_2, bundle_aarch64_unknown_linux_gnu_libxml2_2_15_3, bundle_aarch64_unknown_linux_gnu_libxslt_1_1_45, bundle_aarch64_unknown_linux_gnu_lz4_1_10_0, bundle_aarch64_unknown_linux_gnu_openldap_2_6_10, bundle_aarch64_unknown_linux_gnu_openssl_3_5_7, bundle_aarch64_unknown_linux_gnu_readline_8_3, bundle_aarch64_unknown_linux_gnu_uuid_2_42_2, bundle_aarch64_unknown_linux_gnu_zlib_1_3_2, bundle_aarch64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_gnu_postgresql_18_4
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-gnu-18.4
+          path: dist/aarch64-unknown-linux-gnu/18.4/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_musl_postgresql_14_24:
+    name: postgresql 14.24 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_gettext_0_26, bundle_aarch64_unknown_linux_musl_icu_78_3, bundle_aarch64_unknown_linux_musl_kerberos_1_22_2, bundle_aarch64_unknown_linux_musl_libxml2_2_15_3, bundle_aarch64_unknown_linux_musl_libxslt_1_1_45, bundle_aarch64_unknown_linux_musl_lz4_1_10_0, bundle_aarch64_unknown_linux_musl_openldap_2_6_10, bundle_aarch64_unknown_linux_musl_openssl_3_5_7, bundle_aarch64_unknown_linux_musl_readline_8_3, bundle_aarch64_unknown_linux_musl_uuid_2_42_2, bundle_aarch64_unknown_linux_musl_zlib_1_3_2, bundle_aarch64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_musl_postgresql_14_24
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
             --prepared-target aarch64-unknown-linux-musl
       - name: Upload tested root artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.target }}/${{ matrix.version }}/
+          name: postgresql-aarch64-unknown-linux-musl-14.24
+          path: dist/aarch64-unknown-linux-musl/14.24/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_musl_postgresql_15_19:
+    name: postgresql 15.19 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_gettext_0_26, bundle_aarch64_unknown_linux_musl_icu_78_3, bundle_aarch64_unknown_linux_musl_kerberos_1_22_2, bundle_aarch64_unknown_linux_musl_libxml2_2_15_3, bundle_aarch64_unknown_linux_musl_libxslt_1_1_45, bundle_aarch64_unknown_linux_musl_lz4_1_10_0, bundle_aarch64_unknown_linux_musl_openldap_2_6_10, bundle_aarch64_unknown_linux_musl_openssl_3_5_7, bundle_aarch64_unknown_linux_musl_readline_8_3, bundle_aarch64_unknown_linux_musl_uuid_2_42_2, bundle_aarch64_unknown_linux_musl_zlib_1_3_2, bundle_aarch64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_musl_postgresql_15_19
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-musl-15.19
+          path: dist/aarch64-unknown-linux-musl/15.19/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_musl_postgresql_16_15:
+    name: postgresql 16.15 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_gettext_0_26, bundle_aarch64_unknown_linux_musl_icu_78_3, bundle_aarch64_unknown_linux_musl_kerberos_1_22_2, bundle_aarch64_unknown_linux_musl_libxml2_2_15_3, bundle_aarch64_unknown_linux_musl_libxslt_1_1_45, bundle_aarch64_unknown_linux_musl_lz4_1_10_0, bundle_aarch64_unknown_linux_musl_openldap_2_6_10, bundle_aarch64_unknown_linux_musl_openssl_3_5_7, bundle_aarch64_unknown_linux_musl_readline_8_3, bundle_aarch64_unknown_linux_musl_uuid_2_42_2, bundle_aarch64_unknown_linux_musl_zlib_1_3_2, bundle_aarch64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_musl_postgresql_16_15
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-musl-16.15
+          path: dist/aarch64-unknown-linux-musl/16.15/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_musl_postgresql_17_10:
+    name: postgresql 17.10 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_gettext_0_26, bundle_aarch64_unknown_linux_musl_icu_78_3, bundle_aarch64_unknown_linux_musl_kerberos_1_22_2, bundle_aarch64_unknown_linux_musl_libxml2_2_15_3, bundle_aarch64_unknown_linux_musl_libxslt_1_1_45, bundle_aarch64_unknown_linux_musl_lz4_1_10_0, bundle_aarch64_unknown_linux_musl_openldap_2_6_10, bundle_aarch64_unknown_linux_musl_openssl_3_5_7, bundle_aarch64_unknown_linux_musl_readline_8_3, bundle_aarch64_unknown_linux_musl_uuid_2_42_2, bundle_aarch64_unknown_linux_musl_zlib_1_3_2, bundle_aarch64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_musl_postgresql_17_10
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-musl-17.10
+          path: dist/aarch64-unknown-linux-musl/17.10/
+          if-no-files-found: error
+
+  test_aarch64_unknown_linux_musl_postgresql_18_4:
+    name: postgresql 18.4 (aarch64-unknown-linux-musl)
+    needs: [planning, bundle_aarch64_unknown_linux_musl_gettext_0_26, bundle_aarch64_unknown_linux_musl_icu_78_3, bundle_aarch64_unknown_linux_musl_kerberos_1_22_2, bundle_aarch64_unknown_linux_musl_libxml2_2_15_3, bundle_aarch64_unknown_linux_musl_libxslt_1_1_45, bundle_aarch64_unknown_linux_musl_lz4_1_10_0, bundle_aarch64_unknown_linux_musl_openldap_2_6_10, bundle_aarch64_unknown_linux_musl_openssl_3_5_7, bundle_aarch64_unknown_linux_musl_readline_8_3, bundle_aarch64_unknown_linux_musl_uuid_2_42_2, bundle_aarch64_unknown_linux_musl_zlib_1_3_2, bundle_aarch64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-aarch64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in aarch64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_aarch64_unknown_linux_musl_postgresql_18_4
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target aarch64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-aarch64-unknown-linux-musl-18.4
+          path: dist/aarch64-unknown-linux-musl/18.4/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_gnu_postgresql_14_24:
+    name: postgresql 14.24 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_gettext_0_26, bundle_x86_64_unknown_linux_gnu_icu_78_3, bundle_x86_64_unknown_linux_gnu_kerberos_1_22_2, bundle_x86_64_unknown_linux_gnu_libxml2_2_15_3, bundle_x86_64_unknown_linux_gnu_libxslt_1_1_45, bundle_x86_64_unknown_linux_gnu_lz4_1_10_0, bundle_x86_64_unknown_linux_gnu_openldap_2_6_10, bundle_x86_64_unknown_linux_gnu_openssl_3_5_7, bundle_x86_64_unknown_linux_gnu_readline_8_3, bundle_x86_64_unknown_linux_gnu_uuid_2_42_2, bundle_x86_64_unknown_linux_gnu_zlib_1_3_2, bundle_x86_64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_gnu_postgresql_14_24
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-gnu-14.24
+          path: dist/x86_64-unknown-linux-gnu/14.24/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_gnu_postgresql_15_19:
+    name: postgresql 15.19 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_gettext_0_26, bundle_x86_64_unknown_linux_gnu_icu_78_3, bundle_x86_64_unknown_linux_gnu_kerberos_1_22_2, bundle_x86_64_unknown_linux_gnu_libxml2_2_15_3, bundle_x86_64_unknown_linux_gnu_libxslt_1_1_45, bundle_x86_64_unknown_linux_gnu_lz4_1_10_0, bundle_x86_64_unknown_linux_gnu_openldap_2_6_10, bundle_x86_64_unknown_linux_gnu_openssl_3_5_7, bundle_x86_64_unknown_linux_gnu_readline_8_3, bundle_x86_64_unknown_linux_gnu_uuid_2_42_2, bundle_x86_64_unknown_linux_gnu_zlib_1_3_2, bundle_x86_64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_gnu_postgresql_15_19
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-gnu-15.19
+          path: dist/x86_64-unknown-linux-gnu/15.19/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_gnu_postgresql_16_15:
+    name: postgresql 16.15 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_gettext_0_26, bundle_x86_64_unknown_linux_gnu_icu_78_3, bundle_x86_64_unknown_linux_gnu_kerberos_1_22_2, bundle_x86_64_unknown_linux_gnu_libxml2_2_15_3, bundle_x86_64_unknown_linux_gnu_libxslt_1_1_45, bundle_x86_64_unknown_linux_gnu_lz4_1_10_0, bundle_x86_64_unknown_linux_gnu_openldap_2_6_10, bundle_x86_64_unknown_linux_gnu_openssl_3_5_7, bundle_x86_64_unknown_linux_gnu_readline_8_3, bundle_x86_64_unknown_linux_gnu_uuid_2_42_2, bundle_x86_64_unknown_linux_gnu_zlib_1_3_2, bundle_x86_64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_gnu_postgresql_16_15
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-gnu-16.15
+          path: dist/x86_64-unknown-linux-gnu/16.15/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_gnu_postgresql_17_10:
+    name: postgresql 17.10 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_gettext_0_26, bundle_x86_64_unknown_linux_gnu_icu_78_3, bundle_x86_64_unknown_linux_gnu_kerberos_1_22_2, bundle_x86_64_unknown_linux_gnu_libxml2_2_15_3, bundle_x86_64_unknown_linux_gnu_libxslt_1_1_45, bundle_x86_64_unknown_linux_gnu_lz4_1_10_0, bundle_x86_64_unknown_linux_gnu_openldap_2_6_10, bundle_x86_64_unknown_linux_gnu_openssl_3_5_7, bundle_x86_64_unknown_linux_gnu_readline_8_3, bundle_x86_64_unknown_linux_gnu_uuid_2_42_2, bundle_x86_64_unknown_linux_gnu_zlib_1_3_2, bundle_x86_64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_gnu_postgresql_17_10
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-gnu-17.10
+          path: dist/x86_64-unknown-linux-gnu/17.10/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_gnu_postgresql_18_4:
+    name: postgresql 18.4 (x86_64-unknown-linux-gnu)
+    needs: [planning, bundle_x86_64_unknown_linux_gnu_gettext_0_26, bundle_x86_64_unknown_linux_gnu_icu_78_3, bundle_x86_64_unknown_linux_gnu_kerberos_1_22_2, bundle_x86_64_unknown_linux_gnu_libxml2_2_15_3, bundle_x86_64_unknown_linux_gnu_libxslt_1_1_45, bundle_x86_64_unknown_linux_gnu_lz4_1_10_0, bundle_x86_64_unknown_linux_gnu_openldap_2_6_10, bundle_x86_64_unknown_linux_gnu_openssl_3_5_7, bundle_x86_64_unknown_linux_gnu_readline_8_3, bundle_x86_64_unknown_linux_gnu_uuid_2_42_2, bundle_x86_64_unknown_linux_gnu_zlib_1_3_2, bundle_x86_64_unknown_linux_gnu_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-gnu-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-gnu
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_gnu_postgresql_18_4
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-gnu
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-gnu-18.4
+          path: dist/x86_64-unknown-linux-gnu/18.4/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_musl_postgresql_14_24:
+    name: postgresql 14.24 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_gettext_0_26, bundle_x86_64_unknown_linux_musl_icu_78_3, bundle_x86_64_unknown_linux_musl_kerberos_1_22_2, bundle_x86_64_unknown_linux_musl_libxml2_2_15_3, bundle_x86_64_unknown_linux_musl_libxslt_1_1_45, bundle_x86_64_unknown_linux_musl_lz4_1_10_0, bundle_x86_64_unknown_linux_musl_openldap_2_6_10, bundle_x86_64_unknown_linux_musl_openssl_3_5_7, bundle_x86_64_unknown_linux_musl_readline_8_3, bundle_x86_64_unknown_linux_musl_uuid_2_42_2, bundle_x86_64_unknown_linux_musl_zlib_1_3_2, bundle_x86_64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_musl_postgresql_14_24
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-musl-14.24
+          path: dist/x86_64-unknown-linux-musl/14.24/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_musl_postgresql_15_19:
+    name: postgresql 15.19 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_gettext_0_26, bundle_x86_64_unknown_linux_musl_icu_78_3, bundle_x86_64_unknown_linux_musl_kerberos_1_22_2, bundle_x86_64_unknown_linux_musl_libxml2_2_15_3, bundle_x86_64_unknown_linux_musl_libxslt_1_1_45, bundle_x86_64_unknown_linux_musl_lz4_1_10_0, bundle_x86_64_unknown_linux_musl_openldap_2_6_10, bundle_x86_64_unknown_linux_musl_openssl_3_5_7, bundle_x86_64_unknown_linux_musl_readline_8_3, bundle_x86_64_unknown_linux_musl_uuid_2_42_2, bundle_x86_64_unknown_linux_musl_zlib_1_3_2, bundle_x86_64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_musl_postgresql_15_19
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-musl-15.19
+          path: dist/x86_64-unknown-linux-musl/15.19/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_musl_postgresql_16_15:
+    name: postgresql 16.15 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_gettext_0_26, bundle_x86_64_unknown_linux_musl_icu_78_3, bundle_x86_64_unknown_linux_musl_kerberos_1_22_2, bundle_x86_64_unknown_linux_musl_libxml2_2_15_3, bundle_x86_64_unknown_linux_musl_libxslt_1_1_45, bundle_x86_64_unknown_linux_musl_lz4_1_10_0, bundle_x86_64_unknown_linux_musl_openldap_2_6_10, bundle_x86_64_unknown_linux_musl_openssl_3_5_7, bundle_x86_64_unknown_linux_musl_readline_8_3, bundle_x86_64_unknown_linux_musl_uuid_2_42_2, bundle_x86_64_unknown_linux_musl_zlib_1_3_2, bundle_x86_64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_musl_postgresql_16_15
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-musl-16.15
+          path: dist/x86_64-unknown-linux-musl/16.15/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_musl_postgresql_17_10:
+    name: postgresql 17.10 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_gettext_0_26, bundle_x86_64_unknown_linux_musl_icu_78_3, bundle_x86_64_unknown_linux_musl_kerberos_1_22_2, bundle_x86_64_unknown_linux_musl_libxml2_2_15_3, bundle_x86_64_unknown_linux_musl_libxslt_1_1_45, bundle_x86_64_unknown_linux_musl_lz4_1_10_0, bundle_x86_64_unknown_linux_musl_openldap_2_6_10, bundle_x86_64_unknown_linux_musl_openssl_3_5_7, bundle_x86_64_unknown_linux_musl_readline_8_3, bundle_x86_64_unknown_linux_musl_uuid_2_42_2, bundle_x86_64_unknown_linux_musl_zlib_1_3_2, bundle_x86_64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_musl_postgresql_17_10
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-musl-17.10
+          path: dist/x86_64-unknown-linux-musl/17.10/
+          if-no-files-found: error
+
+  test_x86_64_unknown_linux_musl_postgresql_18_4:
+    name: postgresql 18.4 (x86_64-unknown-linux-musl)
+    needs: [planning, bundle_x86_64_unknown_linux_musl_gettext_0_26, bundle_x86_64_unknown_linux_musl_icu_78_3, bundle_x86_64_unknown_linux_musl_kerberos_1_22_2, bundle_x86_64_unknown_linux_musl_libxml2_2_15_3, bundle_x86_64_unknown_linux_musl_libxslt_1_1_45, bundle_x86_64_unknown_linux_musl_lz4_1_10_0, bundle_x86_64_unknown_linux_musl_openldap_2_6_10, bundle_x86_64_unknown_linux_musl_openssl_3_5_7, bundle_x86_64_unknown_linux_musl_readline_8_3, bundle_x86_64_unknown_linux_musl_uuid_2_42_2, bundle_x86_64_unknown_linux_musl_zlib_1_3_2, bundle_x86_64_unknown_linux_musl_zstd_1_5_7]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Download canonical plan
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: ggbuild-plan-v3
+          path: .cache
+      - name: Download shared bundle graph
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: ggbuild-bundle-x86_64-unknown-linux-musl-*
+          path: .cache/bundles
+          merge-multiple: true
+      - name: Build root artifact and tests in x86_64-unknown-linux-musl
+        uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
+        env:
+          GGBUILD_REF: b1ded35fcbc6c2b9399d6c222bd47dc6551623a5
+        with:
+          args: >-
+            ci execute-node
+            --plan .cache/ggbuild-plan.json
+            --node test_x86_64_unknown_linux_musl_postgresql_18_4
+            --bundle-dir .cache
+            --output-dir dist
+            --work-dir .cache/work
+            --max-parallel 1
+            --prepared-target x86_64-unknown-linux-musl
+      - name: Upload tested root artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgresql-x86_64-unknown-linux-musl-18.4
+          path: dist/x86_64-unknown-linux-musl/18.4/
           if-no-files-found: error
