@@ -382,7 +382,7 @@ wheels = [
 [[package]]
 name = "ggbuild"
 version = "0.1.0"
-source = { editable = "../ggbuild" }
+source = { git = "https://github.com/vercel-labs/ggbuild.git?rev=affd802ca4068eb9fbe83465c057a64eb2b29754#affd802ca4068eb9fbe83465c057a64eb2b29754" }
 dependencies = [
     { name = "build" },
     { name = "defusedxml" },
@@ -397,68 +397,6 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wheel" },
     { name = "zstandard" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "build", specifier = "~=1.2.1" },
-    { name = "defusedxml", specifier = ">=0.7.1" },
-    { name = "distlib", specifier = "~=0.4.3" },
-    { name = "distro", specifier = "~=1.9.0" },
-    { name = "docker", specifier = ">=7.1" },
-    { name = "lograil", specifier = ">=0.7.0" },
-    { name = "poetry", specifier = "~=2.1.3" },
-    { name = "requests", specifier = "~=2.31.0" },
-    { name = "setuptools", specifier = ">=75.3.1" },
-    { name = "setuptools-rust", specifier = ">=0.11.4" },
-    { name = "typing-extensions", specifier = ">=4.12" },
-    { name = "wheel", specifier = ">=0.32.3" },
-    { name = "zstandard", specifier = ">=0.25.0" },
-]
-
-[package.metadata.requires-dev]
-check = [
-    { name = "ggt", specifier = ">=1.5.3" },
-    { name = "lograil" },
-    { name = "mypy" },
-    { name = "poethepoet" },
-    { name = "pytest", specifier = ">=9,<10" },
-    { name = "readme-renderer" },
-    { name = "ruff" },
-    { name = "ty" },
-    { name = "types-defusedxml" },
-    { name = "types-docker" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "types-toml" },
-    { name = "zizmor" },
-]
-dev = [
-    { name = "ggt", specifier = ">=1.5.3" },
-    { name = "lograil" },
-    { name = "mypy" },
-    { name = "poethepoet" },
-    { name = "pytest", specifier = ">=9,<10" },
-    { name = "readme-renderer" },
-    { name = "ruff" },
-    { name = "ty" },
-    { name = "types-defusedxml" },
-    { name = "types-docker" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "types-toml" },
-    { name = "zizmor" },
-]
-test = [
-    { name = "ggt", specifier = ">=1.5.3" },
-    { name = "pytest", specifier = ">=9,<10" },
-]
-typing = [
-    { name = "types-defusedxml" },
-    { name = "types-docker" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "types-toml" },
 ]
 
 [[package]]
@@ -954,7 +892,7 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ggbuild", editable = "../ggbuild" }]
+requires-dist = [{ name = "ggbuild", git = "https://github.com/vercel-labs/ggbuild.git?rev=affd802ca4068eb9fbe83465c057a64eb2b29754" }]
 
 [package.metadata.requires-dev]
 check = [

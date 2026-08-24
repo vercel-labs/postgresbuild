@@ -85,5 +85,5 @@ uv run poe qa
 ```
 
 `ggbuild==0.1.0` is pinned so plans use the same protocol and cache identity.
-During development, uv resolves it and lograil from the adjacent editable
-checkouts; those sources will be removed when `ggbuild==0.1.0` is published.
+Until that release is published, uv resolves it from the immutable Git commit
+recorded in `pyproject.toml` and `uv.lock`.
