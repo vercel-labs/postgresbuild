@@ -75,7 +75,7 @@ jobs:
         if: matrix.target == 'x86_64-unknown-linux-gnu'
         uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
         env:
-          GGBUILD_REF: f47dff7277b74dfbd36838506a05a5e7732d8424
+          GGBUILD_REF: a5628262bfac760bc63cb58eee65e45f34cbf751
         with:
           args: >-
             ci execute-node
@@ -90,7 +90,7 @@ jobs:
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         uses: docker://ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-05f5071a5459028aca2764ce2db1ec2cb14bea52615498fcb053782f9789b9d6
         env:
-          GGBUILD_REF: f47dff7277b74dfbd36838506a05a5e7732d8424
+          GGBUILD_REF: a5628262bfac760bc63cb58eee65e45f34cbf751
         with:
           args: >-
             ci execute-node
@@ -105,7 +105,7 @@ jobs:
         if: matrix.target == 'x86_64-unknown-linux-musl'
         uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
         env:
-          GGBUILD_REF: f47dff7277b74dfbd36838506a05a5e7732d8424
+          GGBUILD_REF: a5628262bfac760bc63cb58eee65e45f34cbf751
         with:
           args: >-
             ci execute-node
@@ -120,7 +120,7 @@ jobs:
         if: matrix.target == 'aarch64-unknown-linux-musl'
         uses: docker://ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-c530c440a922606a75d9b85e777ecdb6c7073f651f9dee3d40677429b60eeb6d
         env:
-          GGBUILD_REF: f47dff7277b74dfbd36838506a05a5e7732d8424
+          GGBUILD_REF: a5628262bfac760bc63cb58eee65e45f34cbf751
         with:
           args: >-
             ci execute-node
