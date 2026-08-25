@@ -1,0 +1,233 @@
+[project]
+name = "postgresbuild"
+dynamic = ["version"]
+description = "Build relocatable standalone PostgreSQL distributions"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "postgresbuild contributors" }]
+requires-python = ">=3.14.0"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+dependencies = [
+    "ggbuild==0.1.0",
+]
+
+[dependency-groups]
+test = [
+    "ggt>=1.5.3,<2",
+    "pytest>=9,<10",
+]
+
+# Typecheckers and linters are pinned exactly to avoid CQA breakage in CI.
+check = [
+    "mypy==2.3.1",
+    "poethepoet>=0.48.0",
+    "ruff==0.16.0",
+    "ty==0.0.73",
+    "tox>=4",
+    "tox-uv-bare",
+    "uv==0.11.24",
+    "zizmor==1.26.1",
+    { include-group = "test" },
+]
+
+dev = [
+    { include-group = "test" },
+    { include-group = "check" },
+]
+
+[project.urls]
+source = "https://github.com/vercel-labs/postgresbuild"
+issues = "https://github.com/vercel-labs/postgresbuild/issues"
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/postgresbuild"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "pep440"
+bump = true
+fallback-version = "0.0.0"
+
+[tool.uv]
+default-groups = ["dev"]
+exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
+
+[tool.uv.sources]
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "177498e86286e685f64ceef09c6c357746e27528" }
+
+[tool.ggbuild]
+root-recipe = "postgresbuild.postgresql:PostgreSQL"
+release-selection = "latest-per-major"
+portable = true
+bundle-prefix = "postgresql"
+
+[[tool.ggbuild.target]]
+triple = "x86_64-unknown-linux-gnu"
+
+[[tool.ggbuild.target]]
+triple = "aarch64-unknown-linux-gnu"
+
+[[tool.ggbuild.target]]
+triple = "x86_64-unknown-linux-musl"
+
+[[tool.ggbuild.target]]
+triple = "aarch64-unknown-linux-musl"
+
+[[tool.ggbuild.target]]
+triple = "aarch64-apple-darwin"
+
+[tool.ggbuild.workflow]
+name = "PostgreSQL builds"
+path = ".github/workflows/postgresbuild.yml"
+setup-action = "./.github/actions/postgresbuild-setup"
+branch = "main"
+max-concurrency = 12
+artifact-name = "postgresql-{target}-{version}"
+
+[tool.ggbuild.build]
+revision = "2"
+compression = ["zstd"]
+
+[tool.ggbuild.sccache]
+production = false
+pull-request = true
+
+# ========================
+#           TOX
+# ========================
+
+[tool.tox]
+requires = ["tox>=4", "tox-uv-bare"]
+env_list = ["py314"]
+
+[tool.tox.env_run_base]
+runner = "uv-venv-lock-runner"
+dependency_groups = ["test"]
+commands = [["ggt", "tests", { replace = "posargs", extend = true }]]
+
+# ========================
+#           POE
+# ========================
+
+[tool.poe]
+verbosity = -1
+
+[tool.poe.tasks.setup]
+sequence = ["sync-githooks"]
+
+[tool.poe.tasks.sync-githooks]
+cmd = "python scripts/sync-githooks.py"
+
+[tool.poe.tasks.regenerate-workflow]
+cmd = "ggbuild ci render-workflow"
+
+[tool.poe.tasks.fix]
+sequence = ["ruff-check-fix", "ruff-format-fix"]
+
+[tool.poe.tasks.lint]
+cmd = "python scripts/poe.py lint --poe-verbose ${verbose:-false}"
+args = [{ name = "verbose", options = ["-v", "--verbose"], type = "boolean" }]
+
+[tool.poe.tasks.typecheck]
+cmd = "python scripts/poe.py typecheck --poe-verbose ${verbose:-false}"
+args = [{ name = "verbose", options = ["-v", "--verbose"], type = "boolean" }]
+
+[tool.poe.tasks.test]
+cmd = "python scripts/poe.py test --poe-verbose ${verbose:-false}"
+args = [{ name = "verbose", options = ["-v", "--verbose"], type = "boolean" }]
+
+[tool.poe.tasks.qa]
+cmd = "python scripts/poe.py qa --poe-verbose ${verbose:-false}"
+args = [{ name = "verbose", options = ["-v", "--verbose"], type = "boolean" }]
+
+[tool.poe.tasks.pre-commit]
+cmd = "python scripts/poe.py pre-commit"
+
+[tool.poe.tasks.pre-push]
+cmd = "python scripts/poe.py pre-push"
+
+[tool.poe.tasks.ruff-check]
+cmd = "ruff check src/postgresbuild tests scripts pyproject.toml"
+
+[tool.poe.tasks.ruff-check-fix]
+cmd = "ruff check --fix src/postgresbuild tests scripts pyproject.toml"
+
+[tool.poe.tasks.ruff-format]
+cmd = "ruff format --check src tests scripts"
+
+[tool.poe.tasks.ruff-format-fix]
+cmd = "ruff format src tests scripts"
+
+[tool.poe.tasks.typecheck-mypy]
+cmd = "mypy"
+
+[tool.poe.tasks.typecheck-ty]
+cmd = "ty check"
+
+# ========================
+#          MYPY
+# ========================
+
+[tool.mypy]
+exclude = ["^.git", "^.github", "^build", "^dist"]
+files = ["src/**/*.py", "scripts/**/*.py"]
+python_version = "3.14"
+follow_imports = "normal"
+strict = true
+ignore_errors = false
+show_error_codes = true
+local_partial_types = true
+
+# ========================
+#            TY
+# ========================
+
+[tool.ty.src]
+include = ["src", "tests", "scripts"]
+
+# ========================
+#           RUFF
+# ========================
+
+[tool.ruff]
+line-length = 79
+indent-width = 4
+target-version = "py314"
+exclude = [".github", ".git", "build", "dist", ".eggs"]
+
+[tool.ruff.lint]
+preview = true
+extend-select = [
+    "A", "B", "C4", "COM", "DTZ", "E", "ERA", "F", "FA", "FBT",
+    "FURB", "G", "ICN", "ISC", "LOG", "PERF", "PGH", "PIE", "PL",
+    "PYI", "Q", "RUF", "S", "SIM", "SLOT", "T20", "TC", "UP", "W",
+]
+extend-ignore = [
+    "N", "SIM102", "C408", "COM812", "ISC002", "PLC0105", "PLC0414",
+    "non-empty-init-module", "rule-codes-in-selectors",
+    "PLR0904", "PLR0911", "PLR0912", "PLR0913", "PLR0914", "PLR0915",
+    "PLR0916", "PLR1702", "PLR2004", "PLR6301", "PLW3201", "S101",
+    "S404", "S603", "SIM105", "SIM117", "UP045", "PLR5501", "PERF203",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["T201"]
+"tests/*" = ["S101"]
+"src/postgresbuild/build.py" = ["T201"]
+"src/postgresbuild/postgresql.py" = ["RUF012"]

@@ -1,0 +1,5 @@
+bin/**
+lib/**
+suites/**
+manifest.sh
+run-tests.sh

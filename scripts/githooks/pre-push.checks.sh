@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+set -eu
+
+printf '\n'
+if FORCE_COLOR=1 CLICOLOR_FORCE=1 PY_COLORS=1 \
+    LOGRAIL_OUTPUT="${LOGRAIL_OUTPUT:-fancy}" uv run poe pre-push; then
+    status=0
+else
+    status=$?
+fi
+printf '\n'
+exit "$status"
+

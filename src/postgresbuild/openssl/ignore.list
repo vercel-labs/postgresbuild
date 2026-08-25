@@ -1,0 +1,4 @@
+{bindir}/*
+{prefix}/etc/**
+{prefix}/include/**
+{libdir}/engines-*/**

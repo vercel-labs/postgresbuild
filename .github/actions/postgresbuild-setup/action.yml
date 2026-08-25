@@ -1,0 +1,11 @@
+name: Set up postgresbuild worker
+description: Install the pinned Python and project environment used by all DAG nodes
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+      with:
+        python-version: "3.14"
+    - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+    - shell: bash
+      run: uv sync --frozen --no-default-groups
