@@ -69,7 +69,7 @@ default-groups = ["dev"]
 exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "e4098070c7c6f32d69684da418c5e9a1e0076a29" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "22e07e87507e622db7dbfa264a3bcdfc43b37b37" }
 lograil = { path = "../lograil", editable = true }
 
 [tool.ggbuild]

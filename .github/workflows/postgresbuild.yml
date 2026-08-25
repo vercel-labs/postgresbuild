@@ -29,7 +29,7 @@ jobs:
       - name: Create canonical build plan
         run: >-
           uv run ggbuild ci plan
-          --expected-digest a7ba08b6101edec77507a9df5fc70c76a667927ccdf9cf9ad94e36c39960bcba
+          --expected-digest 17223fd5de900ac9301f5a99b5b699d5dadece1cb40bd1cead3354177a9219c5
           --output .cache/ggbuild-plan.json
       - name: Upload canonical plan
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -57,8 +57,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-24d938e4cdb761ca7dc005a533aa98a8eef5c2d0c973eae157306f9a0b2d6c5a.tar.zst
-          key: ggbuild-v3-24d938e4cdb761ca7dc005a533aa98a8eef5c2d0c973eae157306f9a0b2d6c5a
+          path: .cache/bundles/ggbuild-v3-b545d7f2e87e4268146da6408ff82ffdd1b032719f274f6f721fcc4d3ececb41.tar.zst
+          key: ggbuild-v3-b545d7f2e87e4268146da6408ff82ffdd1b032719f274f6f721fcc4d3ececb41
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -85,8 +85,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-24d938e4cdb761ca7dc005a533aa98a8eef5c2d0c973eae157306f9a0b2d6c5a
-          path: .cache/bundles/ggbuild-v3-24d938e4cdb761ca7dc005a533aa98a8eef5c2d0c973eae157306f9a0b2d6c5a.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-b545d7f2e87e4268146da6408ff82ffdd1b032719f274f6f721fcc4d3ececb41
+          path: .cache/bundles/ggbuild-v3-b545d7f2e87e4268146da6408ff82ffdd1b032719f274f6f721fcc4d3ececb41.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -108,8 +108,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-947572b1f3008f7e54ffb918b4603603707fb566fdecb9f58233b6258d47a33d.tar.zst
-          key: ggbuild-v3-947572b1f3008f7e54ffb918b4603603707fb566fdecb9f58233b6258d47a33d
+          path: .cache/bundles/ggbuild-v3-341be10cbf82ae7c5886f35d4360f8d81c0eafbba6b02a0dc5e4f49179724fa1.tar.zst
+          key: ggbuild-v3-341be10cbf82ae7c5886f35d4360f8d81c0eafbba6b02a0dc5e4f49179724fa1
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -136,8 +136,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-947572b1f3008f7e54ffb918b4603603707fb566fdecb9f58233b6258d47a33d
-          path: .cache/bundles/ggbuild-v3-947572b1f3008f7e54ffb918b4603603707fb566fdecb9f58233b6258d47a33d.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-341be10cbf82ae7c5886f35d4360f8d81c0eafbba6b02a0dc5e4f49179724fa1
+          path: .cache/bundles/ggbuild-v3-341be10cbf82ae7c5886f35d4360f8d81c0eafbba6b02a0dc5e4f49179724fa1.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -159,8 +159,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-03c09c6c3c2bbd6f5a7b119da96c216a662a188f000de85c066b8fffcb815819.tar.zst
-          key: ggbuild-v3-03c09c6c3c2bbd6f5a7b119da96c216a662a188f000de85c066b8fffcb815819
+          path: .cache/bundles/ggbuild-v3-caa1ad07fc24c197a1fe901c1e160f2d675e0791127caaceab09c8f1668d8752.tar.zst
+          key: ggbuild-v3-caa1ad07fc24c197a1fe901c1e160f2d675e0791127caaceab09c8f1668d8752
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -187,8 +187,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-03c09c6c3c2bbd6f5a7b119da96c216a662a188f000de85c066b8fffcb815819
-          path: .cache/bundles/ggbuild-v3-03c09c6c3c2bbd6f5a7b119da96c216a662a188f000de85c066b8fffcb815819.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-caa1ad07fc24c197a1fe901c1e160f2d675e0791127caaceab09c8f1668d8752
+          path: .cache/bundles/ggbuild-v3-caa1ad07fc24c197a1fe901c1e160f2d675e0791127caaceab09c8f1668d8752.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -210,8 +210,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-7eb4044092884d0a461c6d71ce77d9d991963640840a0a6cfea073c0f71a41a1.tar.zst
-          key: ggbuild-v3-7eb4044092884d0a461c6d71ce77d9d991963640840a0a6cfea073c0f71a41a1
+          path: .cache/bundles/ggbuild-v3-39df3d3b99e69e60f61e67c8700f36c8077c7c0b3473f5b1c9f21d032a5923cb.tar.zst
+          key: ggbuild-v3-39df3d3b99e69e60f61e67c8700f36c8077c7c0b3473f5b1c9f21d032a5923cb
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -238,8 +238,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-7eb4044092884d0a461c6d71ce77d9d991963640840a0a6cfea073c0f71a41a1
-          path: .cache/bundles/ggbuild-v3-7eb4044092884d0a461c6d71ce77d9d991963640840a0a6cfea073c0f71a41a1.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-39df3d3b99e69e60f61e67c8700f36c8077c7c0b3473f5b1c9f21d032a5923cb
+          path: .cache/bundles/ggbuild-v3-39df3d3b99e69e60f61e67c8700f36c8077c7c0b3473f5b1c9f21d032a5923cb.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -261,8 +261,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-e10b9777d48edbef1038ef49a55c15208187964d6fb2451cccd6a021fdcf2278.tar.zst
-          key: ggbuild-v3-e10b9777d48edbef1038ef49a55c15208187964d6fb2451cccd6a021fdcf2278
+          path: .cache/bundles/ggbuild-v3-d6a6b3cb5dea6018178fa9371b189a1a10e7b779e298ac7da4955b3d0ab087a0.tar.zst
+          key: ggbuild-v3-d6a6b3cb5dea6018178fa9371b189a1a10e7b779e298ac7da4955b3d0ab087a0
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -289,8 +289,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-e10b9777d48edbef1038ef49a55c15208187964d6fb2451cccd6a021fdcf2278
-          path: .cache/bundles/ggbuild-v3-e10b9777d48edbef1038ef49a55c15208187964d6fb2451cccd6a021fdcf2278.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-d6a6b3cb5dea6018178fa9371b189a1a10e7b779e298ac7da4955b3d0ab087a0
+          path: .cache/bundles/ggbuild-v3-d6a6b3cb5dea6018178fa9371b189a1a10e7b779e298ac7da4955b3d0ab087a0.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -312,8 +312,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-3eacc6c3c920a7d5cdadd8cdcd2eb93a990161f410cf31163985384e0705ae43.tar.zst
-          key: ggbuild-v3-3eacc6c3c920a7d5cdadd8cdcd2eb93a990161f410cf31163985384e0705ae43
+          path: .cache/bundles/ggbuild-v3-9af79beb574ce7bafa39d893654eca9b4f6af5f2ad94254b022b59b4416018a9.tar.zst
+          key: ggbuild-v3-9af79beb574ce7bafa39d893654eca9b4f6af5f2ad94254b022b59b4416018a9
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -340,8 +340,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-3eacc6c3c920a7d5cdadd8cdcd2eb93a990161f410cf31163985384e0705ae43
-          path: .cache/bundles/ggbuild-v3-3eacc6c3c920a7d5cdadd8cdcd2eb93a990161f410cf31163985384e0705ae43.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-9af79beb574ce7bafa39d893654eca9b4f6af5f2ad94254b022b59b4416018a9
+          path: .cache/bundles/ggbuild-v3-9af79beb574ce7bafa39d893654eca9b4f6af5f2ad94254b022b59b4416018a9.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -363,8 +363,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-44af764d4b5af5054d38b8c42c0088af33fcac4495eff9fd3e27293ee8b66b9c.tar.zst
-          key: ggbuild-v3-44af764d4b5af5054d38b8c42c0088af33fcac4495eff9fd3e27293ee8b66b9c
+          path: .cache/bundles/ggbuild-v3-4e4bfa68fbb517eda3a6b8aaff39345124839f6c7875d851b21dd0f4e16f6368.tar.zst
+          key: ggbuild-v3-4e4bfa68fbb517eda3a6b8aaff39345124839f6c7875d851b21dd0f4e16f6368
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -391,8 +391,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-44af764d4b5af5054d38b8c42c0088af33fcac4495eff9fd3e27293ee8b66b9c
-          path: .cache/bundles/ggbuild-v3-44af764d4b5af5054d38b8c42c0088af33fcac4495eff9fd3e27293ee8b66b9c.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-4e4bfa68fbb517eda3a6b8aaff39345124839f6c7875d851b21dd0f4e16f6368
+          path: .cache/bundles/ggbuild-v3-4e4bfa68fbb517eda3a6b8aaff39345124839f6c7875d851b21dd0f4e16f6368.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -414,8 +414,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-3700d4f43bb5014dc4806053953317b61dd7f004e3ce466b15f9fbba5cdaa957.tar.zst
-          key: ggbuild-v3-3700d4f43bb5014dc4806053953317b61dd7f004e3ce466b15f9fbba5cdaa957
+          path: .cache/bundles/ggbuild-v3-2889cf804e6a687c8f3a36270f790c17e7a97eaa99a0c71cb12155ac93df1000.tar.zst
+          key: ggbuild-v3-2889cf804e6a687c8f3a36270f790c17e7a97eaa99a0c71cb12155ac93df1000
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -442,8 +442,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-3700d4f43bb5014dc4806053953317b61dd7f004e3ce466b15f9fbba5cdaa957
-          path: .cache/bundles/ggbuild-v3-3700d4f43bb5014dc4806053953317b61dd7f004e3ce466b15f9fbba5cdaa957.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-2889cf804e6a687c8f3a36270f790c17e7a97eaa99a0c71cb12155ac93df1000
+          path: .cache/bundles/ggbuild-v3-2889cf804e6a687c8f3a36270f790c17e7a97eaa99a0c71cb12155ac93df1000.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -465,8 +465,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-1ac2740f6b0f5b5b5febb5c30c7c75fa304e82feac3d2ae82a7f1ee9a829d12b.tar.zst
-          key: ggbuild-v3-1ac2740f6b0f5b5b5febb5c30c7c75fa304e82feac3d2ae82a7f1ee9a829d12b
+          path: .cache/bundles/ggbuild-v3-3104ec22160b3d50c0a8bfcae11e0bc724497b17006619704009dcaa03297327.tar.zst
+          key: ggbuild-v3-3104ec22160b3d50c0a8bfcae11e0bc724497b17006619704009dcaa03297327
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -493,8 +493,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-1ac2740f6b0f5b5b5febb5c30c7c75fa304e82feac3d2ae82a7f1ee9a829d12b
-          path: .cache/bundles/ggbuild-v3-1ac2740f6b0f5b5b5febb5c30c7c75fa304e82feac3d2ae82a7f1ee9a829d12b.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-3104ec22160b3d50c0a8bfcae11e0bc724497b17006619704009dcaa03297327
+          path: .cache/bundles/ggbuild-v3-3104ec22160b3d50c0a8bfcae11e0bc724497b17006619704009dcaa03297327.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -517,8 +517,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-4b857138b7396367fdcc584628e646c939279e2c3635a04851d6ce9108f5d0ab.tar.zst
-          key: ggbuild-v3-4b857138b7396367fdcc584628e646c939279e2c3635a04851d6ce9108f5d0ab
+          path: .cache/bundles/ggbuild-v3-6db11869d80aa04ab7b3dcba02c739e5853f2f3c3d4b3943400420019debc617.tar.zst
+          key: ggbuild-v3-6db11869d80aa04ab7b3dcba02c739e5853f2f3c3d4b3943400420019debc617
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -538,7 +538,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -562,8 +562,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-4b857138b7396367fdcc584628e646c939279e2c3635a04851d6ce9108f5d0ab
-          path: .cache/bundles/ggbuild-v3-4b857138b7396367fdcc584628e646c939279e2c3635a04851d6ce9108f5d0ab.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-6db11869d80aa04ab7b3dcba02c739e5853f2f3c3d4b3943400420019debc617
+          path: .cache/bundles/ggbuild-v3-6db11869d80aa04ab7b3dcba02c739e5853f2f3c3d4b3943400420019debc617.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -586,8 +586,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-7f1b5fb24683c7e34c533f43a64b835100d6550b83f7eb7f9cca9522a3b87736.tar.zst
-          key: ggbuild-v3-7f1b5fb24683c7e34c533f43a64b835100d6550b83f7eb7f9cca9522a3b87736
+          path: .cache/bundles/ggbuild-v3-fd2f6e2dcafe6adf32b58f22a0297e1747112572c3821e10aff4c518615ef49b.tar.zst
+          key: ggbuild-v3-fd2f6e2dcafe6adf32b58f22a0297e1747112572c3821e10aff4c518615ef49b
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -607,7 +607,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -631,8 +631,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-7f1b5fb24683c7e34c533f43a64b835100d6550b83f7eb7f9cca9522a3b87736
-          path: .cache/bundles/ggbuild-v3-7f1b5fb24683c7e34c533f43a64b835100d6550b83f7eb7f9cca9522a3b87736.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-fd2f6e2dcafe6adf32b58f22a0297e1747112572c3821e10aff4c518615ef49b
+          path: .cache/bundles/ggbuild-v3-fd2f6e2dcafe6adf32b58f22a0297e1747112572c3821e10aff4c518615ef49b.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -655,8 +655,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-580b5f5ee3ab0f9c1ba4f06a34b8fdeb5982a75bffdd724cf994a334307091dc.tar.zst
-          key: ggbuild-v3-580b5f5ee3ab0f9c1ba4f06a34b8fdeb5982a75bffdd724cf994a334307091dc
+          path: .cache/bundles/ggbuild-v3-c97a3e5ca898b3b2ced16c14fd0809d4e7f1c0917f2698226c9539df489f0ae7.tar.zst
+          key: ggbuild-v3-c97a3e5ca898b3b2ced16c14fd0809d4e7f1c0917f2698226c9539df489f0ae7
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -676,7 +676,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -700,8 +700,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-580b5f5ee3ab0f9c1ba4f06a34b8fdeb5982a75bffdd724cf994a334307091dc
-          path: .cache/bundles/ggbuild-v3-580b5f5ee3ab0f9c1ba4f06a34b8fdeb5982a75bffdd724cf994a334307091dc.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-c97a3e5ca898b3b2ced16c14fd0809d4e7f1c0917f2698226c9539df489f0ae7
+          path: .cache/bundles/ggbuild-v3-c97a3e5ca898b3b2ced16c14fd0809d4e7f1c0917f2698226c9539df489f0ae7.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -724,8 +724,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-c293b3e149d6a5a0c8f0ebdb35330880fb2f43ee240cf04e279421ae8bed5c5d.tar.zst
-          key: ggbuild-v3-c293b3e149d6a5a0c8f0ebdb35330880fb2f43ee240cf04e279421ae8bed5c5d
+          path: .cache/bundles/ggbuild-v3-fc88279d3350567f2f9dcfa4bfe47c97912bf2c2b6f6230e91c36e530a812a2e.tar.zst
+          key: ggbuild-v3-fc88279d3350567f2f9dcfa4bfe47c97912bf2c2b6f6230e91c36e530a812a2e
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -745,7 +745,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -769,8 +769,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-c293b3e149d6a5a0c8f0ebdb35330880fb2f43ee240cf04e279421ae8bed5c5d
-          path: .cache/bundles/ggbuild-v3-c293b3e149d6a5a0c8f0ebdb35330880fb2f43ee240cf04e279421ae8bed5c5d.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-fc88279d3350567f2f9dcfa4bfe47c97912bf2c2b6f6230e91c36e530a812a2e
+          path: .cache/bundles/ggbuild-v3-fc88279d3350567f2f9dcfa4bfe47c97912bf2c2b6f6230e91c36e530a812a2e.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -793,8 +793,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-c09f69c5edc24d1d03dab11f413985d3d37e104157e7518ea59ddbefcdc28f2a.tar.zst
-          key: ggbuild-v3-c09f69c5edc24d1d03dab11f413985d3d37e104157e7518ea59ddbefcdc28f2a
+          path: .cache/bundles/ggbuild-v3-ce7655df5011fea031a6ed13b1e718fa2fcdf5c6574463a71a92c82b6610b646.tar.zst
+          key: ggbuild-v3-ce7655df5011fea031a6ed13b1e718fa2fcdf5c6574463a71a92c82b6610b646
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -814,7 +814,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -838,8 +838,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-c09f69c5edc24d1d03dab11f413985d3d37e104157e7518ea59ddbefcdc28f2a
-          path: .cache/bundles/ggbuild-v3-c09f69c5edc24d1d03dab11f413985d3d37e104157e7518ea59ddbefcdc28f2a.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-ce7655df5011fea031a6ed13b1e718fa2fcdf5c6574463a71a92c82b6610b646
+          path: .cache/bundles/ggbuild-v3-ce7655df5011fea031a6ed13b1e718fa2fcdf5c6574463a71a92c82b6610b646.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -862,8 +862,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-1b3108c548a0f78a8f7ecb81b088bbf30685a713ecc34eaded9a036d74500725.tar.zst
-          key: ggbuild-v3-1b3108c548a0f78a8f7ecb81b088bbf30685a713ecc34eaded9a036d74500725
+          path: .cache/bundles/ggbuild-v3-d59f2e310904f5e89c7e90a3e9e438487e28dc479dd3c6e4a55f121afd64266f.tar.zst
+          key: ggbuild-v3-d59f2e310904f5e89c7e90a3e9e438487e28dc479dd3c6e4a55f121afd64266f
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -883,7 +883,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -907,8 +907,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-1b3108c548a0f78a8f7ecb81b088bbf30685a713ecc34eaded9a036d74500725
-          path: .cache/bundles/ggbuild-v3-1b3108c548a0f78a8f7ecb81b088bbf30685a713ecc34eaded9a036d74500725.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-d59f2e310904f5e89c7e90a3e9e438487e28dc479dd3c6e4a55f121afd64266f
+          path: .cache/bundles/ggbuild-v3-d59f2e310904f5e89c7e90a3e9e438487e28dc479dd3c6e4a55f121afd64266f.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -931,8 +931,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-4cdbbfed41a79041daca1ebd2a83ed7d0b04a2fcd09f30a15b175e3790a00c25.tar.zst
-          key: ggbuild-v3-4cdbbfed41a79041daca1ebd2a83ed7d0b04a2fcd09f30a15b175e3790a00c25
+          path: .cache/bundles/ggbuild-v3-713049032279bed22888e2a779730705297990355ed12cc1b3984f58fe643bf0.tar.zst
+          key: ggbuild-v3-713049032279bed22888e2a779730705297990355ed12cc1b3984f58fe643bf0
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -952,7 +952,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -976,8 +976,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-4cdbbfed41a79041daca1ebd2a83ed7d0b04a2fcd09f30a15b175e3790a00c25
-          path: .cache/bundles/ggbuild-v3-4cdbbfed41a79041daca1ebd2a83ed7d0b04a2fcd09f30a15b175e3790a00c25.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-713049032279bed22888e2a779730705297990355ed12cc1b3984f58fe643bf0
+          path: .cache/bundles/ggbuild-v3-713049032279bed22888e2a779730705297990355ed12cc1b3984f58fe643bf0.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1000,8 +1000,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-ab14f7d712a3af55895724600497ad3bd0e223162e8ef22db64481f75223ec85.tar.zst
-          key: ggbuild-v3-ab14f7d712a3af55895724600497ad3bd0e223162e8ef22db64481f75223ec85
+          path: .cache/bundles/ggbuild-v3-00c1e2fd932a5ced1daeaa974e556fbac33481f4a9dada23d2d3abf2dbe27dac.tar.zst
+          key: ggbuild-v3-00c1e2fd932a5ced1daeaa974e556fbac33481f4a9dada23d2d3abf2dbe27dac
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1021,7 +1021,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1045,8 +1045,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-ab14f7d712a3af55895724600497ad3bd0e223162e8ef22db64481f75223ec85
-          path: .cache/bundles/ggbuild-v3-ab14f7d712a3af55895724600497ad3bd0e223162e8ef22db64481f75223ec85.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-00c1e2fd932a5ced1daeaa974e556fbac33481f4a9dada23d2d3abf2dbe27dac
+          path: .cache/bundles/ggbuild-v3-00c1e2fd932a5ced1daeaa974e556fbac33481f4a9dada23d2d3abf2dbe27dac.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1069,8 +1069,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-f8e5317593dd6872431b29129251b412c92083ea8b22ccea872dcf680f716eab.tar.zst
-          key: ggbuild-v3-f8e5317593dd6872431b29129251b412c92083ea8b22ccea872dcf680f716eab
+          path: .cache/bundles/ggbuild-v3-916daed58407928bc4342a6de538c754802e4f20a6262ae19da87f6b18948dad.tar.zst
+          key: ggbuild-v3-916daed58407928bc4342a6de538c754802e4f20a6262ae19da87f6b18948dad
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1090,7 +1090,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1114,8 +1114,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-f8e5317593dd6872431b29129251b412c92083ea8b22ccea872dcf680f716eab
-          path: .cache/bundles/ggbuild-v3-f8e5317593dd6872431b29129251b412c92083ea8b22ccea872dcf680f716eab.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-916daed58407928bc4342a6de538c754802e4f20a6262ae19da87f6b18948dad
+          path: .cache/bundles/ggbuild-v3-916daed58407928bc4342a6de538c754802e4f20a6262ae19da87f6b18948dad.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1138,8 +1138,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-982d8c356420464387df6ce9db0f82a4847692ac7734996a91c59d37c0dd9928.tar.zst
-          key: ggbuild-v3-982d8c356420464387df6ce9db0f82a4847692ac7734996a91c59d37c0dd9928
+          path: .cache/bundles/ggbuild-v3-5f5affd781a620354618de1eed1fdc1076deaf6773916f43a02e9ed5f94405f4.tar.zst
+          key: ggbuild-v3-5f5affd781a620354618de1eed1fdc1076deaf6773916f43a02e9ed5f94405f4
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1159,7 +1159,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1183,8 +1183,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-982d8c356420464387df6ce9db0f82a4847692ac7734996a91c59d37c0dd9928
-          path: .cache/bundles/ggbuild-v3-982d8c356420464387df6ce9db0f82a4847692ac7734996a91c59d37c0dd9928.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-5f5affd781a620354618de1eed1fdc1076deaf6773916f43a02e9ed5f94405f4
+          path: .cache/bundles/ggbuild-v3-5f5affd781a620354618de1eed1fdc1076deaf6773916f43a02e9ed5f94405f4.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1207,8 +1207,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-b1073528fb8b14be4c5276d3fde70619fcfc7c40fc099b0b76f24227ddb33f91.tar.zst
-          key: ggbuild-v3-b1073528fb8b14be4c5276d3fde70619fcfc7c40fc099b0b76f24227ddb33f91
+          path: .cache/bundles/ggbuild-v3-88d500751c3138b6b88c8bf6bb371cd824dfa3704f8a71109fa50a019fc367bf.tar.zst
+          key: ggbuild-v3-88d500751c3138b6b88c8bf6bb371cd824dfa3704f8a71109fa50a019fc367bf
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1228,7 +1228,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1252,8 +1252,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-b1073528fb8b14be4c5276d3fde70619fcfc7c40fc099b0b76f24227ddb33f91
-          path: .cache/bundles/ggbuild-v3-b1073528fb8b14be4c5276d3fde70619fcfc7c40fc099b0b76f24227ddb33f91.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-88d500751c3138b6b88c8bf6bb371cd824dfa3704f8a71109fa50a019fc367bf
+          path: .cache/bundles/ggbuild-v3-88d500751c3138b6b88c8bf6bb371cd824dfa3704f8a71109fa50a019fc367bf.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1276,8 +1276,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-95c77139fb1a0d257399aef7cdff003259cc61defdef8740956124da32faae6a.tar.zst
-          key: ggbuild-v3-95c77139fb1a0d257399aef7cdff003259cc61defdef8740956124da32faae6a
+          path: .cache/bundles/ggbuild-v3-6df621845639f70d929ec4c852d6075a7732936ccdc27ee84e51aed9f8065cd3.tar.zst
+          key: ggbuild-v3-6df621845639f70d929ec4c852d6075a7732936ccdc27ee84e51aed9f8065cd3
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1297,7 +1297,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1321,8 +1321,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-95c77139fb1a0d257399aef7cdff003259cc61defdef8740956124da32faae6a
-          path: .cache/bundles/ggbuild-v3-95c77139fb1a0d257399aef7cdff003259cc61defdef8740956124da32faae6a.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-6df621845639f70d929ec4c852d6075a7732936ccdc27ee84e51aed9f8065cd3
+          path: .cache/bundles/ggbuild-v3-6df621845639f70d929ec4c852d6075a7732936ccdc27ee84e51aed9f8065cd3.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1345,8 +1345,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-187d9e2d007478995b8ed5234d0038bc9adff87d2e6a79936a767b345b26ee0f.tar.zst
-          key: ggbuild-v3-187d9e2d007478995b8ed5234d0038bc9adff87d2e6a79936a767b345b26ee0f
+          path: .cache/bundles/ggbuild-v3-c3d7dc62b762f741f36df318a19aec686d28df0d6e48c32e4cd039174569b613.tar.zst
+          key: ggbuild-v3-c3d7dc62b762f741f36df318a19aec686d28df0d6e48c32e4cd039174569b613
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1366,7 +1366,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1390,8 +1390,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-187d9e2d007478995b8ed5234d0038bc9adff87d2e6a79936a767b345b26ee0f
-          path: .cache/bundles/ggbuild-v3-187d9e2d007478995b8ed5234d0038bc9adff87d2e6a79936a767b345b26ee0f.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-c3d7dc62b762f741f36df318a19aec686d28df0d6e48c32e4cd039174569b613
+          path: .cache/bundles/ggbuild-v3-c3d7dc62b762f741f36df318a19aec686d28df0d6e48c32e4cd039174569b613.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1414,8 +1414,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-10a0b2c2267fc961a0422688d173160e0e8ab1f62449f8c3ba520a0e2b855801.tar.zst
-          key: ggbuild-v3-10a0b2c2267fc961a0422688d173160e0e8ab1f62449f8c3ba520a0e2b855801
+          path: .cache/bundles/ggbuild-v3-5661324c32606caf5aec7b35086d4f292f3b6c048230c956b6febb16d46a711f.tar.zst
+          key: ggbuild-v3-5661324c32606caf5aec7b35086d4f292f3b6c048230c956b6febb16d46a711f
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1435,7 +1435,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1459,8 +1459,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-10a0b2c2267fc961a0422688d173160e0e8ab1f62449f8c3ba520a0e2b855801
-          path: .cache/bundles/ggbuild-v3-10a0b2c2267fc961a0422688d173160e0e8ab1f62449f8c3ba520a0e2b855801.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-5661324c32606caf5aec7b35086d4f292f3b6c048230c956b6febb16d46a711f
+          path: .cache/bundles/ggbuild-v3-5661324c32606caf5aec7b35086d4f292f3b6c048230c956b6febb16d46a711f.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1483,8 +1483,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-fea4a534f4bfc0f995ff9b967750ae61c5f114159814c423794b2a62db683641.tar.zst
-          key: ggbuild-v3-fea4a534f4bfc0f995ff9b967750ae61c5f114159814c423794b2a62db683641
+          path: .cache/bundles/ggbuild-v3-dd43090f8566fb76db57bafd431ebd45eb4649166140d6d2fce7f99d669f1c2a.tar.zst
+          key: ggbuild-v3-dd43090f8566fb76db57bafd431ebd45eb4649166140d6d2fce7f99d669f1c2a
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1504,7 +1504,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1528,8 +1528,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-fea4a534f4bfc0f995ff9b967750ae61c5f114159814c423794b2a62db683641
-          path: .cache/bundles/ggbuild-v3-fea4a534f4bfc0f995ff9b967750ae61c5f114159814c423794b2a62db683641.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-dd43090f8566fb76db57bafd431ebd45eb4649166140d6d2fce7f99d669f1c2a
+          path: .cache/bundles/ggbuild-v3-dd43090f8566fb76db57bafd431ebd45eb4649166140d6d2fce7f99d669f1c2a.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1552,8 +1552,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-b38c11277da1cc2d7bd2762678bb15f3c5ab6f139e5b67c976a3bb69921a2274.tar.zst
-          key: ggbuild-v3-b38c11277da1cc2d7bd2762678bb15f3c5ab6f139e5b67c976a3bb69921a2274
+          path: .cache/bundles/ggbuild-v3-3dacb49cf4e4b3f6479d1f04a9bb19729f55c7080d47d721ddb4e75592f7f0fe.tar.zst
+          key: ggbuild-v3-3dacb49cf4e4b3f6479d1f04a9bb19729f55c7080d47d721ddb4e75592f7f0fe
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1573,7 +1573,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1597,8 +1597,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-b38c11277da1cc2d7bd2762678bb15f3c5ab6f139e5b67c976a3bb69921a2274
-          path: .cache/bundles/ggbuild-v3-b38c11277da1cc2d7bd2762678bb15f3c5ab6f139e5b67c976a3bb69921a2274.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-3dacb49cf4e4b3f6479d1f04a9bb19729f55c7080d47d721ddb4e75592f7f0fe
+          path: .cache/bundles/ggbuild-v3-3dacb49cf4e4b3f6479d1f04a9bb19729f55c7080d47d721ddb4e75592f7f0fe.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1621,8 +1621,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-12997d776cfcbe935d2815d32cbcdb033671df66deff9d3422085c51bca807a9.tar.zst
-          key: ggbuild-v3-12997d776cfcbe935d2815d32cbcdb033671df66deff9d3422085c51bca807a9
+          path: .cache/bundles/ggbuild-v3-30b428dd95cf0d32bd62487a2936c360efb89c9fa92e76d8e9287257d74d9de6.tar.zst
+          key: ggbuild-v3-30b428dd95cf0d32bd62487a2936c360efb89c9fa92e76d8e9287257d74d9de6
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1642,7 +1642,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1666,8 +1666,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-12997d776cfcbe935d2815d32cbcdb033671df66deff9d3422085c51bca807a9
-          path: .cache/bundles/ggbuild-v3-12997d776cfcbe935d2815d32cbcdb033671df66deff9d3422085c51bca807a9.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-30b428dd95cf0d32bd62487a2936c360efb89c9fa92e76d8e9287257d74d9de6
+          path: .cache/bundles/ggbuild-v3-30b428dd95cf0d32bd62487a2936c360efb89c9fa92e76d8e9287257d74d9de6.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1690,8 +1690,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-af5ea165e15933c2f0d63ade186614c546d93ca7d85f1baf13cac12005ba7e6f.tar.zst
-          key: ggbuild-v3-af5ea165e15933c2f0d63ade186614c546d93ca7d85f1baf13cac12005ba7e6f
+          path: .cache/bundles/ggbuild-v3-01fc8cc0ba8b61730083e05d5172d35fdc47b24d1c658364aa500deeebd1219c.tar.zst
+          key: ggbuild-v3-01fc8cc0ba8b61730083e05d5172d35fdc47b24d1c658364aa500deeebd1219c
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1711,7 +1711,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1735,8 +1735,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-af5ea165e15933c2f0d63ade186614c546d93ca7d85f1baf13cac12005ba7e6f
-          path: .cache/bundles/ggbuild-v3-af5ea165e15933c2f0d63ade186614c546d93ca7d85f1baf13cac12005ba7e6f.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-01fc8cc0ba8b61730083e05d5172d35fdc47b24d1c658364aa500deeebd1219c
+          path: .cache/bundles/ggbuild-v3-01fc8cc0ba8b61730083e05d5172d35fdc47b24d1c658364aa500deeebd1219c.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1759,8 +1759,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-53d728248fdb7f06e716a1f48bac082139fea52232739291c64a80ee71941772.tar.zst
-          key: ggbuild-v3-53d728248fdb7f06e716a1f48bac082139fea52232739291c64a80ee71941772
+          path: .cache/bundles/ggbuild-v3-8b9a26f7a9ede1a32f8e7b40a4845851a10f5b45bf17614f1dd4ec24b0aebe75.tar.zst
+          key: ggbuild-v3-8b9a26f7a9ede1a32f8e7b40a4845851a10f5b45bf17614f1dd4ec24b0aebe75
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1780,7 +1780,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1804,8 +1804,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-53d728248fdb7f06e716a1f48bac082139fea52232739291c64a80ee71941772
-          path: .cache/bundles/ggbuild-v3-53d728248fdb7f06e716a1f48bac082139fea52232739291c64a80ee71941772.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-8b9a26f7a9ede1a32f8e7b40a4845851a10f5b45bf17614f1dd4ec24b0aebe75
+          path: .cache/bundles/ggbuild-v3-8b9a26f7a9ede1a32f8e7b40a4845851a10f5b45bf17614f1dd4ec24b0aebe75.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1828,8 +1828,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-9e6453087d37602b942f18fe153636611ac8eeb6ba122740274ea85c4763e9dd.tar.zst
-          key: ggbuild-v3-9e6453087d37602b942f18fe153636611ac8eeb6ba122740274ea85c4763e9dd
+          path: .cache/bundles/ggbuild-v3-110ff073a1f753e581df420d6026684f825a3c37415f35acff71648db330b534.tar.zst
+          key: ggbuild-v3-110ff073a1f753e581df420d6026684f825a3c37415f35acff71648db330b534
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1849,7 +1849,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1873,8 +1873,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-9e6453087d37602b942f18fe153636611ac8eeb6ba122740274ea85c4763e9dd
-          path: .cache/bundles/ggbuild-v3-9e6453087d37602b942f18fe153636611ac8eeb6ba122740274ea85c4763e9dd.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-110ff073a1f753e581df420d6026684f825a3c37415f35acff71648db330b534
+          path: .cache/bundles/ggbuild-v3-110ff073a1f753e581df420d6026684f825a3c37415f35acff71648db330b534.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1897,8 +1897,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-0bb5982d0d4a7d51d0895d65c05cc5767ffaa8c65a62bf6c8c50630bc43f46a2.tar.zst
-          key: ggbuild-v3-0bb5982d0d4a7d51d0895d65c05cc5767ffaa8c65a62bf6c8c50630bc43f46a2
+          path: .cache/bundles/ggbuild-v3-42faa83060b8481cf7d311be47d0ae508c29db14193a43ca425d38c42b4023d8.tar.zst
+          key: ggbuild-v3-42faa83060b8481cf7d311be47d0ae508c29db14193a43ca425d38c42b4023d8
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1918,7 +1918,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -1942,8 +1942,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-0bb5982d0d4a7d51d0895d65c05cc5767ffaa8c65a62bf6c8c50630bc43f46a2
-          path: .cache/bundles/ggbuild-v3-0bb5982d0d4a7d51d0895d65c05cc5767ffaa8c65a62bf6c8c50630bc43f46a2.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-42faa83060b8481cf7d311be47d0ae508c29db14193a43ca425d38c42b4023d8
+          path: .cache/bundles/ggbuild-v3-42faa83060b8481cf7d311be47d0ae508c29db14193a43ca425d38c42b4023d8.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -1966,8 +1966,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-2e59169a7624a7cb33b6940fa8e941fbd70a519194f34ad6f1500a80b00b18e1.tar.zst
-          key: ggbuild-v3-2e59169a7624a7cb33b6940fa8e941fbd70a519194f34ad6f1500a80b00b18e1
+          path: .cache/bundles/ggbuild-v3-c64f1009ce629bf6d8d8d0a2034c97f6f5d7ad2233e47ac93bcb2ac7344bd84b.tar.zst
+          key: ggbuild-v3-c64f1009ce629bf6d8d8d0a2034c97f6f5d7ad2233e47ac93bcb2ac7344bd84b
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -1987,7 +1987,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2011,8 +2011,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-2e59169a7624a7cb33b6940fa8e941fbd70a519194f34ad6f1500a80b00b18e1
-          path: .cache/bundles/ggbuild-v3-2e59169a7624a7cb33b6940fa8e941fbd70a519194f34ad6f1500a80b00b18e1.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-c64f1009ce629bf6d8d8d0a2034c97f6f5d7ad2233e47ac93bcb2ac7344bd84b
+          path: .cache/bundles/ggbuild-v3-c64f1009ce629bf6d8d8d0a2034c97f6f5d7ad2233e47ac93bcb2ac7344bd84b.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2035,8 +2035,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-e59e6d4f12c5e2ddb01484975d1fc4e435ba74bde555fc454b2f5226cf442f97.tar.zst
-          key: ggbuild-v3-e59e6d4f12c5e2ddb01484975d1fc4e435ba74bde555fc454b2f5226cf442f97
+          path: .cache/bundles/ggbuild-v3-d95f869dd8e863b49a0a8c71729891509510d613137ba92b4077dcbc20ac27f1.tar.zst
+          key: ggbuild-v3-d95f869dd8e863b49a0a8c71729891509510d613137ba92b4077dcbc20ac27f1
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2056,7 +2056,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2080,8 +2080,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-e59e6d4f12c5e2ddb01484975d1fc4e435ba74bde555fc454b2f5226cf442f97
-          path: .cache/bundles/ggbuild-v3-e59e6d4f12c5e2ddb01484975d1fc4e435ba74bde555fc454b2f5226cf442f97.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-d95f869dd8e863b49a0a8c71729891509510d613137ba92b4077dcbc20ac27f1
+          path: .cache/bundles/ggbuild-v3-d95f869dd8e863b49a0a8c71729891509510d613137ba92b4077dcbc20ac27f1.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2104,8 +2104,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-31d064cac48dcfcc23bb0e783fb23cd4bd39b3692d6b4c1ef3ddb013c6046e6f.tar.zst
-          key: ggbuild-v3-31d064cac48dcfcc23bb0e783fb23cd4bd39b3692d6b4c1ef3ddb013c6046e6f
+          path: .cache/bundles/ggbuild-v3-beaf67c4784625be24b4977b8507f440aaf52d00a25101e300ad03551146a784.tar.zst
+          key: ggbuild-v3-beaf67c4784625be24b4977b8507f440aaf52d00a25101e300ad03551146a784
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2125,7 +2125,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2149,8 +2149,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-31d064cac48dcfcc23bb0e783fb23cd4bd39b3692d6b4c1ef3ddb013c6046e6f
-          path: .cache/bundles/ggbuild-v3-31d064cac48dcfcc23bb0e783fb23cd4bd39b3692d6b4c1ef3ddb013c6046e6f.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-beaf67c4784625be24b4977b8507f440aaf52d00a25101e300ad03551146a784
+          path: .cache/bundles/ggbuild-v3-beaf67c4784625be24b4977b8507f440aaf52d00a25101e300ad03551146a784.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2173,8 +2173,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-da6e2f39074fbc108fac35bb9cd6a63186fd506f06689a4c692ea2e7c6a77a3b.tar.zst
-          key: ggbuild-v3-da6e2f39074fbc108fac35bb9cd6a63186fd506f06689a4c692ea2e7c6a77a3b
+          path: .cache/bundles/ggbuild-v3-a197e101a196c0d60bd737cdce2d0db015c65cfddf9e15dba2e4ba58e30e1d1b.tar.zst
+          key: ggbuild-v3-a197e101a196c0d60bd737cdce2d0db015c65cfddf9e15dba2e4ba58e30e1d1b
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2194,7 +2194,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2218,8 +2218,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-da6e2f39074fbc108fac35bb9cd6a63186fd506f06689a4c692ea2e7c6a77a3b
-          path: .cache/bundles/ggbuild-v3-da6e2f39074fbc108fac35bb9cd6a63186fd506f06689a4c692ea2e7c6a77a3b.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-a197e101a196c0d60bd737cdce2d0db015c65cfddf9e15dba2e4ba58e30e1d1b
+          path: .cache/bundles/ggbuild-v3-a197e101a196c0d60bd737cdce2d0db015c65cfddf9e15dba2e4ba58e30e1d1b.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2242,8 +2242,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-2527c1c41139707f3de22578d080c7e2f078f53e0d1906b0aea18cb5ac3de228.tar.zst
-          key: ggbuild-v3-2527c1c41139707f3de22578d080c7e2f078f53e0d1906b0aea18cb5ac3de228
+          path: .cache/bundles/ggbuild-v3-cebebc44a1bbb7e5691ce30820f8650510ab3c2ee8c451175924d558c2821294.tar.zst
+          key: ggbuild-v3-cebebc44a1bbb7e5691ce30820f8650510ab3c2ee8c451175924d558c2821294
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2263,7 +2263,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2287,8 +2287,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-2527c1c41139707f3de22578d080c7e2f078f53e0d1906b0aea18cb5ac3de228
-          path: .cache/bundles/ggbuild-v3-2527c1c41139707f3de22578d080c7e2f078f53e0d1906b0aea18cb5ac3de228.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-cebebc44a1bbb7e5691ce30820f8650510ab3c2ee8c451175924d558c2821294
+          path: .cache/bundles/ggbuild-v3-cebebc44a1bbb7e5691ce30820f8650510ab3c2ee8c451175924d558c2821294.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2311,8 +2311,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-afb0c09c38c53f8edc081dd2e85c2bb0d29006d2486273c5043f53fccc773672.tar.zst
-          key: ggbuild-v3-afb0c09c38c53f8edc081dd2e85c2bb0d29006d2486273c5043f53fccc773672
+          path: .cache/bundles/ggbuild-v3-3c0db4f0d1b42a0e502452ece42dfd074943f2536ee381a610252848fe1d2b38.tar.zst
+          key: ggbuild-v3-3c0db4f0d1b42a0e502452ece42dfd074943f2536ee381a610252848fe1d2b38
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2332,7 +2332,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2356,8 +2356,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-afb0c09c38c53f8edc081dd2e85c2bb0d29006d2486273c5043f53fccc773672
-          path: .cache/bundles/ggbuild-v3-afb0c09c38c53f8edc081dd2e85c2bb0d29006d2486273c5043f53fccc773672.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-3c0db4f0d1b42a0e502452ece42dfd074943f2536ee381a610252848fe1d2b38
+          path: .cache/bundles/ggbuild-v3-3c0db4f0d1b42a0e502452ece42dfd074943f2536ee381a610252848fe1d2b38.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2380,8 +2380,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-2862d6ed6cfeeae3576254af1c2474bc6eef9d9f6d02139c3c361cc2f09e9281.tar.zst
-          key: ggbuild-v3-2862d6ed6cfeeae3576254af1c2474bc6eef9d9f6d02139c3c361cc2f09e9281
+          path: .cache/bundles/ggbuild-v3-4c98038768b8824446890dd6c810cc77d38b91031312a21959a0229abc8fd8c9.tar.zst
+          key: ggbuild-v3-4c98038768b8824446890dd6c810cc77d38b91031312a21959a0229abc8fd8c9
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2401,7 +2401,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2425,8 +2425,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-2862d6ed6cfeeae3576254af1c2474bc6eef9d9f6d02139c3c361cc2f09e9281
-          path: .cache/bundles/ggbuild-v3-2862d6ed6cfeeae3576254af1c2474bc6eef9d9f6d02139c3c361cc2f09e9281.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-4c98038768b8824446890dd6c810cc77d38b91031312a21959a0229abc8fd8c9
+          path: .cache/bundles/ggbuild-v3-4c98038768b8824446890dd6c810cc77d38b91031312a21959a0229abc8fd8c9.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2449,8 +2449,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-afb1de27fe0e0f30db98d80efe73cfae6f56cb506e9848731ab9932bc3875e90.tar.zst
-          key: ggbuild-v3-afb1de27fe0e0f30db98d80efe73cfae6f56cb506e9848731ab9932bc3875e90
+          path: .cache/bundles/ggbuild-v3-c1c0e3be95c78165d027deb90848f88d5cccd6b6381a66f0a8c1722d6d663dab.tar.zst
+          key: ggbuild-v3-c1c0e3be95c78165d027deb90848f88d5cccd6b6381a66f0a8c1722d6d663dab
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2470,7 +2470,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2494,8 +2494,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-afb1de27fe0e0f30db98d80efe73cfae6f56cb506e9848731ab9932bc3875e90
-          path: .cache/bundles/ggbuild-v3-afb1de27fe0e0f30db98d80efe73cfae6f56cb506e9848731ab9932bc3875e90.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-c1c0e3be95c78165d027deb90848f88d5cccd6b6381a66f0a8c1722d6d663dab
+          path: .cache/bundles/ggbuild-v3-c1c0e3be95c78165d027deb90848f88d5cccd6b6381a66f0a8c1722d6d663dab.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2518,8 +2518,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-d0ddd6ebb41b0286a0f3f82b8a4eb5cf5ba8cf69e64094d82bc09d69c75883f6.tar.zst
-          key: ggbuild-v3-d0ddd6ebb41b0286a0f3f82b8a4eb5cf5ba8cf69e64094d82bc09d69c75883f6
+          path: .cache/bundles/ggbuild-v3-f1726e36f652c7ca56dd422f316fb81a578d9cdf616655815808e3d3d4aab754.tar.zst
+          key: ggbuild-v3-f1726e36f652c7ca56dd422f316fb81a578d9cdf616655815808e3d3d4aab754
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2539,7 +2539,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2563,8 +2563,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-d0ddd6ebb41b0286a0f3f82b8a4eb5cf5ba8cf69e64094d82bc09d69c75883f6
-          path: .cache/bundles/ggbuild-v3-d0ddd6ebb41b0286a0f3f82b8a4eb5cf5ba8cf69e64094d82bc09d69c75883f6.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-f1726e36f652c7ca56dd422f316fb81a578d9cdf616655815808e3d3d4aab754
+          path: .cache/bundles/ggbuild-v3-f1726e36f652c7ca56dd422f316fb81a578d9cdf616655815808e3d3d4aab754.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2587,8 +2587,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-42f416719ebb160e07b890bb69a7d1766f441c04629184bd41518bee55afc481.tar.zst
-          key: ggbuild-v3-42f416719ebb160e07b890bb69a7d1766f441c04629184bd41518bee55afc481
+          path: .cache/bundles/ggbuild-v3-26f97ba58eee8edbff5a088c80608a9d740f3aa5c80002dd082bd016dd0e3fc2.tar.zst
+          key: ggbuild-v3-26f97ba58eee8edbff5a088c80608a9d740f3aa5c80002dd082bd016dd0e3fc2
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2608,7 +2608,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2632,8 +2632,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-42f416719ebb160e07b890bb69a7d1766f441c04629184bd41518bee55afc481
-          path: .cache/bundles/ggbuild-v3-42f416719ebb160e07b890bb69a7d1766f441c04629184bd41518bee55afc481.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-26f97ba58eee8edbff5a088c80608a9d740f3aa5c80002dd082bd016dd0e3fc2
+          path: .cache/bundles/ggbuild-v3-26f97ba58eee8edbff5a088c80608a9d740f3aa5c80002dd082bd016dd0e3fc2.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2656,8 +2656,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-1424c487f97ef9c94d05467d4145c04fac96bd698626738dd1003db26ce33dfb.tar.zst
-          key: ggbuild-v3-1424c487f97ef9c94d05467d4145c04fac96bd698626738dd1003db26ce33dfb
+          path: .cache/bundles/ggbuild-v3-c6afa9a833d71413b5d80e7e77c4ac2b4851ee79e07fcd3158aeb176a9703fc8.tar.zst
+          key: ggbuild-v3-c6afa9a833d71413b5d80e7e77c4ac2b4851ee79e07fcd3158aeb176a9703fc8
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2677,7 +2677,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2701,8 +2701,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-1424c487f97ef9c94d05467d4145c04fac96bd698626738dd1003db26ce33dfb
-          path: .cache/bundles/ggbuild-v3-1424c487f97ef9c94d05467d4145c04fac96bd698626738dd1003db26ce33dfb.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-c6afa9a833d71413b5d80e7e77c4ac2b4851ee79e07fcd3158aeb176a9703fc8
+          path: .cache/bundles/ggbuild-v3-c6afa9a833d71413b5d80e7e77c4ac2b4851ee79e07fcd3158aeb176a9703fc8.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2725,8 +2725,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-68cb71e90638b18104e5bf3eeb0e7701b718d007be25b303de74c8a0a8aa6dcb.tar.zst
-          key: ggbuild-v3-68cb71e90638b18104e5bf3eeb0e7701b718d007be25b303de74c8a0a8aa6dcb
+          path: .cache/bundles/ggbuild-v3-25d10dac47d1c21a52777945368ea770e6c9acc92b79f979c408939e4226de49.tar.zst
+          key: ggbuild-v3-25d10dac47d1c21a52777945368ea770e6c9acc92b79f979c408939e4226de49
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2746,7 +2746,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2770,8 +2770,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-68cb71e90638b18104e5bf3eeb0e7701b718d007be25b303de74c8a0a8aa6dcb
-          path: .cache/bundles/ggbuild-v3-68cb71e90638b18104e5bf3eeb0e7701b718d007be25b303de74c8a0a8aa6dcb.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-25d10dac47d1c21a52777945368ea770e6c9acc92b79f979c408939e4226de49
+          path: .cache/bundles/ggbuild-v3-25d10dac47d1c21a52777945368ea770e6c9acc92b79f979c408939e4226de49.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2794,8 +2794,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-dae24faa20d6623da0bd3f716085f3afba9bc7a6fdd7bcd2ba36d2bdb74205bf.tar.zst
-          key: ggbuild-v3-dae24faa20d6623da0bd3f716085f3afba9bc7a6fdd7bcd2ba36d2bdb74205bf
+          path: .cache/bundles/ggbuild-v3-cf3c72be7e96c172e3e00c6eda1f6204f6391fa559bdfb74a193699cdb418288.tar.zst
+          key: ggbuild-v3-cf3c72be7e96c172e3e00c6eda1f6204f6391fa559bdfb74a193699cdb418288
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2815,7 +2815,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2839,8 +2839,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-dae24faa20d6623da0bd3f716085f3afba9bc7a6fdd7bcd2ba36d2bdb74205bf
-          path: .cache/bundles/ggbuild-v3-dae24faa20d6623da0bd3f716085f3afba9bc7a6fdd7bcd2ba36d2bdb74205bf.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-cf3c72be7e96c172e3e00c6eda1f6204f6391fa559bdfb74a193699cdb418288
+          path: .cache/bundles/ggbuild-v3-cf3c72be7e96c172e3e00c6eda1f6204f6391fa559bdfb74a193699cdb418288.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2863,8 +2863,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-aae147c7564706d0a6675bdbd45dfbdb5bc30fb44cb117bf54d0ce3386023b8a.tar.zst
-          key: ggbuild-v3-aae147c7564706d0a6675bdbd45dfbdb5bc30fb44cb117bf54d0ce3386023b8a
+          path: .cache/bundles/ggbuild-v3-e1ab63ef3e8b569cc94062c649a4aee77c08ed3d5575be86b706ab6e82d80d99.tar.zst
+          key: ggbuild-v3-e1ab63ef3e8b569cc94062c649a4aee77c08ed3d5575be86b706ab6e82d80d99
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2884,7 +2884,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2908,8 +2908,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-aae147c7564706d0a6675bdbd45dfbdb5bc30fb44cb117bf54d0ce3386023b8a
-          path: .cache/bundles/ggbuild-v3-aae147c7564706d0a6675bdbd45dfbdb5bc30fb44cb117bf54d0ce3386023b8a.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-e1ab63ef3e8b569cc94062c649a4aee77c08ed3d5575be86b706ab6e82d80d99
+          path: .cache/bundles/ggbuild-v3-e1ab63ef3e8b569cc94062c649a4aee77c08ed3d5575be86b706ab6e82d80d99.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -2932,8 +2932,8 @@ jobs:
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-bc847d69bc191fe5892409d3de7573b120b559e108b9bb6a201641a417905117.tar.zst
-          key: ggbuild-v3-bc847d69bc191fe5892409d3de7573b120b559e108b9bb6a201641a417905117
+          path: .cache/bundles/ggbuild-v3-387a817fe781af3924481e4d28873949393d6ab4a96b30d2d4b4ae2b12b12b1e.tar.zst
+          key: ggbuild-v3-387a817fe781af3924481e4d28873949393d6ab4a96b30d2d4b4ae2b12b12b1e
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -2953,7 +2953,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -2977,8 +2977,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-bc847d69bc191fe5892409d3de7573b120b559e108b9bb6a201641a417905117
-          path: .cache/bundles/ggbuild-v3-bc847d69bc191fe5892409d3de7573b120b559e108b9bb6a201641a417905117.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-387a817fe781af3924481e4d28873949393d6ab4a96b30d2d4b4ae2b12b12b1e
+          path: .cache/bundles/ggbuild-v3-387a817fe781af3924481e4d28873949393d6ab4a96b30d2d4b4ae2b12b12b1e.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3000,13 +3000,13 @@ jobs:
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-3700d4f43bb5014dc4806053953317b61dd7f004e3ce466b15f9fbba5cdaa957
+          name: ggbuild-bundle-aarch64-apple-darwin-2889cf804e6a687c8f3a36270f790c17e7a97eaa99a0c71cb12155ac93df1000
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-a854c974abf429637cfd722d7cb4136813deaf62e5df3d30be778a2b4c654182.tar.zst
-          key: ggbuild-v3-a854c974abf429637cfd722d7cb4136813deaf62e5df3d30be778a2b4c654182
+          path: .cache/bundles/ggbuild-v3-787fb3a159ac257caaf2867b4567c8f1ef8fdecd9d7adc3eb236f4b4aa1d257d.tar.zst
+          key: ggbuild-v3-787fb3a159ac257caaf2867b4567c8f1ef8fdecd9d7adc3eb236f4b4aa1d257d
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -3033,8 +3033,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-a854c974abf429637cfd722d7cb4136813deaf62e5df3d30be778a2b4c654182
-          path: .cache/bundles/ggbuild-v3-a854c974abf429637cfd722d7cb4136813deaf62e5df3d30be778a2b4c654182.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-787fb3a159ac257caaf2867b4567c8f1ef8fdecd9d7adc3eb236f4b4aa1d257d
+          path: .cache/bundles/ggbuild-v3-787fb3a159ac257caaf2867b4567c8f1ef8fdecd9d7adc3eb236f4b4aa1d257d.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3056,13 +3056,13 @@ jobs:
       - name: Download openssl bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-3eacc6c3c920a7d5cdadd8cdcd2eb93a990161f410cf31163985384e0705ae43
+          name: ggbuild-bundle-aarch64-apple-darwin-9af79beb574ce7bafa39d893654eca9b4f6af5f2ad94254b022b59b4416018a9
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-1604f106160d14a6f776047113d6e4d39cd399182afd5da250d41fe0e88993b7.tar.zst
-          key: ggbuild-v3-1604f106160d14a6f776047113d6e4d39cd399182afd5da250d41fe0e88993b7
+          path: .cache/bundles/ggbuild-v3-90533f8eb3cc6b0a72b18db33157fc3097e26dc2afcc4f80247117223661eb1e.tar.zst
+          key: ggbuild-v3-90533f8eb3cc6b0a72b18db33157fc3097e26dc2afcc4f80247117223661eb1e
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -3089,8 +3089,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-1604f106160d14a6f776047113d6e4d39cd399182afd5da250d41fe0e88993b7
-          path: .cache/bundles/ggbuild-v3-1604f106160d14a6f776047113d6e4d39cd399182afd5da250d41fe0e88993b7.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-90533f8eb3cc6b0a72b18db33157fc3097e26dc2afcc4f80247117223661eb1e
+          path: .cache/bundles/ggbuild-v3-90533f8eb3cc6b0a72b18db33157fc3097e26dc2afcc4f80247117223661eb1e.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3112,13 +3112,13 @@ jobs:
       - name: Download ncurses bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-e10b9777d48edbef1038ef49a55c15208187964d6fb2451cccd6a021fdcf2278
+          name: ggbuild-bundle-aarch64-apple-darwin-d6a6b3cb5dea6018178fa9371b189a1a10e7b779e298ac7da4955b3d0ab087a0
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-5f655e1c6b6666962723fbd0a4dbc03aca8006d6170402b46eddf448634e2aba.tar.zst
-          key: ggbuild-v3-5f655e1c6b6666962723fbd0a4dbc03aca8006d6170402b46eddf448634e2aba
+          path: .cache/bundles/ggbuild-v3-2246196c8b6bf83ad6f10a397960d58a58feae2fae1808061533f5f604752aff.tar.zst
+          key: ggbuild-v3-2246196c8b6bf83ad6f10a397960d58a58feae2fae1808061533f5f604752aff
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -3145,8 +3145,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-5f655e1c6b6666962723fbd0a4dbc03aca8006d6170402b46eddf448634e2aba
-          path: .cache/bundles/ggbuild-v3-5f655e1c6b6666962723fbd0a4dbc03aca8006d6170402b46eddf448634e2aba.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-2246196c8b6bf83ad6f10a397960d58a58feae2fae1808061533f5f604752aff
+          path: .cache/bundles/ggbuild-v3-2246196c8b6bf83ad6f10a397960d58a58feae2fae1808061533f5f604752aff.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3169,13 +3169,13 @@ jobs:
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-ab14f7d712a3af55895724600497ad3bd0e223162e8ef22db64481f75223ec85
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-00c1e2fd932a5ced1daeaa974e556fbac33481f4a9dada23d2d3abf2dbe27dac
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-86b018d6d253f9670eb00508ea4ae578bba23847aa24baffb8d5e1ef40f15e92.tar.zst
-          key: ggbuild-v3-86b018d6d253f9670eb00508ea4ae578bba23847aa24baffb8d5e1ef40f15e92
+          path: .cache/bundles/ggbuild-v3-7ee131a9da0dab982b6dc4fdffc92538779ba63e3f024ec2b5fb061d50c3415e.tar.zst
+          key: ggbuild-v3-7ee131a9da0dab982b6dc4fdffc92538779ba63e3f024ec2b5fb061d50c3415e
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3195,7 +3195,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3219,8 +3219,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-86b018d6d253f9670eb00508ea4ae578bba23847aa24baffb8d5e1ef40f15e92
-          path: .cache/bundles/ggbuild-v3-86b018d6d253f9670eb00508ea4ae578bba23847aa24baffb8d5e1ef40f15e92.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-7ee131a9da0dab982b6dc4fdffc92538779ba63e3f024ec2b5fb061d50c3415e
+          path: .cache/bundles/ggbuild-v3-7ee131a9da0dab982b6dc4fdffc92538779ba63e3f024ec2b5fb061d50c3415e.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3243,13 +3243,13 @@ jobs:
       - name: Download openssl bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-1b3108c548a0f78a8f7ecb81b088bbf30685a713ecc34eaded9a036d74500725
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-d59f2e310904f5e89c7e90a3e9e438487e28dc479dd3c6e4a55f121afd64266f
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-8ec871c54f6aacdfb227f3a74b95be7e15a86e93d82d03c881bc3eba0b386ab5.tar.zst
-          key: ggbuild-v3-8ec871c54f6aacdfb227f3a74b95be7e15a86e93d82d03c881bc3eba0b386ab5
+          path: .cache/bundles/ggbuild-v3-ad49ed3f48ddd50e35a258ce7cad96d9cbad6d0b662cd1de2cbaa6111a12bbca.tar.zst
+          key: ggbuild-v3-ad49ed3f48ddd50e35a258ce7cad96d9cbad6d0b662cd1de2cbaa6111a12bbca
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3269,7 +3269,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3293,8 +3293,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-8ec871c54f6aacdfb227f3a74b95be7e15a86e93d82d03c881bc3eba0b386ab5
-          path: .cache/bundles/ggbuild-v3-8ec871c54f6aacdfb227f3a74b95be7e15a86e93d82d03c881bc3eba0b386ab5.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-ad49ed3f48ddd50e35a258ce7cad96d9cbad6d0b662cd1de2cbaa6111a12bbca
+          path: .cache/bundles/ggbuild-v3-ad49ed3f48ddd50e35a258ce7cad96d9cbad6d0b662cd1de2cbaa6111a12bbca.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3317,13 +3317,13 @@ jobs:
       - name: Download ncurses bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-c09f69c5edc24d1d03dab11f413985d3d37e104157e7518ea59ddbefcdc28f2a
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-ce7655df5011fea031a6ed13b1e718fa2fcdf5c6574463a71a92c82b6610b646
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-47d4e8d063cd2a86a3a8400bb833e89d03deb59c7cd36037269d13ed8d4e93ed.tar.zst
-          key: ggbuild-v3-47d4e8d063cd2a86a3a8400bb833e89d03deb59c7cd36037269d13ed8d4e93ed
+          path: .cache/bundles/ggbuild-v3-05c8434d007ac9d63c53e1fee8881612b9dbbae3e0d22ab0fb967770effc9f17.tar.zst
+          key: ggbuild-v3-05c8434d007ac9d63c53e1fee8881612b9dbbae3e0d22ab0fb967770effc9f17
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3343,7 +3343,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3367,8 +3367,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-47d4e8d063cd2a86a3a8400bb833e89d03deb59c7cd36037269d13ed8d4e93ed
-          path: .cache/bundles/ggbuild-v3-47d4e8d063cd2a86a3a8400bb833e89d03deb59c7cd36037269d13ed8d4e93ed.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-05c8434d007ac9d63c53e1fee8881612b9dbbae3e0d22ab0fb967770effc9f17
+          path: .cache/bundles/ggbuild-v3-05c8434d007ac9d63c53e1fee8881612b9dbbae3e0d22ab0fb967770effc9f17.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3391,13 +3391,13 @@ jobs:
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-12997d776cfcbe935d2815d32cbcdb033671df66deff9d3422085c51bca807a9
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-30b428dd95cf0d32bd62487a2936c360efb89c9fa92e76d8e9287257d74d9de6
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-d8605d5d6a6829cdb04aa7ae557ca217ab18868c3f637561194bcd05550e5c5f.tar.zst
-          key: ggbuild-v3-d8605d5d6a6829cdb04aa7ae557ca217ab18868c3f637561194bcd05550e5c5f
+          path: .cache/bundles/ggbuild-v3-ec0b91b45408b9b7f46a728260408f48c25283e9b1ab9e0d4cd4e239750fb786.tar.zst
+          key: ggbuild-v3-ec0b91b45408b9b7f46a728260408f48c25283e9b1ab9e0d4cd4e239750fb786
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3417,7 +3417,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3441,8 +3441,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-d8605d5d6a6829cdb04aa7ae557ca217ab18868c3f637561194bcd05550e5c5f
-          path: .cache/bundles/ggbuild-v3-d8605d5d6a6829cdb04aa7ae557ca217ab18868c3f637561194bcd05550e5c5f.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-ec0b91b45408b9b7f46a728260408f48c25283e9b1ab9e0d4cd4e239750fb786
+          path: .cache/bundles/ggbuild-v3-ec0b91b45408b9b7f46a728260408f48c25283e9b1ab9e0d4cd4e239750fb786.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3465,13 +3465,13 @@ jobs:
       - name: Download openssl bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-fea4a534f4bfc0f995ff9b967750ae61c5f114159814c423794b2a62db683641
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-dd43090f8566fb76db57bafd431ebd45eb4649166140d6d2fce7f99d669f1c2a
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-a0fabfe6978a3c392977870d6d319e160c59e07f71f79dfaf477bb88bb483a24.tar.zst
-          key: ggbuild-v3-a0fabfe6978a3c392977870d6d319e160c59e07f71f79dfaf477bb88bb483a24
+          path: .cache/bundles/ggbuild-v3-63c06316e815b183f84d3ed0df00d0489f26d813ab58a68e31f6857f01bd9863.tar.zst
+          key: ggbuild-v3-63c06316e815b183f84d3ed0df00d0489f26d813ab58a68e31f6857f01bd9863
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3491,7 +3491,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3515,8 +3515,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-a0fabfe6978a3c392977870d6d319e160c59e07f71f79dfaf477bb88bb483a24
-          path: .cache/bundles/ggbuild-v3-a0fabfe6978a3c392977870d6d319e160c59e07f71f79dfaf477bb88bb483a24.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-63c06316e815b183f84d3ed0df00d0489f26d813ab58a68e31f6857f01bd9863
+          path: .cache/bundles/ggbuild-v3-63c06316e815b183f84d3ed0df00d0489f26d813ab58a68e31f6857f01bd9863.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3539,13 +3539,13 @@ jobs:
       - name: Download ncurses bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-10a0b2c2267fc961a0422688d173160e0e8ab1f62449f8c3ba520a0e2b855801
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-5661324c32606caf5aec7b35086d4f292f3b6c048230c956b6febb16d46a711f
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-7dbd0f8aa7bcbfc28fd1e742e1cbb46a5d23921830737c8d0561cefc6342c9c9.tar.zst
-          key: ggbuild-v3-7dbd0f8aa7bcbfc28fd1e742e1cbb46a5d23921830737c8d0561cefc6342c9c9
+          path: .cache/bundles/ggbuild-v3-0d14dfa0fbfd5eb6e3d73b1550c52191969be6ed1b30e908b770887625495e8d.tar.zst
+          key: ggbuild-v3-0d14dfa0fbfd5eb6e3d73b1550c52191969be6ed1b30e908b770887625495e8d
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3565,7 +3565,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3589,8 +3589,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-7dbd0f8aa7bcbfc28fd1e742e1cbb46a5d23921830737c8d0561cefc6342c9c9
-          path: .cache/bundles/ggbuild-v3-7dbd0f8aa7bcbfc28fd1e742e1cbb46a5d23921830737c8d0561cefc6342c9c9.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-0d14dfa0fbfd5eb6e3d73b1550c52191969be6ed1b30e908b770887625495e8d
+          path: .cache/bundles/ggbuild-v3-0d14dfa0fbfd5eb6e3d73b1550c52191969be6ed1b30e908b770887625495e8d.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3613,13 +3613,13 @@ jobs:
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-2527c1c41139707f3de22578d080c7e2f078f53e0d1906b0aea18cb5ac3de228
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-cebebc44a1bbb7e5691ce30820f8650510ab3c2ee8c451175924d558c2821294
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-ef12fb1b2be60ac68c1723db8bd1f7e73818f391147fb0a829d13c250ae2fb73.tar.zst
-          key: ggbuild-v3-ef12fb1b2be60ac68c1723db8bd1f7e73818f391147fb0a829d13c250ae2fb73
+          path: .cache/bundles/ggbuild-v3-d6a0807f2519eda81b9050dea31b2d3f3c24508b0e6388770eb782272a004f7b.tar.zst
+          key: ggbuild-v3-d6a0807f2519eda81b9050dea31b2d3f3c24508b0e6388770eb782272a004f7b
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3639,7 +3639,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3663,8 +3663,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-ef12fb1b2be60ac68c1723db8bd1f7e73818f391147fb0a829d13c250ae2fb73
-          path: .cache/bundles/ggbuild-v3-ef12fb1b2be60ac68c1723db8bd1f7e73818f391147fb0a829d13c250ae2fb73.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-d6a0807f2519eda81b9050dea31b2d3f3c24508b0e6388770eb782272a004f7b
+          path: .cache/bundles/ggbuild-v3-d6a0807f2519eda81b9050dea31b2d3f3c24508b0e6388770eb782272a004f7b.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3687,13 +3687,13 @@ jobs:
       - name: Download openssl bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-31d064cac48dcfcc23bb0e783fb23cd4bd39b3692d6b4c1ef3ddb013c6046e6f
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-beaf67c4784625be24b4977b8507f440aaf52d00a25101e300ad03551146a784
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-94d9c6c7ac99130621d8e0a3f606060feee55f42903b6f371d7696d54d9b68e0.tar.zst
-          key: ggbuild-v3-94d9c6c7ac99130621d8e0a3f606060feee55f42903b6f371d7696d54d9b68e0
+          path: .cache/bundles/ggbuild-v3-d9eaea2c50b80eb93f4f3adb1e02e2657c4a3c0e750ec3fd531099a6d3777406.tar.zst
+          key: ggbuild-v3-d9eaea2c50b80eb93f4f3adb1e02e2657c4a3c0e750ec3fd531099a6d3777406
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3713,7 +3713,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3737,8 +3737,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-94d9c6c7ac99130621d8e0a3f606060feee55f42903b6f371d7696d54d9b68e0
-          path: .cache/bundles/ggbuild-v3-94d9c6c7ac99130621d8e0a3f606060feee55f42903b6f371d7696d54d9b68e0.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-d9eaea2c50b80eb93f4f3adb1e02e2657c4a3c0e750ec3fd531099a6d3777406
+          path: .cache/bundles/ggbuild-v3-d9eaea2c50b80eb93f4f3adb1e02e2657c4a3c0e750ec3fd531099a6d3777406.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3761,13 +3761,13 @@ jobs:
       - name: Download ncurses bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-e59e6d4f12c5e2ddb01484975d1fc4e435ba74bde555fc454b2f5226cf442f97
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-d95f869dd8e863b49a0a8c71729891509510d613137ba92b4077dcbc20ac27f1
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-fc6b88c387d4920ab881ec7d8e16a67f7120995d84ce210407f1366add590085.tar.zst
-          key: ggbuild-v3-fc6b88c387d4920ab881ec7d8e16a67f7120995d84ce210407f1366add590085
+          path: .cache/bundles/ggbuild-v3-c40504ca323e1c0a1689886855f8fb4d2a7b32f5bf8aeacfc8f3543df4b9c6ec.tar.zst
+          key: ggbuild-v3-c40504ca323e1c0a1689886855f8fb4d2a7b32f5bf8aeacfc8f3543df4b9c6ec
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3787,7 +3787,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3811,8 +3811,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-fc6b88c387d4920ab881ec7d8e16a67f7120995d84ce210407f1366add590085
-          path: .cache/bundles/ggbuild-v3-fc6b88c387d4920ab881ec7d8e16a67f7120995d84ce210407f1366add590085.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-c40504ca323e1c0a1689886855f8fb4d2a7b32f5bf8aeacfc8f3543df4b9c6ec
+          path: .cache/bundles/ggbuild-v3-c40504ca323e1c0a1689886855f8fb4d2a7b32f5bf8aeacfc8f3543df4b9c6ec.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3835,13 +3835,13 @@ jobs:
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-aae147c7564706d0a6675bdbd45dfbdb5bc30fb44cb117bf54d0ce3386023b8a
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-e1ab63ef3e8b569cc94062c649a4aee77c08ed3d5575be86b706ab6e82d80d99
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-04b2f8e1c6775d4a38741bbbdf28318fedf0106f38f90a4e255654ad2220801c.tar.zst
-          key: ggbuild-v3-04b2f8e1c6775d4a38741bbbdf28318fedf0106f38f90a4e255654ad2220801c
+          path: .cache/bundles/ggbuild-v3-6f398b466880070f9992f326f9811d99fe64d6e195667c5bec8b4d00e6ed1452.tar.zst
+          key: ggbuild-v3-6f398b466880070f9992f326f9811d99fe64d6e195667c5bec8b4d00e6ed1452
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3861,7 +3861,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3885,8 +3885,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-04b2f8e1c6775d4a38741bbbdf28318fedf0106f38f90a4e255654ad2220801c
-          path: .cache/bundles/ggbuild-v3-04b2f8e1c6775d4a38741bbbdf28318fedf0106f38f90a4e255654ad2220801c.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-6f398b466880070f9992f326f9811d99fe64d6e195667c5bec8b4d00e6ed1452
+          path: .cache/bundles/ggbuild-v3-6f398b466880070f9992f326f9811d99fe64d6e195667c5bec8b4d00e6ed1452.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3909,13 +3909,13 @@ jobs:
       - name: Download openssl bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-68cb71e90638b18104e5bf3eeb0e7701b718d007be25b303de74c8a0a8aa6dcb
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-25d10dac47d1c21a52777945368ea770e6c9acc92b79f979c408939e4226de49
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-b1803ad94a86fcef7bc66040c4668c88f4924319ad186e53ef81ddcab80ae81a.tar.zst
-          key: ggbuild-v3-b1803ad94a86fcef7bc66040c4668c88f4924319ad186e53ef81ddcab80ae81a
+          path: .cache/bundles/ggbuild-v3-14af359ef8a64899ef8acad4d5247877bcf510847de08399b3e6292126676d5f.tar.zst
+          key: ggbuild-v3-14af359ef8a64899ef8acad4d5247877bcf510847de08399b3e6292126676d5f
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -3935,7 +3935,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -3959,8 +3959,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-b1803ad94a86fcef7bc66040c4668c88f4924319ad186e53ef81ddcab80ae81a
-          path: .cache/bundles/ggbuild-v3-b1803ad94a86fcef7bc66040c4668c88f4924319ad186e53ef81ddcab80ae81a.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-14af359ef8a64899ef8acad4d5247877bcf510847de08399b3e6292126676d5f
+          path: .cache/bundles/ggbuild-v3-14af359ef8a64899ef8acad4d5247877bcf510847de08399b3e6292126676d5f.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -3983,13 +3983,13 @@ jobs:
       - name: Download ncurses bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-1424c487f97ef9c94d05467d4145c04fac96bd698626738dd1003db26ce33dfb
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-c6afa9a833d71413b5d80e7e77c4ac2b4851ee79e07fcd3158aeb176a9703fc8
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-fed3a9d2c1d8f11a859e3ec7ace7a1ba81b2c881bfe04d6d6bb2bb4664ae215c.tar.zst
-          key: ggbuild-v3-fed3a9d2c1d8f11a859e3ec7ace7a1ba81b2c881bfe04d6d6bb2bb4664ae215c
+          path: .cache/bundles/ggbuild-v3-3f32f23574ba2727caec17f9c00b870804b893b919b89625f120cefb0b299489.tar.zst
+          key: ggbuild-v3-3f32f23574ba2727caec17f9c00b870804b893b919b89625f120cefb0b299489
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -4009,7 +4009,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -4033,8 +4033,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-fed3a9d2c1d8f11a859e3ec7ace7a1ba81b2c881bfe04d6d6bb2bb4664ae215c
-          path: .cache/bundles/ggbuild-v3-fed3a9d2c1d8f11a859e3ec7ace7a1ba81b2c881bfe04d6d6bb2bb4664ae215c.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-3f32f23574ba2727caec17f9c00b870804b893b919b89625f120cefb0b299489
+          path: .cache/bundles/ggbuild-v3-3f32f23574ba2727caec17f9c00b870804b893b919b89625f120cefb0b299489.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -4056,18 +4056,18 @@ jobs:
       - name: Download libxml2 bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-a854c974abf429637cfd722d7cb4136813deaf62e5df3d30be778a2b4c654182
+          name: ggbuild-bundle-aarch64-apple-darwin-787fb3a159ac257caaf2867b4567c8f1ef8fdecd9d7adc3eb236f4b4aa1d257d
           path: .cache/bundles
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-3700d4f43bb5014dc4806053953317b61dd7f004e3ce466b15f9fbba5cdaa957
+          name: ggbuild-bundle-aarch64-apple-darwin-2889cf804e6a687c8f3a36270f790c17e7a97eaa99a0c71cb12155ac93df1000
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-0089ee467b04e600875b118ba0e0fedf982b5ccd7d8d4b4617b91a57cdb4ae57.tar.zst
-          key: ggbuild-v3-0089ee467b04e600875b118ba0e0fedf982b5ccd7d8d4b4617b91a57cdb4ae57
+          path: .cache/bundles/ggbuild-v3-283e2c3e0e46e40ee18dcf3138814b9fd1c319a6c1a03bfeed01c1714ef6a662.tar.zst
+          key: ggbuild-v3-283e2c3e0e46e40ee18dcf3138814b9fd1c319a6c1a03bfeed01c1714ef6a662
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
@@ -4094,8 +4094,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-apple-darwin-0089ee467b04e600875b118ba0e0fedf982b5ccd7d8d4b4617b91a57cdb4ae57
-          path: .cache/bundles/ggbuild-v3-0089ee467b04e600875b118ba0e0fedf982b5ccd7d8d4b4617b91a57cdb4ae57.tar.zst
+          name: ggbuild-bundle-aarch64-apple-darwin-283e2c3e0e46e40ee18dcf3138814b9fd1c319a6c1a03bfeed01c1714ef6a662
+          path: .cache/bundles/ggbuild-v3-283e2c3e0e46e40ee18dcf3138814b9fd1c319a6c1a03bfeed01c1714ef6a662.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -4118,18 +4118,18 @@ jobs:
       - name: Download libxml2 bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-86b018d6d253f9670eb00508ea4ae578bba23847aa24baffb8d5e1ef40f15e92
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-7ee131a9da0dab982b6dc4fdffc92538779ba63e3f024ec2b5fb061d50c3415e
           path: .cache/bundles
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-ab14f7d712a3af55895724600497ad3bd0e223162e8ef22db64481f75223ec85
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-00c1e2fd932a5ced1daeaa974e556fbac33481f4a9dada23d2d3abf2dbe27dac
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-666944f7c4f09ae0bee18368bb2ddb4f60600f911ba8923dd571eaf7682a6933.tar.zst
-          key: ggbuild-v3-666944f7c4f09ae0bee18368bb2ddb4f60600f911ba8923dd571eaf7682a6933
+          path: .cache/bundles/ggbuild-v3-82aa0affa75890207c415dfd0f38bffe28aebbec270a7af9381cfb5bb06ceae7.tar.zst
+          key: ggbuild-v3-82aa0affa75890207c415dfd0f38bffe28aebbec270a7af9381cfb5bb06ceae7
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -4149,7 +4149,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -4173,8 +4173,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-gnu-666944f7c4f09ae0bee18368bb2ddb4f60600f911ba8923dd571eaf7682a6933
-          path: .cache/bundles/ggbuild-v3-666944f7c4f09ae0bee18368bb2ddb4f60600f911ba8923dd571eaf7682a6933.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-gnu-82aa0affa75890207c415dfd0f38bffe28aebbec270a7af9381cfb5bb06ceae7
+          path: .cache/bundles/ggbuild-v3-82aa0affa75890207c415dfd0f38bffe28aebbec270a7af9381cfb5bb06ceae7.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -4197,18 +4197,18 @@ jobs:
       - name: Download libxml2 bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-d8605d5d6a6829cdb04aa7ae557ca217ab18868c3f637561194bcd05550e5c5f
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-ec0b91b45408b9b7f46a728260408f48c25283e9b1ab9e0d4cd4e239750fb786
           path: .cache/bundles
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-12997d776cfcbe935d2815d32cbcdb033671df66deff9d3422085c51bca807a9
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-30b428dd95cf0d32bd62487a2936c360efb89c9fa92e76d8e9287257d74d9de6
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-0c974b99497db5988b9845766719f665a1485da82de1b338f47dd42e9a5e23ff.tar.zst
-          key: ggbuild-v3-0c974b99497db5988b9845766719f665a1485da82de1b338f47dd42e9a5e23ff
+          path: .cache/bundles/ggbuild-v3-1c5d5707fd68e00bcf0258b767cd2386975e613723f9cc5c9da93906f8e75ff5.tar.zst
+          key: ggbuild-v3-1c5d5707fd68e00bcf0258b767cd2386975e613723f9cc5c9da93906f8e75ff5
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -4228,7 +4228,7 @@ jobs:
       - name: Build dependency in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -4252,8 +4252,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-aarch64-unknown-linux-musl-0c974b99497db5988b9845766719f665a1485da82de1b338f47dd42e9a5e23ff
-          path: .cache/bundles/ggbuild-v3-0c974b99497db5988b9845766719f665a1485da82de1b338f47dd42e9a5e23ff.tar.zst
+          name: ggbuild-bundle-aarch64-unknown-linux-musl-1c5d5707fd68e00bcf0258b767cd2386975e613723f9cc5c9da93906f8e75ff5
+          path: .cache/bundles/ggbuild-v3-1c5d5707fd68e00bcf0258b767cd2386975e613723f9cc5c9da93906f8e75ff5.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -4276,18 +4276,18 @@ jobs:
       - name: Download libxml2 bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-ef12fb1b2be60ac68c1723db8bd1f7e73818f391147fb0a829d13c250ae2fb73
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-d6a0807f2519eda81b9050dea31b2d3f3c24508b0e6388770eb782272a004f7b
           path: .cache/bundles
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-2527c1c41139707f3de22578d080c7e2f078f53e0d1906b0aea18cb5ac3de228
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-cebebc44a1bbb7e5691ce30820f8650510ab3c2ee8c451175924d558c2821294
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-56895508e2badbc250c8f9107e93aa70369a1faab9f833ffdb40dcfd0bdcfd37.tar.zst
-          key: ggbuild-v3-56895508e2badbc250c8f9107e93aa70369a1faab9f833ffdb40dcfd0bdcfd37
+          path: .cache/bundles/ggbuild-v3-bf6ab0f40a5051d8507d41c448af6fad1216a5f5ec5938bbbdaf4c776b0dd9ce.tar.zst
+          key: ggbuild-v3-bf6ab0f40a5051d8507d41c448af6fad1216a5f5ec5938bbbdaf4c776b0dd9ce
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -4307,7 +4307,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -4331,8 +4331,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-gnu-56895508e2badbc250c8f9107e93aa70369a1faab9f833ffdb40dcfd0bdcfd37
-          path: .cache/bundles/ggbuild-v3-56895508e2badbc250c8f9107e93aa70369a1faab9f833ffdb40dcfd0bdcfd37.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-gnu-bf6ab0f40a5051d8507d41c448af6fad1216a5f5ec5938bbbdaf4c776b0dd9ce
+          path: .cache/bundles/ggbuild-v3-bf6ab0f40a5051d8507d41c448af6fad1216a5f5ec5938bbbdaf4c776b0dd9ce.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -4355,18 +4355,18 @@ jobs:
       - name: Download libxml2 bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-04b2f8e1c6775d4a38741bbbdf28318fedf0106f38f90a4e255654ad2220801c
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-6f398b466880070f9992f326f9811d99fe64d6e195667c5bec8b4d00e6ed1452
           path: .cache/bundles
       - name: Download zlib bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-aae147c7564706d0a6675bdbd45dfbdb5bc30fb44cb117bf54d0ce3386023b8a
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-e1ab63ef3e8b569cc94062c649a4aee77c08ed3d5575be86b706ab6e82d80d99
           path: .cache/bundles
       - name: Restore exact bundle
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .cache/bundles/ggbuild-v3-3c5555b3576ad9eba2ec0b8435a1a9db4acf2cde8eeb4c738691108694a3a904.tar.zst
-          key: ggbuild-v3-3c5555b3576ad9eba2ec0b8435a1a9db4acf2cde8eeb4c738691108694a3a904
+          path: .cache/bundles/ggbuild-v3-1100fea6e7e6836d23e43203dc70739c015612640ad39f4fd116a25dd8d9c275.tar.zst
+          key: ggbuild-v3-1100fea6e7e6836d23e43203dc70739c015612640ad39f4fd116a25dd8d9c275
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -4386,7 +4386,7 @@ jobs:
       - name: Build dependency in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -4410,8 +4410,8 @@ jobs:
       - name: Upload bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-bundle-x86_64-unknown-linux-musl-3c5555b3576ad9eba2ec0b8435a1a9db4acf2cde8eeb4c738691108694a3a904
-          path: .cache/bundles/ggbuild-v3-3c5555b3576ad9eba2ec0b8435a1a9db4acf2cde8eeb4c738691108694a3a904.tar.zst
+          name: ggbuild-bundle-x86_64-unknown-linux-musl-1100fea6e7e6836d23e43203dc70739c015612640ad39f4fd116a25dd8d9c275
+          path: .cache/bundles/ggbuild-v3-1100fea6e7e6836d23e43203dc70739c015612640ad39f4fd116a25dd8d9c275.tar.zst
           if-no-files-found: error
           retention-days: 1
 
@@ -4463,7 +4463,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-apple-darwin-8310197cc9b2dc8cd3a94803ae13aec5eceaaef3e006c1862b06f867ac4df16a
+          name: ggbuild-root-aarch64-apple-darwin-ac8a58b97906b1ae5e54561d17152ec62f7986e1b016e676f588eb26704a17d7
           path: dist/aarch64-apple-darwin/14.24/
           if-no-files-found: error
           retention-days: 1
@@ -4486,7 +4486,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-apple-darwin-8310197cc9b2dc8cd3a94803ae13aec5eceaaef3e006c1862b06f867ac4df16a
+          name: ggbuild-root-aarch64-apple-darwin-ac8a58b97906b1ae5e54561d17152ec62f7986e1b016e676f588eb26704a17d7
           path: dist/aarch64-apple-darwin/14.24
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
@@ -4567,7 +4567,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-apple-darwin-68df85ef024c522622dff684dec1dd2fc4767a8a85ed88af7da3f4c0319016cc
+          name: ggbuild-root-aarch64-apple-darwin-17c1a0e8211118304284e112d3d24014a6fc225e9efa2c78838a84a169f8db2d
           path: dist/aarch64-apple-darwin/15.19/
           if-no-files-found: error
           retention-days: 1
@@ -4590,7 +4590,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-apple-darwin-68df85ef024c522622dff684dec1dd2fc4767a8a85ed88af7da3f4c0319016cc
+          name: ggbuild-root-aarch64-apple-darwin-17c1a0e8211118304284e112d3d24014a6fc225e9efa2c78838a84a169f8db2d
           path: dist/aarch64-apple-darwin/15.19
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
@@ -4671,7 +4671,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-apple-darwin-003e44900845998b2b9aed2d9ca0ad034943f7db48433fd19755d7adda5df3ae
+          name: ggbuild-root-aarch64-apple-darwin-55b630562104c8d50b6902cef39c159b81f48ff912010af59b2466e2cda5b487
           path: dist/aarch64-apple-darwin/16.15/
           if-no-files-found: error
           retention-days: 1
@@ -4694,7 +4694,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-apple-darwin-003e44900845998b2b9aed2d9ca0ad034943f7db48433fd19755d7adda5df3ae
+          name: ggbuild-root-aarch64-apple-darwin-55b630562104c8d50b6902cef39c159b81f48ff912010af59b2466e2cda5b487
           path: dist/aarch64-apple-darwin/16.15
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
@@ -4775,7 +4775,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-apple-darwin-9af3d6207687d96935259e6c37946267e6ba2a384a545b0a84f01707f63edb0c
+          name: ggbuild-root-aarch64-apple-darwin-ce28d1e0961ccab89cf912c22e4876af959e2a2d7e4485ba8764989b84d83db0
           path: dist/aarch64-apple-darwin/17.10/
           if-no-files-found: error
           retention-days: 1
@@ -4798,7 +4798,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-apple-darwin-9af3d6207687d96935259e6c37946267e6ba2a384a545b0a84f01707f63edb0c
+          name: ggbuild-root-aarch64-apple-darwin-ce28d1e0961ccab89cf912c22e4876af959e2a2d7e4485ba8764989b84d83db0
           path: dist/aarch64-apple-darwin/17.10
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
@@ -4879,7 +4879,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-apple-darwin-6fb4c577583d9f4c5e96910c67de7cf401ad149556bbb5004bf4350a2504ee99
+          name: ggbuild-root-aarch64-apple-darwin-1c9e2483b1e31a618869b3a80cbf0be95f3393aa5b9e352888df1a00c8d1daa1
           path: dist/aarch64-apple-darwin/18.4/
           if-no-files-found: error
           retention-days: 1
@@ -4902,7 +4902,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-apple-darwin-6fb4c577583d9f4c5e96910c67de7cf401ad149556bbb5004bf4350a2504ee99
+          name: ggbuild-root-aarch64-apple-darwin-1c9e2483b1e31a618869b3a80cbf0be95f3393aa5b9e352888df1a00c8d1daa1
           path: dist/aarch64-apple-darwin/18.4
       - name: Get sccache credentials
         if: env.GGBUILD_ENABLE_SCCACHE == 'true'
@@ -4976,7 +4976,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -5001,7 +5001,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-fc9ad6e8671c6f1861f08b20876eeb8ca86f192eb2dc2ef559f08ad32ae20e6c
+          name: ggbuild-root-aarch64-unknown-linux-gnu-f18ba7d6c2cd4bd75931cddf11bdd3547148df2c30564e2d35fd341ca845c01b
           path: dist/aarch64-unknown-linux-gnu/14.24/
           if-no-files-found: error
           retention-days: 1
@@ -5025,7 +5025,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-fc9ad6e8671c6f1861f08b20876eeb8ca86f192eb2dc2ef559f08ad32ae20e6c
+          name: ggbuild-root-aarch64-unknown-linux-gnu-f18ba7d6c2cd4bd75931cddf11bdd3547148df2c30564e2d35fd341ca845c01b
           path: dist/aarch64-unknown-linux-gnu/14.24
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -5108,7 +5108,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -5133,7 +5133,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-949e4cb2e2d912fa79c4d36e263d099513933df834085bfb2e27a1f34457ebda
+          name: ggbuild-root-aarch64-unknown-linux-gnu-5d036fb51b3fef3c503d420496677105d2109ebf8e476f7e75e2ee3b22e7f529
           path: dist/aarch64-unknown-linux-gnu/15.19/
           if-no-files-found: error
           retention-days: 1
@@ -5157,7 +5157,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-949e4cb2e2d912fa79c4d36e263d099513933df834085bfb2e27a1f34457ebda
+          name: ggbuild-root-aarch64-unknown-linux-gnu-5d036fb51b3fef3c503d420496677105d2109ebf8e476f7e75e2ee3b22e7f529
           path: dist/aarch64-unknown-linux-gnu/15.19
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -5240,7 +5240,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -5265,7 +5265,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-16c30b424b676ae96006bdbdee25f6347192cdc393552a1bc8521084a3f929ea
+          name: ggbuild-root-aarch64-unknown-linux-gnu-1b2bd68461561c73e5f7753ec33c166757956b9d5931d1ae49ee2cd834e074b7
           path: dist/aarch64-unknown-linux-gnu/16.15/
           if-no-files-found: error
           retention-days: 1
@@ -5289,7 +5289,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-16c30b424b676ae96006bdbdee25f6347192cdc393552a1bc8521084a3f929ea
+          name: ggbuild-root-aarch64-unknown-linux-gnu-1b2bd68461561c73e5f7753ec33c166757956b9d5931d1ae49ee2cd834e074b7
           path: dist/aarch64-unknown-linux-gnu/16.15
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -5372,7 +5372,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -5397,7 +5397,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-fe556cafe5ecf403d6cce42a308665b8031a41618f966d1d5dfe14b872450ba6
+          name: ggbuild-root-aarch64-unknown-linux-gnu-f5124d9e7de9b2df10e132056449805b89d9eb5a5dad75b434b22ac2fc963bee
           path: dist/aarch64-unknown-linux-gnu/17.10/
           if-no-files-found: error
           retention-days: 1
@@ -5421,7 +5421,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-fe556cafe5ecf403d6cce42a308665b8031a41618f966d1d5dfe14b872450ba6
+          name: ggbuild-root-aarch64-unknown-linux-gnu-f5124d9e7de9b2df10e132056449805b89d9eb5a5dad75b434b22ac2fc963bee
           path: dist/aarch64-unknown-linux-gnu/17.10
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -5504,7 +5504,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -5529,7 +5529,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-c5e2d5625de3b804dd5145aa679b3e334f26e8e30697a8db9eac9c0f19410d83
+          name: ggbuild-root-aarch64-unknown-linux-gnu-a3f343bb64d29a33f6a027bd2223384933a71d4efb2d975413f7d3a4c64eb006
           path: dist/aarch64-unknown-linux-gnu/18.4/
           if-no-files-found: error
           retention-days: 1
@@ -5553,7 +5553,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-gnu-c5e2d5625de3b804dd5145aa679b3e334f26e8e30697a8db9eac9c0f19410d83
+          name: ggbuild-root-aarch64-unknown-linux-gnu-a3f343bb64d29a33f6a027bd2223384933a71d4efb2d975413f7d3a4c64eb006
           path: dist/aarch64-unknown-linux-gnu/18.4
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -5636,7 +5636,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -5661,7 +5661,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-fb83667bea9e18dc3ce5ee047cba8c11e39e85efbceb8bcebf3e981ad3d1488d
+          name: ggbuild-root-aarch64-unknown-linux-musl-c9780e434dcd8ad9415c3e360e61a1622e55791e04bd7f462d901ff4502dde56
           path: dist/aarch64-unknown-linux-musl/14.24/
           if-no-files-found: error
           retention-days: 1
@@ -5685,7 +5685,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-fb83667bea9e18dc3ce5ee047cba8c11e39e85efbceb8bcebf3e981ad3d1488d
+          name: ggbuild-root-aarch64-unknown-linux-musl-c9780e434dcd8ad9415c3e360e61a1622e55791e04bd7f462d901ff4502dde56
           path: dist/aarch64-unknown-linux-musl/14.24
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -5768,7 +5768,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -5793,7 +5793,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-b03168a61ded28c9fac25efddee9e89ed988f208237a4f6e25c35d95f829a372
+          name: ggbuild-root-aarch64-unknown-linux-musl-ae47cd691b777b26b16c0ccf3a04a5d3d2d1b48c2577626aeef3b7c83ecee1fe
           path: dist/aarch64-unknown-linux-musl/15.19/
           if-no-files-found: error
           retention-days: 1
@@ -5817,7 +5817,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-b03168a61ded28c9fac25efddee9e89ed988f208237a4f6e25c35d95f829a372
+          name: ggbuild-root-aarch64-unknown-linux-musl-ae47cd691b777b26b16c0ccf3a04a5d3d2d1b48c2577626aeef3b7c83ecee1fe
           path: dist/aarch64-unknown-linux-musl/15.19
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -5900,7 +5900,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -5925,7 +5925,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-cc5fb6eafe9f3df60ffeec7ba295965f3f67a543daef0730483703f0535be5be
+          name: ggbuild-root-aarch64-unknown-linux-musl-6ed2339e261a9f34272a21268ebfad4f548895039d3916fc313857cd0abd142d
           path: dist/aarch64-unknown-linux-musl/16.15/
           if-no-files-found: error
           retention-days: 1
@@ -5949,7 +5949,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-cc5fb6eafe9f3df60ffeec7ba295965f3f67a543daef0730483703f0535be5be
+          name: ggbuild-root-aarch64-unknown-linux-musl-6ed2339e261a9f34272a21268ebfad4f548895039d3916fc313857cd0abd142d
           path: dist/aarch64-unknown-linux-musl/16.15
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -6032,7 +6032,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -6057,7 +6057,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-3084ad83e24eea91cb869dea33693fa9ca8fea631722899f1a4c83b7ba7322dd
+          name: ggbuild-root-aarch64-unknown-linux-musl-008441d90b5aaa0b0bb21adc3e2affb92dbeaf35149ec3cde0870ac426bce161
           path: dist/aarch64-unknown-linux-musl/17.10/
           if-no-files-found: error
           retention-days: 1
@@ -6081,7 +6081,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-3084ad83e24eea91cb869dea33693fa9ca8fea631722899f1a4c83b7ba7322dd
+          name: ggbuild-root-aarch64-unknown-linux-musl-008441d90b5aaa0b0bb21adc3e2affb92dbeaf35149ec3cde0870ac426bce161
           path: dist/aarch64-unknown-linux-musl/17.10
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -6164,7 +6164,7 @@ jobs:
       - name: Build root artifact in aarch64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -6189,7 +6189,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-4b5e59292c7b6c46d960402a74c3e755f690a991d29925158133f2070275cbb1
+          name: ggbuild-root-aarch64-unknown-linux-musl-f99f554eb3d9782602b57abbf14c5f0549ef4231ac715842c76bfc9cb8979cfe
           path: dist/aarch64-unknown-linux-musl/18.4/
           if-no-files-found: error
           retention-days: 1
@@ -6213,7 +6213,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-aarch64-unknown-linux-musl-4b5e59292c7b6c46d960402a74c3e755f690a991d29925158133f2070275cbb1
+          name: ggbuild-root-aarch64-unknown-linux-musl-f99f554eb3d9782602b57abbf14c5f0549ef4231ac715842c76bfc9cb8979cfe
           path: dist/aarch64-unknown-linux-musl/18.4
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -6296,7 +6296,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -6321,7 +6321,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-e00001ea169d82935bde7f16cc83158f871dcee6bf7eadbe6cf06c5bf6bf3572
+          name: ggbuild-root-x86_64-unknown-linux-gnu-2e8329bf7947fcab5c31ed023270c12c2061a97f376f4f3a1f91cfd2942eaa7d
           path: dist/x86_64-unknown-linux-gnu/14.24/
           if-no-files-found: error
           retention-days: 1
@@ -6345,7 +6345,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-e00001ea169d82935bde7f16cc83158f871dcee6bf7eadbe6cf06c5bf6bf3572
+          name: ggbuild-root-x86_64-unknown-linux-gnu-2e8329bf7947fcab5c31ed023270c12c2061a97f376f4f3a1f91cfd2942eaa7d
           path: dist/x86_64-unknown-linux-gnu/14.24
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -6428,7 +6428,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -6453,7 +6453,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-1e3a4ba39f27dcb8085a95a67c3878c865e03a098d177441428bdbf88afad3ea
+          name: ggbuild-root-x86_64-unknown-linux-gnu-47875b70c50704ba6ffe114c53e4304e007e42f429fbe431c83d39c18cb25ef2
           path: dist/x86_64-unknown-linux-gnu/15.19/
           if-no-files-found: error
           retention-days: 1
@@ -6477,7 +6477,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-1e3a4ba39f27dcb8085a95a67c3878c865e03a098d177441428bdbf88afad3ea
+          name: ggbuild-root-x86_64-unknown-linux-gnu-47875b70c50704ba6ffe114c53e4304e007e42f429fbe431c83d39c18cb25ef2
           path: dist/x86_64-unknown-linux-gnu/15.19
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -6560,7 +6560,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -6585,7 +6585,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-4918b5fbe998576e1de84c283c0c8f5e1c5b07660bd340aca44af7a18751a3f6
+          name: ggbuild-root-x86_64-unknown-linux-gnu-dced25e894e9d726a95449c0372c94010100fd9c851542ce3f983a32af294780
           path: dist/x86_64-unknown-linux-gnu/16.15/
           if-no-files-found: error
           retention-days: 1
@@ -6609,7 +6609,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-4918b5fbe998576e1de84c283c0c8f5e1c5b07660bd340aca44af7a18751a3f6
+          name: ggbuild-root-x86_64-unknown-linux-gnu-dced25e894e9d726a95449c0372c94010100fd9c851542ce3f983a32af294780
           path: dist/x86_64-unknown-linux-gnu/16.15
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -6692,7 +6692,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -6717,7 +6717,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-71ce8d9e70ee5d2e1308958501effdb2baf984cdfaa5fe692110a9ee33a84b4c
+          name: ggbuild-root-x86_64-unknown-linux-gnu-80e932fbf87e3c95092262061d7cac5e3b9d52baf1a86db1fa6e7a8bccb134d4
           path: dist/x86_64-unknown-linux-gnu/17.10/
           if-no-files-found: error
           retention-days: 1
@@ -6741,7 +6741,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-71ce8d9e70ee5d2e1308958501effdb2baf984cdfaa5fe692110a9ee33a84b4c
+          name: ggbuild-root-x86_64-unknown-linux-gnu-80e932fbf87e3c95092262061d7cac5e3b9d52baf1a86db1fa6e7a8bccb134d4
           path: dist/x86_64-unknown-linux-gnu/17.10
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -6824,7 +6824,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-gnu
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -6849,7 +6849,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-d7f179d66fbdcbc671b33045ad70b9f7472f24f43fad63c8443d5facec78ab4f
+          name: ggbuild-root-x86_64-unknown-linux-gnu-b37d4e7a5a25fa82e1e1ceac2ef3f536c14e9efa9c717da8c4ae04aaf09eac12
           path: dist/x86_64-unknown-linux-gnu/18.4/
           if-no-files-found: error
           retention-days: 1
@@ -6873,7 +6873,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-gnu-d7f179d66fbdcbc671b33045ad70b9f7472f24f43fad63c8443d5facec78ab4f
+          name: ggbuild-root-x86_64-unknown-linux-gnu-b37d4e7a5a25fa82e1e1ceac2ef3f536c14e9efa9c717da8c4ae04aaf09eac12
           path: dist/x86_64-unknown-linux-gnu/18.4
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -6956,7 +6956,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -6981,7 +6981,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-ebf6cb33c909fc2874fa05545d22a9b44737ad924cbb6480382d693344554b32
+          name: ggbuild-root-x86_64-unknown-linux-musl-990e6262e13cbfa84a87e2a64d2d95375d6064f1f7924aebcb2d8a2e7912ad80
           path: dist/x86_64-unknown-linux-musl/14.24/
           if-no-files-found: error
           retention-days: 1
@@ -7005,7 +7005,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-ebf6cb33c909fc2874fa05545d22a9b44737ad924cbb6480382d693344554b32
+          name: ggbuild-root-x86_64-unknown-linux-musl-990e6262e13cbfa84a87e2a64d2d95375d6064f1f7924aebcb2d8a2e7912ad80
           path: dist/x86_64-unknown-linux-musl/14.24
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -7088,7 +7088,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -7113,7 +7113,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-c0a840d9f975cf790fa48b4d7bcf0ddc07144ed2b0a73766c9b7a9f55737b552
+          name: ggbuild-root-x86_64-unknown-linux-musl-242b9c43f8f4880ddb732075742d4be26d8d8667f63d922ab9c5302105b65d96
           path: dist/x86_64-unknown-linux-musl/15.19/
           if-no-files-found: error
           retention-days: 1
@@ -7137,7 +7137,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-c0a840d9f975cf790fa48b4d7bcf0ddc07144ed2b0a73766c9b7a9f55737b552
+          name: ggbuild-root-x86_64-unknown-linux-musl-242b9c43f8f4880ddb732075742d4be26d8d8667f63d922ab9c5302105b65d96
           path: dist/x86_64-unknown-linux-musl/15.19
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -7220,7 +7220,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -7245,7 +7245,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-8c7d6cccff0e72f7307db66d408b18f7d58a10b12855d6292f097badf05f2f5b
+          name: ggbuild-root-x86_64-unknown-linux-musl-b5c5de3a8088b5bf300a1bd5027571abbb163101220fc8a2269f53e688378d95
           path: dist/x86_64-unknown-linux-musl/16.15/
           if-no-files-found: error
           retention-days: 1
@@ -7269,7 +7269,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-8c7d6cccff0e72f7307db66d408b18f7d58a10b12855d6292f097badf05f2f5b
+          name: ggbuild-root-x86_64-unknown-linux-musl-b5c5de3a8088b5bf300a1bd5027571abbb163101220fc8a2269f53e688378d95
           path: dist/x86_64-unknown-linux-musl/16.15
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -7352,7 +7352,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -7377,7 +7377,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-79150a2e3009a12baeb5f6c8f930aee0a1e5974fa9dcd2b93a527f014b3d0d4f
+          name: ggbuild-root-x86_64-unknown-linux-musl-b10743e46287dd51b1dd1bb95d668beaee2ca3f0693c9501ab92bce59377b41f
           path: dist/x86_64-unknown-linux-musl/17.10/
           if-no-files-found: error
           retention-days: 1
@@ -7401,7 +7401,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-79150a2e3009a12baeb5f6c8f930aee0a1e5974fa9dcd2b93a527f014b3d0d4f
+          name: ggbuild-root-x86_64-unknown-linux-musl-b10743e46287dd51b1dd1bb95d668beaee2ca3f0693c9501ab92bce59377b41f
           path: dist/x86_64-unknown-linux-musl/17.10
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -7484,7 +7484,7 @@ jobs:
       - name: Build root artifact in x86_64-unknown-linux-musl
         env:
           ACTIONS_CACHE_SERVICE_V2: on
-          GGBUILD_REF: e4098070c7c6f32d69684da418c5e9a1e0076a29
+          GGBUILD_REF: 22e07e87507e622db7dbfa264a3bcdfc43b37b37
           SCCACHE_GHA_ENABLED: on
         run: >-
           docker run --rm
@@ -7509,7 +7509,7 @@ jobs:
       - name: Upload root artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-0c5270fc2bdef437d627c7659d0fda4dda83256bbe2832663d814501185ae0e4
+          name: ggbuild-root-x86_64-unknown-linux-musl-a08baeacbf7df76e8668cbff72165d4e166ecc21f9dc004de1f5db88ecab03b3
           path: dist/x86_64-unknown-linux-musl/18.4/
           if-no-files-found: error
           retention-days: 1
@@ -7533,7 +7533,7 @@ jobs:
       - name: Download root artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: ggbuild-root-x86_64-unknown-linux-musl-0c5270fc2bdef437d627c7659d0fda4dda83256bbe2832663d814501185ae0e4
+          name: ggbuild-root-x86_64-unknown-linux-musl-a08baeacbf7df76e8668cbff72165d4e166ecc21f9dc004de1f5db88ecab03b3
           path: dist/x86_64-unknown-linux-musl/18.4
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
