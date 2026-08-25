@@ -14,7 +14,12 @@ class Gettext(UpdateableBundledCAutoconfPackage):
     title, ident = "GNU gettext", "gettext"
     aliases: ClassVar[list[str]] = ["gettext-dev"]
     sources: ClassVar[list[str | package_sources.SourceDecl]] = [
-        {"url": "https://ftp.gnu.org/gnu/gettext/gettext-{version}.tar.xz"}
+        {
+            "url": "https://ftp.gnu.org/gnu/gettext/gettext-{version}.tar.xz",
+            "mirrors": [
+                "https://ftpmirror.gnu.org/gettext/gettext-{version}.tar.xz"
+            ],
+        }
     ]
     update_policy: ClassVar[UpdatePolicy] = {
         "type": "html-index",

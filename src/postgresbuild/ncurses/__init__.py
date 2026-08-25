@@ -14,7 +14,12 @@ class NCurses(UpdateableBundledCAutoconfPackage):
     title, ident = "ncurses", "ncurses"
     aliases: ClassVar[list[str]] = ["ncurses-dev"]
     sources: ClassVar[list[str | package_sources.SourceDecl]] = [
-        {"url": "https://ftp.gnu.org/gnu/ncurses/ncurses-{version}.tar.gz"}
+        {
+            "url": "https://ftp.gnu.org/gnu/ncurses/ncurses-{version}.tar.gz",
+            "mirrors": [
+                "https://ftpmirror.gnu.org/ncurses/ncurses-{version}.tar.gz"
+            ],
+        }
     ]
     update_policy: ClassVar[UpdatePolicy] = {
         "type": "html-index",

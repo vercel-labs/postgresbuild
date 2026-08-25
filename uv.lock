@@ -382,7 +382,7 @@ wheels = [
 [[package]]
 name = "ggbuild"
 version = "0.1.0"
-source = { git = "https://github.com/vercel-labs/ggbuild.git?rev=03bd54286e00f940af322737c2c95e0fb040aec0#03bd54286e00f940af322737c2c95e0fb040aec0" }
+source = { git = "https://github.com/vercel-labs/ggbuild.git?rev=75b5712638e363028d2ed854e55bd523548cfe42#75b5712638e363028d2ed854e55bd523548cfe42" }
 dependencies = [
     { name = "build" },
     { name = "defusedxml" },
@@ -892,7 +892,7 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ggbuild", git = "https://github.com/vercel-labs/ggbuild.git?rev=03bd54286e00f940af322737c2c95e0fb040aec0" }]
+requires-dist = [{ name = "ggbuild", git = "https://github.com/vercel-labs/ggbuild.git?rev=75b5712638e363028d2ed854e55bd523548cfe42" }]
 
 [package.metadata.requires-dev]
 check = [

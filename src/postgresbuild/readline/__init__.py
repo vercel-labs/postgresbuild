@@ -15,7 +15,12 @@ class Readline(UpdateableBundledCAutoconfPackage):
     title, ident = "readline", "readline"
     aliases: ClassVar[list[str]] = ["readline-dev"]
     sources: ClassVar[list[str | package_sources.SourceDecl]] = [
-        {"url": "https://ftp.gnu.org/gnu/readline/readline-{version}.tar.gz"}
+        {
+            "url": "https://ftp.gnu.org/gnu/readline/readline-{version}.tar.gz",
+            "mirrors": [
+                "https://ftpmirror.gnu.org/readline/readline-{version}.tar.gz"
+            ],
+        }
     ]
     update_policy: ClassVar[UpdatePolicy] = {
         "type": "html-index",
