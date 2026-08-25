@@ -69,7 +69,7 @@ default-groups = ["dev"]
 exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "75b5712638e363028d2ed854e55bd523548cfe42" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "690751db224efb64ddc6fa27c51c8c648f06225d" }
 lograil = { path = "../lograil", editable = true }
 
 [tool.ggbuild]
@@ -98,7 +98,7 @@ name = "PostgreSQL builds"
 path = ".github/workflows/postgresbuild.yml"
 setup-action = "./.github/actions/postgresbuild-setup"
 branch = "main"
-parallelism = 4
+max-concurrency = 12
 artifact-name = "postgresql-{target}-{version}"
 
 [tool.ggbuild.build]
