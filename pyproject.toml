@@ -69,7 +69,7 @@ default-groups = ["dev"]
 exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "8b7943902ee9391683ef1edb0981b38f669907af" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "e4098070c7c6f32d69684da418c5e9a1e0076a29" }
 lograil = { path = "../lograil", editable = true }
 
 [tool.ggbuild]
@@ -104,6 +104,10 @@ artifact-name = "postgresql-{target}-{version}"
 [tool.ggbuild.build]
 revision = "1"
 compression = ["zstd"]
+
+[tool.ggbuild.sccache]
+production = false
+pull-request = true
 
 # ========================
 #           TOX
