@@ -102,7 +102,7 @@ parallelism = 4
 artifact-name = "postgresql-{target}-{version}"
 
 [tool.ggbuild.build]
-revision = "1"
+revision = "2"
 compression = ["zstd"]
 
 [tool.ggbuild.sccache]
