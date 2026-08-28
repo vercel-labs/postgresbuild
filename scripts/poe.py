@@ -92,6 +92,7 @@ def lint_commands() -> tuple[Command, ...]:
             (
                 "ruff",
                 "check",
+                "main.py",
                 "src/postgresbuild",
                 "tests",
                 "scripts",
@@ -101,7 +102,15 @@ def lint_commands() -> tuple[Command, ...]:
         ),
         Command(
             "ruff format",
-            ("ruff", "format", "--check", "src", "tests", "scripts"),
+            (
+                "ruff",
+                "format",
+                "--check",
+                "main.py",
+                "src",
+                "tests",
+                "scripts",
+            ),
             "lint",
         ),
     )

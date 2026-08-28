@@ -14,7 +14,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
+    "fastapi>=0.130,<1",
     "ggbuild==0.1.0",
+    "pyjwt[crypto]>=2.10,<3",
+    "vercel>=0.8",
 ]
 
 [dependency-groups]
@@ -29,6 +32,7 @@ check = [
     "poethepoet>=0.48.0",
     "ruff==0.16.0",
     "ty==0.0.73",
+    "types-requests",
     "tox>=4",
     "tox-uv-bare",
     "uv==0.11.24",
@@ -55,6 +59,9 @@ source = "uv-dynamic-versioning"
 [tool.hatch.build.targets.wheel]
 packages = ["src/postgresbuild"]
 
+[tool.vercel]
+entrypoint = "main:app"
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
@@ -69,7 +76,7 @@ default-groups = ["dev"]
 exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "177498e86286e685f64ceef09c6c357746e27528" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "e4106c07308496c3c580ab3843858193b07fd668" }
 
 [tool.ggbuild]
 root-recipe = "postgresbuild.postgresql:PostgreSQL"
@@ -103,10 +110,15 @@ artifact-name = "postgresql-{target}-{version}"
 [tool.ggbuild.build]
 revision = "2"
 compression = ["zstd"]
+build-dbgsym = true
 
 [tool.ggbuild.sccache]
 production = false
 pull-request = true
+
+[tool.ggbuild.publication]
+repository = "vercel-labs/postgresbuild"
+index-url = "https://postgresbuild.vercel.app/api/publication"
 
 # ========================
 #           TOX
@@ -186,7 +198,7 @@ cmd = "ty check"
 
 [tool.mypy]
 exclude = ["^.git", "^.github", "^build", "^dist"]
-files = ["src/**/*.py", "scripts/**/*.py"]
+files = ["main.py", "src/**/*.py", "scripts/**/*.py"]
 python_version = "3.14"
 follow_imports = "normal"
 strict = true
@@ -199,7 +211,7 @@ local_partial_types = true
 # ========================
 
 [tool.ty.src]
-include = ["src", "tests", "scripts"]
+include = ["main.py", "src", "tests", "scripts"]
 
 # ========================
 #           RUFF

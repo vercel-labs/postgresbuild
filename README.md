@@ -61,9 +61,20 @@ Artifact tests require an exact architecture, OS, and libc host match. Docker
 nodes use the invoking UID/GID with a rootful daemon; rootless Docker keeps its
 mapped identity. Registry-backed CI containers also drop root before building
 or testing, and PostgreSQL keeps clusters, sockets, logs, sources, and temporary
-state inside the node work directory. Builds with `build-debug = true` also
-publish a separate debug-symbol tarball while keeping the primary payload
+state inside the node work directory. Builds with `build-dbgsym = true` also
+publish a separate `dbgsym` tarball while keeping the primary payload
 stripped.
+
+Snapshot publication uses a protected GitHub `release` environment. Configure
+that environment with required reviewers, and configure the deployed index
+service with `PUBLICATION_REPOSITORY=owner/repository` and `BLOB_STORE_ID`.
+`PUBLICATION_REF`, `PUBLICATION_WORKFLOW_PATH`, `PUBLICATION_ENVIRONMENT`, and
+`PUBLICATION_AUDIENCE` may override their canonical-main defaults.
+Successful runs publish twelve-digit UTC release tags, canonical distribution
+archives, `SHA256SUMS`, and `ggbuild-snapshot-v1.json`. The validated public
+inventory is available at `/index.json` and `/versions.ndjson`. If release
+publication succeeds but index ingestion fails, dispatch `ingest-existing`
+with the immutable release tag; that operation skips planning and all builds.
 
 ## Updating releases
 
