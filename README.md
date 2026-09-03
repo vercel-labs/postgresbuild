@@ -74,9 +74,13 @@ The service accepts both GitHub's name-based and immutable-ID OIDC subjects,
 while requiring signed repository, owner, ref, workflow, and environment
 identity to match the configured publication policy.
 After authentication, the workflow's ephemeral, read-scoped GitHub token is
-used to verify release assets when the repository is private; it is not stored.
-Verified primary archives are copied to immutable public Vercel Blob paths, and
-`/versions.ndjson` advertises those consumer URLs.
+used to verify release assets through GitHub's API; it is not stored.
+Verified primary archives are copied to immutable public Vercel Blob paths.
+`/versions.ndjson` advertises stable service-owned ordered URL lists;
+static 307 redirects send primary requests to GitHub and fallback requests to
+Blob without proxying archive bytes through a function. Consumers try URLs in
+order for network failures, HTTP 404/408/429, and 5xx responses, but treat a
+checksum mismatch as terminal.
 Successful runs publish twelve-digit UTC release tags, canonical distribution
 archives, `SHA256SUMS`, and `ggbuild-snapshot-v1.json`. The validated public
 inventory is available at `/index.json` and `/versions.ndjson`. If release

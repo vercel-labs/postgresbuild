@@ -231,10 +231,6 @@ class ArtifactPublisher(Protocol):
     def __call__(self, tag: str, name: str, content: bytes) -> None: ...
 
 
-class ArtifactUrl(Protocol):
-    def __call__(self, tag: str, name: str) -> str: ...
-
-
 _FILE_ROLES = {
     "primary-archive",
     "dbgsym",
@@ -690,13 +686,19 @@ def validate_index(value: object, repository: str) -> dict[str, Any]:
     return cast("dict[str, Any]", value)
 
 
-def versions_ndjson(
-    index: Mapping[str, Any], artifact_url: ArtifactUrl | None = None
-) -> bytes:
+def _consumer_artifact_url(route: str, tag: str, name: str) -> str:
+    return (
+        f"https://postgresbuild.labs.vercel.dev/{route}/"
+        f"{urllib.parse.quote(tag, safe='')}/"
+        f"{urllib.parse.quote(name, safe='')}"
+    )
+
+
+def versions_ndjson(index: Mapping[str, Any]) -> bytes:
     """Project the validated v1 index into the PBS-compatible version feed."""
     lines: list[str] = []
     for snapshot in index["snapshots"]:
-        by_version: dict[str, list[dict[str, str]]] = {}
+        by_version: dict[str, list[dict[str, Any]]] = {}
         for record in snapshot["successful"]:
             coordinate = record["coordinate"]
             if coordinate["package"] != "postgresql":
@@ -711,11 +713,18 @@ def versions_ndjson(
                     "archive_format": "tar.zst",
                     "platform": coordinate["target"],
                     "sha256": primary["sha256"],
-                    "url": (
-                        artifact_url(snapshot["tag"], primary["release_name"])
-                        if artifact_url is not None
-                        else primary["url"]
-                    ),
+                    "urls": [
+                        _consumer_artifact_url(
+                            "artifacts",
+                            snapshot["tag"],
+                            primary["release_name"],
+                        ),
+                        _consumer_artifact_url(
+                            "artifact-fallback",
+                            snapshot["tag"],
+                            primary["release_name"],
+                        ),
+                    ],
                     "variant": "install_only",
                 }
             )

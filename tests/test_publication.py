@@ -32,6 +32,8 @@ from postgresbuild.publication import (
 
 REPOSITORY = "example/postgresbuild"
 POLICY = PublicationPolicy(REPOSITORY)
+
+
 WORKFLOW_REF = POLICY.workflow_ref
 TAG = "202601010000"
 
@@ -753,22 +755,25 @@ def test_versions_ndjson_groups_orders_and_advertises_primary_only(
     assert all(
         artifact["variant"] == "install_only"
         and artifact["archive_format"] == "tar.zst"
-        and "dbgsym" not in artifact["url"]
+        and all("dbgsym" not in url for url in artifact["urls"])
         for record in records
         for artifact in record["artifacts"]
     )
-    public = [
-        json.loads(line)
-        for line in versions_ndjson(
-            index,
-            lambda tag, name: f"https://blob.test/{tag}/{name}",
-        ).splitlines()
+    artifact = records[0]["artifacts"][0]
+    filename = "postgresql-17.1+202601020000-a-target.tar.zst"
+    assert artifact["urls"] == [
+        (
+            "https://postgresbuild.labs.vercel.dev/artifacts/"
+            "202601020000/"
+            "postgresql-17.1%2B202601020000-a-target.tar.zst"
+        ),
+        (
+            "https://postgresbuild.labs.vercel.dev/artifact-fallback/"
+            f"202601020000/{filename.replace('+', '%2B')}"
+        ),
     ]
-    assert all(
-        artifact["url"].startswith("https://blob.test/")
-        for record in public
-        for artifact in record["artifacts"]
-    )
+    assert "url" not in artifact
+    assert "fallback_urls" not in artifact
 
     monkeypatch.setenv("PUBLICATION_REPOSITORY", REPOSITORY)
 
@@ -777,16 +782,24 @@ def test_versions_ndjson_groups_orders_and_advertises_primary_only(
             assert path == "index.json"
             return canonical_json(index), "etag"
 
-        def artifact_url(self, tag: str, name: str) -> str:
-            return f"https://blob.test/{tag}/{name}"
-
     monkeypatch.setattr(main, "VercelBlobStore", Store)
     response = TestClient(main.app).get("/versions.ndjson")
     assert response.status_code == 200
-    assert response.content == versions_ndjson(index, Store().artifact_url)
+    assert response.content == versions_ndjson(index)
     assert response.headers["content-type"].startswith("application/x-ndjson")
     assert response.headers["cache-control"] == (
         "public, s-maxage=300, stale-while-revalidate=3600"
+    )
+
+
+def test_consumer_artifact_url_encodes_tag_and_filename_segments() -> None:
+    assert publication._consumer_artifact_url(
+        "artifacts",
+        "tag+candidate/1",
+        "postgresql 18+build/file?.tar.zst",
+    ) == (
+        "https://postgresbuild.labs.vercel.dev/artifacts/"
+        "tag%2Bcandidate%2F1/postgresql%2018%2Bbuild%2Ffile%3F.tar.zst"
     )
 
 

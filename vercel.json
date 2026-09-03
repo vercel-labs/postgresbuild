@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/artifacts/:tag/:filename",
+      "destination": "https://github.com/vercel-labs/postgresbuild/releases/download/:tag/:filename",
+      "permanent": false
+    },
+    {
+      "source": "/artifact-fallback/:tag/:filename",
+      "destination": "https://ELpB8jqiqYMPGQFp.public.blob.vercel-storage.com/releases/:tag/:filename",
+      "permanent": false
+    }
+  ]
+}

@@ -112,7 +112,7 @@ def get_versions() -> Response:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "index not found")
     try:
         value = validate_index(json.loads(existing[0]), policy.repository)
-        content = versions_ndjson(value, store.artifact_url)
+        content = versions_ndjson(value)
     except (TypeError, ValueError, json.JSONDecodeError) as error:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, "stored index is corrupt"
