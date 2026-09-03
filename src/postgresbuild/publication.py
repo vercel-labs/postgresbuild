@@ -74,6 +74,20 @@ class PublicationPolicy:
     def subject(self) -> str:
         return f"repo:{self.repository}:environment:{self.environment}"
 
+    def immutable_subject(self, claims: Mapping[str, Any]) -> str | None:
+        owner_id = claims.get("repository_owner_id")
+        repository_id = claims.get("repository_id")
+        if not all(
+            isinstance(value, str) and value.isdecimal()
+            for value in (owner_id, repository_id)
+        ):
+            return None
+        owner, _, repository = self.repository.partition("/")
+        return (
+            f"repo:{owner}@{owner_id}/{repository}@{repository_id}:"
+            f"environment:{self.environment}"
+        )
+
 
 def canonical_json(value: object) -> bytes:
     return (
@@ -156,15 +170,22 @@ def verify_github_oidc(
         raise ValueError("GitHub OIDC event is not authorized")
     if claims.get("repository_owner") != policy.owner:
         raise ValueError("GitHub OIDC repository owner is not authorized")
-    if claims.get("sub") != policy.subject:
+    if claims.get("sub") not in {
+        policy.subject,
+        policy.immutable_subject(claims),
+    }:
         raise ValueError("GitHub OIDC subject is not the release environment")
     return claims
 
 
 class GitHubReleaseClient:
-    def __init__(self, session: requests.Session | None = None) -> None:
+    def __init__(
+        self, token: str = "", session: requests.Session | None = None
+    ) -> None:
         self.session = session or requests.Session()
         self.session.headers["Accept"] = "application/vnd.github+json"
+        if token:
+            self.session.headers["Authorization"] = f"Bearer {token}"
 
     def release_by_tag(
         self, repository: str, tag: str

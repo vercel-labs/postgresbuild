@@ -70,6 +70,11 @@ that environment with required reviewers, and configure the deployed index
 service with `PUBLICATION_REPOSITORY=owner/repository` and `BLOB_STORE_ID`.
 `PUBLICATION_REF`, `PUBLICATION_WORKFLOW_PATH`, `PUBLICATION_ENVIRONMENT`, and
 `PUBLICATION_AUDIENCE` may override their canonical-main defaults.
+The service accepts both GitHub's name-based and immutable-ID OIDC subjects,
+while requiring signed repository, owner, ref, workflow, and environment
+identity to match the configured publication policy.
+After authentication, the workflow's ephemeral, read-scoped GitHub token is
+used to verify release assets when the repository is private; it is not stored.
 Successful runs publish twelve-digit UTC release tags, canonical distribution
 archives, `SHA256SUMS`, and `ggbuild-snapshot-v1.json`. The validated public
 inventory is available at `/index.json` and `/versions.ndjson`. If release
