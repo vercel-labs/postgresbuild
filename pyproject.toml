@@ -76,7 +76,7 @@ default-groups = ["dev"]
 exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "b7d1b353b8c9fec22238c14475becd3768f6a4f7" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "5d2921543303af416fa8e9ced7dfe99b8535be07" }
 
 [tool.ggbuild]
 root-recipe = "postgresbuild.postgresql:PostgreSQL"
@@ -148,6 +148,10 @@ cmd = "python scripts/sync-githooks.py"
 
 [tool.poe.tasks.regenerate-workflow]
 cmd = "ggbuild ci render-workflow"
+
+[tool.poe.tasks.update-ggbuild]
+cmd = "python scripts/update-ggbuild.py"
+help = "Pin ggbuild/main, update the lock, and regenerate the workflow"
 
 [tool.poe.tasks.fix]
 sequence = ["ruff-check-fix", "ruff-format-fix"]

@@ -41,6 +41,10 @@ uv run ggbuild ci render-workflow
 uv run ggbuild ci check-workflow
 ```
 
+Manual workflow runs also accept `ggbuild_ref`, a full ggbuild commit SHA for
+testing executor changes without updating the repository pin. Override runs do
+not reuse persistent bundle caches and cannot publish a snapshot.
+
 Bundles under `.cache/bundles` are content addressed. Every restored filename,
 manifest, and payload is checked against the exact v3 node key before use.
 
@@ -109,3 +113,9 @@ uv run poe qa
 `ggbuild==0.1.0` is pinned so plans use the same protocol and cache identity.
 Until that release is published, uv resolves it from the immutable Git commit
 recorded in `pyproject.toml` and `uv.lock`.
+
+Update that commit, the lockfile, and the generated Actions workflow together:
+
+```console
+uv run poe update-ggbuild
+```
