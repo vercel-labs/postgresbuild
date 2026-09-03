@@ -184,6 +184,7 @@ class GitHubReleaseClient:
     ) -> None:
         self.session = session or requests.Session()
         self.session.headers["Accept"] = "application/vnd.github+json"
+        self._asset_api_urls: dict[str, str] = {}
         if token:
             self.session.headers["Authorization"] = f"Bearer {token}"
 
@@ -198,10 +199,22 @@ class GitHubReleaseClient:
         if response.status_code == 404:
             return None
         response.raise_for_status()
-        return cast("dict[str, Any]", response.json())
+        release = cast("dict[str, Any]", response.json())
+        for asset in release.get("assets", []):
+            if not isinstance(asset, dict):
+                continue
+            browser_url = asset.get("browser_download_url")
+            api_url = asset.get("url")
+            if isinstance(browser_url, str) and isinstance(api_url, str):
+                self._asset_api_urls[browser_url] = api_url
+        return release
 
     def get_bytes(self, url: str) -> bytes:
-        response = self.session.get(url, timeout=30)
+        response = self.session.get(
+            self._asset_api_urls.get(url, url),
+            headers={"Accept": "application/octet-stream"},
+            timeout=30,
+        )
         response.raise_for_status()
         return bytes(response.content)
 
@@ -212,6 +225,14 @@ class ReleaseReader(Protocol):
     ) -> dict[str, Any] | None: ...
 
     def get_bytes(self, url: str) -> bytes: ...
+
+
+class ArtifactPublisher(Protocol):
+    def __call__(self, tag: str, name: str, content: bytes) -> None: ...
+
+
+class ArtifactUrl(Protocol):
+    def __call__(self, tag: str, name: str) -> str: ...
 
 
 _FILE_ROLES = {
@@ -457,6 +478,7 @@ def fetch_valid_snapshot(
     tag: str,
     github: ReleaseReader,
     policy: PublicationPolicy,
+    publish_artifact: ArtifactPublisher | None = None,
 ) -> tuple[dict[str, Any], str] | None:
     if repository != policy.repository or SNAPSHOT_TAG.fullmatch(tag) is None:
         return None
@@ -529,6 +551,8 @@ def fetch_valid_snapshot(
                 "release distribution does not match snapshot: "
                 f"{item['release_name']}"
             )
+        if publish_artifact is not None and item["role"] == "primary-archive":
+            publish_artifact(tag, item["release_name"], content)
     published_at = release.get("published_at")
     if not isinstance(published_at, str):
         raise TypeError("published release has no publication time")
@@ -666,7 +690,9 @@ def validate_index(value: object, repository: str) -> dict[str, Any]:
     return cast("dict[str, Any]", value)
 
 
-def versions_ndjson(index: Mapping[str, Any]) -> bytes:
+def versions_ndjson(
+    index: Mapping[str, Any], artifact_url: ArtifactUrl | None = None
+) -> bytes:
     """Project the validated v1 index into the PBS-compatible version feed."""
     lines: list[str] = []
     for snapshot in index["snapshots"]:
@@ -685,7 +711,11 @@ def versions_ndjson(index: Mapping[str, Any]) -> bytes:
                     "archive_format": "tar.zst",
                     "platform": coordinate["target"],
                     "sha256": primary["sha256"],
-                    "url": primary["url"],
+                    "url": (
+                        artifact_url(snapshot["tag"], primary["release_name"])
+                        if artifact_url is not None
+                        else primary["url"]
+                    ),
                     "variant": "install_only",
                 }
             )
@@ -768,6 +798,9 @@ def materialize(
             raise ValueError("immutable snapshot fragment conflicts")
         by_tag[item["tag"]] = item
         index = project_index(list(by_tag.values()))
-        if store.put_cas("index.json", canonical_json(index), etag):
+        content = canonical_json(index)
+        if existing is not None and existing[0] == content:
+            return index
+        if store.put_cas("index.json", content, etag):
             return index
     raise RuntimeError("Blob index compare-and-swap did not converge")

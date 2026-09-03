@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.parse
 import uuid
 
 import requests
@@ -20,7 +21,13 @@ class VercelBlobStore:
         )
 
     def _url(self, path: str) -> str:
-        return f"https://{self.store_id}.public.blob.vercel-storage.com/{path}"
+        encoded = urllib.parse.quote(path, safe="/")
+        return (
+            f"https://{self.store_id}.public.blob.vercel-storage.com/{encoded}"
+        )
+
+    def public_url(self, path: str) -> str:
+        return self._url(path)
 
     def _get(self, url: str) -> tuple[bytes, str]:
         separator = "&" if "?" in url else "?"
@@ -79,6 +86,13 @@ class VercelBlobStore:
             existing = self.get(path)
             if existing is None or existing[0] != content:
                 raise
+
+    def artifact_url(self, tag: str, name: str) -> str:
+        return self.public_url(f"releases/{tag}/{name}")
+
+    def publish_artifact(self, tag: str, name: str, content: bytes) -> None:
+        path = f"releases/{tag}/{name}"
+        self.put_immutable(path, content)
 
     def put_cas(self, path: str, content: bytes, etag: str | None) -> bool:
         response = self._put(

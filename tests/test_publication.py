@@ -10,6 +10,7 @@ from typing import Any, cast
 
 import jwt
 import pytest
+import requests
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
@@ -374,6 +375,49 @@ def test_unknown_oidc_key_refreshes_once() -> None:
     assert session.calls == 2
 
 
+def test_github_client_downloads_private_release_assets_through_api(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    browser_url = _url(SNAPSHOT_NAME)
+    api_url = f"https://api.github.com/repos/{REPOSITORY}/releases/assets/123"
+
+    calls: list[tuple[str, dict[str, str] | None, int]] = []
+
+    def get(
+        url: str,
+        *,
+        headers: dict[str, str] | None = None,
+        timeout: int,
+    ) -> FakeResponse:
+        calls.append((url, headers, timeout))
+        if url.endswith(f"/releases/tags/{TAG}"):
+            return FakeResponse(
+                {
+                    "assets": [
+                        {
+                            "browser_download_url": browser_url,
+                            "url": api_url,
+                        }
+                    ]
+                }
+            )
+        assert url == api_url
+        return FakeResponse({}, content=b"private asset")
+
+    session = requests.Session()
+    monkeypatch.setattr(session, "get", get)
+    client = publication.GitHubReleaseClient("token", session)
+    assert client.release_by_tag(REPOSITORY, TAG) is not None
+    assert client.get_bytes(browser_url) == b"private asset"
+    assert session.headers["Accept"] == "application/vnd.github+json"
+    assert session.headers["Authorization"] == "Bearer token"
+    assert calls[1] == (
+        api_url,
+        {"Accept": "application/octet-stream"},
+        30,
+    )
+
+
 def test_snapshot_validation_rejects_release_asset_mismatch() -> None:
     snapshot = _snapshot()
     assert (
@@ -504,6 +548,47 @@ def test_fetch_rejects_checksum_or_distribution_byte_mismatch(
         fetch_valid_snapshot(REPOSITORY, TAG, GitHub(), POLICY)
 
 
+def test_fetch_publishes_verified_primary_artifact_only() -> None:
+    snapshot = _snapshot()
+    assets = list(_assets(snapshot).values())
+    calls: list[tuple[str, str, bytes]] = []
+
+    class GitHub:
+        def release_by_tag(self, repository: str, tag: str) -> dict[str, Any]:
+            return {
+                "assets": assets,
+                "draft": False,
+                "name": tag,
+                "prerelease": False,
+                "published_at": "2026-01-01T00:00:00Z",
+                "tag_name": tag,
+            }
+
+        def get_bytes(self, url: str) -> bytes:
+            if url == _url(SNAPSHOT_NAME):
+                return canonical_json(snapshot)
+            if url == _url(CHECKSUM_NAME):
+                return _checksum_bytes(snapshot)
+            if url.endswith("-dbgsym.tar.zst"):
+                return b"symbols"
+            return b"archive"
+
+    assert fetch_valid_snapshot(
+        REPOSITORY,
+        TAG,
+        GitHub(),
+        POLICY,
+        lambda tag, name, content: calls.append((tag, name, content)),
+    ) == (snapshot, "2026-01-01T00:00:00Z")
+    assert calls == [
+        (
+            TAG,
+            f"postgresql-17.1+{TAG}-target.tar.zst",
+            b"archive",
+        )
+    ]
+
+
 class MemoryBlob:
     def __init__(self, *, race_once: bool = False) -> None:
         self.values: dict[str, tuple[bytes, str]] = {}
@@ -553,6 +638,7 @@ def test_materialize_is_idempotent_retries_cas_and_rebuilds() -> None:
         materialize(store, _snapshot(tag), "2026-01-01T00:00:00Z", REPOSITORY)
         == first
     )
+    assert store.cas_calls == 2
     del store.values["index.json"]
     assert (
         materialize(store, _snapshot(tag), "2026-01-01T00:00:00Z", REPOSITORY)
@@ -616,6 +702,9 @@ def test_public_index_reads_blob_without_github(
             assert path == "index.json"
             return canonical_json(index), "etag"
 
+        def artifact_url(self, tag: str, name: str) -> str:
+            return f"https://blob.test/{tag}/{name}"
+
     monkeypatch.setattr(main, "VercelBlobStore", Store)
     response = TestClient(main.app).get("/index.json")
     assert response.status_code == 200
@@ -668,6 +757,18 @@ def test_versions_ndjson_groups_orders_and_advertises_primary_only(
         for record in records
         for artifact in record["artifacts"]
     )
+    public = [
+        json.loads(line)
+        for line in versions_ndjson(
+            index,
+            lambda tag, name: f"https://blob.test/{tag}/{name}",
+        ).splitlines()
+    ]
+    assert all(
+        artifact["url"].startswith("https://blob.test/")
+        for record in public
+        for artifact in record["artifacts"]
+    )
 
     monkeypatch.setenv("PUBLICATION_REPOSITORY", REPOSITORY)
 
@@ -676,10 +777,13 @@ def test_versions_ndjson_groups_orders_and_advertises_primary_only(
             assert path == "index.json"
             return canonical_json(index), "etag"
 
+        def artifact_url(self, tag: str, name: str) -> str:
+            return f"https://blob.test/{tag}/{name}"
+
     monkeypatch.setattr(main, "VercelBlobStore", Store)
     response = TestClient(main.app).get("/versions.ndjson")
     assert response.status_code == 200
-    assert response.content == versions_ndjson(index)
+    assert response.content == versions_ndjson(index, Store().artifact_url)
     assert response.headers["content-type"].startswith("application/x-ndjson")
     assert response.headers["cache-control"] == (
         "public, s-maxage=300, stale-while-revalidate=3600"
@@ -705,15 +809,21 @@ def test_publication_route_authenticates_and_materializes(
         ),
     )
     monkeypatch.setattr(main, "GitHubReleaseClient", GitHub)
+
+    class Store:
+        def publish_artifact(
+            self, tag: str, name: str, content: bytes
+        ) -> None:
+            calls.append(("publish", tag, name, content))
+
+    monkeypatch.setattr(main, "VercelBlobStore", Store)
     monkeypatch.setattr(
         main,
         "fetch_valid_snapshot",
-        lambda repository, tag, github, policy: (
-            snapshot,
-            "2026-01-01T00:00:00Z",
+        lambda repository, tag, github, policy, publish: (
+            calls.append("mirror") or (snapshot, "2026-01-01T00:00:00Z")
         ),
     )
-    monkeypatch.setattr(main, "VercelBlobStore", object)
     monkeypatch.setattr(
         main,
         "materialize",
@@ -739,6 +849,7 @@ def test_publication_route_authenticates_and_materializes(
             REPOSITORY,
         ),
         ("release-token", "github-release-token"),
+        "mirror",
     ]
 
 

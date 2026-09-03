@@ -27,6 +27,33 @@ class PublicationRequest(BaseModel):
     tag: str
 
 
+def publish_release(
+    request: PublicationRequest,
+    token: str,
+    policy: PublicationPolicy,
+) -> dict[str, object] | None:
+    github = GitHubReleaseClient(token)
+    store: VercelBlobStore | None = None
+
+    def publish_artifact(tag: str, name: str, content: bytes) -> None:
+        nonlocal store
+        store = store or VercelBlobStore()
+        store.publish_artifact(tag, name, content)
+
+    fetched = fetch_valid_snapshot(
+        request.repository,
+        request.tag,
+        github,
+        policy,
+        publish_artifact,
+    )
+    if fetched is None:
+        return None
+    snapshot, published_at = fetched
+    store = store or VercelBlobStore()
+    return materialize(store, snapshot, published_at, policy.repository)
+
+
 def oidc_failure_reason(error: Exception) -> str:
     message = str(error)
     fixed_reasons = {
@@ -79,12 +106,13 @@ def get_index() -> Response:
 @app.get("/versions.ndjson", response_class=Response)
 def get_versions() -> Response:
     policy = PublicationPolicy.from_environment()
-    existing = VercelBlobStore().get("index.json")
+    store = VercelBlobStore()
+    existing = store.get("index.json")
     if existing is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "index not found")
     try:
         value = validate_index(json.loads(existing[0]), policy.repository)
-        content = versions_ndjson(value)
+        content = versions_ndjson(value, store.artifact_url)
     except (TypeError, ValueError, json.JSONDecodeError) as error:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, "stored index is corrupt"
@@ -129,18 +157,9 @@ def ingest_publication(
             status.HTTP_401_UNAUTHORIZED, "missing GitHub release token"
         )
     try:
-        fetched = fetch_valid_snapshot(
-            request.repository,
-            request.tag,
-            GitHubReleaseClient(x_github_token),
-            policy,
-        )
-        if fetched is None:
+        index = publish_release(request, x_github_token, policy)
+        if index is None:
             return json_response({"ignored": True}, status_code=202)
-        snapshot, published_at = fetched
-        index = materialize(
-            VercelBlobStore(), snapshot, published_at, policy.repository
-        )
     except (
         TypeError,
         ValueError,

@@ -68,3 +68,19 @@ def test_public_blob_read_maps_missing_object_to_none(
     monkeypatch.setattr(blob, "get", get)
 
     assert blob.VercelBlobStore().get("index.json") is None
+
+
+def test_artifact_url_is_public_and_encodes_release_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("BLOB_STORE_ID", "store_example")
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "managed-token")
+    monkeypatch.delenv("VERCEL_OIDC_TOKEN", raising=False)
+
+    url = blob.VercelBlobStore().artifact_url(
+        "202601010000", "postgresql-18.4+build-aarch64.tar.zst"
+    )
+    assert url == (
+        "https://example.public.blob.vercel-storage.com/releases/"
+        "202601010000/postgresql-18.4%2Bbuild-aarch64.tar.zst"
+    )

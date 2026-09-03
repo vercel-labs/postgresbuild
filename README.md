@@ -75,6 +75,8 @@ while requiring signed repository, owner, ref, workflow, and environment
 identity to match the configured publication policy.
 After authentication, the workflow's ephemeral, read-scoped GitHub token is
 used to verify release assets when the repository is private; it is not stored.
+Verified primary archives are copied to immutable public Vercel Blob paths, and
+`/versions.ndjson` advertises those consumer URLs.
 Successful runs publish twelve-digit UTC release tags, canonical distribution
 archives, `SHA256SUMS`, and `ggbuild-snapshot-v1.json`. The validated public
 inventory is available at `/index.json` and `/versions.ndjson`. If release
