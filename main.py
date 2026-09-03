@@ -27,6 +27,26 @@ class PublicationRequest(BaseModel):
     tag: str
 
 
+def oidc_failure_reason(error: Exception) -> str:
+    message = str(error)
+    fixed_reasons = {
+        "GitHub OIDC header is not RS256 with a key ID": "header",
+        "GitHub OIDC token uses an unknown key": "key",
+        "GitHub OIDC event is not authorized": "event_name",
+        "GitHub OIDC repository owner is not authorized": "repository_owner",
+        "GitHub OIDC subject is not the release environment": "subject",
+    }
+    if message in fixed_reasons:
+        return fixed_reasons[message]
+    prefix = "GitHub OIDC claim "
+    suffix = " is not authorized"
+    if message.startswith(prefix) and message.endswith(suffix):
+        claim = message.removeprefix(prefix).removesuffix(suffix)
+        if claim in {"repository", "ref", "workflow_ref"}:
+            return claim
+    return type(error).__name__
+
+
 def json_response(
     value: object, *, status_code: int = 200, cache_control: str = "no-store"
 ) -> Response:
@@ -84,6 +104,7 @@ def get_versions() -> Response:
 def ingest_publication(
     request: PublicationRequest,
     authorization: Annotated[str | None, Header()] = None,
+    x_github_token: Annotated[str | None, Header()] = None,
 ) -> Response:
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(
@@ -100,11 +121,19 @@ def ingest_publication(
         )
     except Exception as error:
         raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED, "unauthorized GitHub workflow"
+            status.HTTP_401_UNAUTHORIZED,
+            f"unauthorized GitHub workflow: {oidc_failure_reason(error)}",
         ) from error
+    if not x_github_token:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, "missing GitHub release token"
+        )
     try:
         fetched = fetch_valid_snapshot(
-            request.repository, request.tag, GitHubReleaseClient(), policy
+            request.repository,
+            request.tag,
+            GitHubReleaseClient(x_github_token),
+            policy,
         )
         if fetched is None:
             return json_response({"ignored": True}, status_code=202)

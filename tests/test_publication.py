@@ -56,6 +56,13 @@ def test_publication_policy_is_loaded_from_environment() -> None:
         "owner/repository/.github/workflows/release.yml@refs/heads/stable"
     )
     assert policy.subject == "repo:owner/repository:environment:production"
+    assert (
+        policy.immutable_subject(
+            {"repository_owner_id": "123", "repository_id": "456"}
+        )
+        == "repo:owner@123/repository@456:environment:production"
+    )
+    assert policy.immutable_subject({}) is None
 
     with pytest.raises(ValueError, match="PUBLICATION_REPOSITORY"):
         PublicationPolicy.from_environment({})
@@ -313,6 +320,31 @@ def test_oidc_verification_caches_jwks_and_checks_workflow(
     )
     with pytest.raises(ValueError, match="release environment"):
         verify_github_oidc(bad_token, claims["aud"], POLICY, fetch=session)
+
+    immutable = {
+        **claims,
+        "repository_owner_id": "123",
+        "repository_id": "456",
+        "sub": "repo:example@123/postgresbuild@456:environment:release",
+    }
+    immutable_token = jwt.encode(
+        immutable, private, algorithm="RS256", headers={"kid": kid}
+    )
+    assert (
+        verify_github_oidc(
+            immutable_token, claims["aud"], POLICY, fetch=session
+        )["sub"]
+        == immutable["sub"]
+    )
+
+    immutable["repository_id"] = "457"
+    mismatched_token = jwt.encode(
+        immutable, private, algorithm="RS256", headers={"kid": kid}
+    )
+    with pytest.raises(ValueError, match="release environment"):
+        verify_github_oidc(
+            mismatched_token, claims["aud"], POLICY, fetch=session
+        )
 
 
 def test_unknown_oidc_key_refreshes_once() -> None:
@@ -661,6 +693,10 @@ def test_publication_route_authenticates_and_materializes(
     snapshot = _snapshot()
     calls: list[object] = []
 
+    class GitHub:
+        def __init__(self, token: str) -> None:
+            calls.append(("release-token", token))
+
     monkeypatch.setattr(
         main,
         "verify_github_oidc",
@@ -668,6 +704,7 @@ def test_publication_route_authenticates_and_materializes(
             (token, audience, policy.repository)
         ),
     )
+    monkeypatch.setattr(main, "GitHubReleaseClient", GitHub)
     monkeypatch.setattr(
         main,
         "fetch_valid_snapshot",
@@ -688,17 +725,72 @@ def test_publication_route_authenticates_and_materializes(
     )
     response = TestClient(main.app).post(
         "/api/publication",
-        headers={"authorization": "Bearer github-token"},
+        headers={
+            "authorization": "Bearer github-oidc-token",
+            "x-github-token": "github-release-token",
+        },
         json={"repository": REPOSITORY, "tag": "build-1"},
     )
     assert response.status_code == 200
     assert calls == [
         (
-            "github-token",
+            "github-oidc-token",
             "https://postgresbuild.labs.vercel.dev/api/publication",
             REPOSITORY,
-        )
+        ),
+        ("release-token", "github-release-token"),
     ]
+
+
+def test_publication_route_requires_release_token_after_oidc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("PUBLICATION_REPOSITORY", REPOSITORY)
+    monkeypatch.setattr(main, "verify_github_oidc", lambda *_args: None)
+    response = TestClient(main.app).post(
+        "/api/publication",
+        headers={"authorization": "Bearer github-oidc-token"},
+        json={"repository": REPOSITORY, "tag": TAG},
+    )
+    assert response.status_code == 401
+    assert response.json() == {"detail": "missing GitHub release token"}
+
+
+@pytest.mark.parametrize(
+    ("error", "reason"),
+    [
+        (
+            ValueError("GitHub OIDC claim workflow_ref is not authorized"),
+            "workflow_ref",
+        ),
+        (
+            ValueError("GitHub OIDC subject is not the release environment"),
+            "subject",
+        ),
+        (RuntimeError("sensitive detail"), "RuntimeError"),
+    ],
+)
+def test_publication_route_reports_safe_oidc_failure_reason(
+    monkeypatch: pytest.MonkeyPatch,
+    error: Exception,
+    reason: str,
+) -> None:
+    monkeypatch.setenv("PUBLICATION_REPOSITORY", REPOSITORY)
+
+    def reject(*_args: object) -> None:
+        raise error
+
+    monkeypatch.setattr(main, "verify_github_oidc", reject)
+    response = TestClient(main.app).post(
+        "/api/publication",
+        headers={"authorization": "Bearer github-token"},
+        json={"repository": REPOSITORY, "tag": TAG},
+    )
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": f"unauthorized GitHub workflow: {reason}"
+    }
+    assert "sensitive detail" not in response.text
 
 
 def test_publication_route_rejects_incomplete_snapshot_without_blob_mutation(
@@ -720,6 +812,9 @@ def test_publication_route_rejects_incomplete_snapshot_without_blob_mutation(
     assets = list(_assets(snapshot).values())
 
     class GitHub:
+        def __init__(self, _token: str) -> None:
+            pass
+
         def release_by_tag(self, repository: str, tag: str) -> dict[str, Any]:
             assert repository == REPOSITORY
             return {
@@ -752,7 +847,10 @@ def test_publication_route_rejects_incomplete_snapshot_without_blob_mutation(
     monkeypatch.setattr(main, "VercelBlobStore", blob_store)
     response = TestClient(main.app).post(
         "/api/publication",
-        headers={"authorization": "Bearer github-token"},
+        headers={
+            "authorization": "Bearer github-token",
+            "x-github-token": "github-release-token",
+        },
         json={
             "repository": REPOSITORY,
             "tag": TAG,
