@@ -1,4 +1,4 @@
-"""Vercel Blob adapter using ambient function OIDC plus ``BLOB_STORE_ID``."""
+"""Vercel Blob adapter using project credentials plus ``BLOB_STORE_ID``."""
 
 from __future__ import annotations
 
@@ -14,17 +14,24 @@ from vercel.blob.errors import BlobNotFoundError
 class VercelBlobStore:
     def __init__(self) -> None:
         self.store_id = os.environ["BLOB_STORE_ID"].removeprefix("store_")
-        self.token = os.environ["VERCEL_OIDC_TOKEN"]
+        self.token = (
+            os.environ.get("VERCEL_OIDC_TOKEN")
+            or os.environ["BLOB_READ_WRITE_TOKEN"]
+        )
 
     def _url(self, path: str) -> str:
         return f"https://{self.store_id}.public.blob.vercel-storage.com/{path}"
 
+    def _get(self, url: str) -> tuple[bytes, str]:
+        separator = "&" if "?" in url else "?"
+        value = get(f"{url}{separator}v={uuid.uuid4().hex}", token=self.token)
+        return value.content, value.etag
+
     def get(self, path: str) -> tuple[bytes, str] | None:
         try:
-            value = get(self._url(path), token=self.token, use_cache=False)
+            return self._get(self._url(path))
         except BlobNotFoundError:
             return None
-        return value.content, value.etag
 
     def _put(
         self,
@@ -119,10 +126,10 @@ class VercelBlobStore:
                     and item["pathname"].endswith(".json")
                     and isinstance(item.get("url"), str)
                 ):
-                    value = get(item["url"], token=self.token, use_cache=False)
+                    content, _ = self._get(item["url"])
                     # Parse here so a corrupt fragment fails before any write.
-                    json.loads(value.content)
-                    result.append(value.content)
+                    json.loads(content)
+                    result.append(content)
             if not page.get("hasMore"):
                 return result
             cursor = page.get("cursor")
