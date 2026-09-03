@@ -16,9 +16,15 @@ class Kerberos(UpdateableBundledCAutoconfPackage):
     sources: ClassVar[list[str | package_sources.SourceDecl]] = [
         {
             "url": (
-                "https://kerberos.org/dist/krb5/{major_minor_v}/"
+                "https://distfiles.macports.org/kerberos5/"
                 "krb5-{version}.tar.gz"
-            )
+            ),
+            "mirrors": [
+                (
+                    "https://kerberos.org/dist/krb5/{major_minor_v}/"
+                    "krb5-{version}.tar.gz"
+                )
+            ],
         }
     ]
     update_policy: ClassVar[UpdatePolicy] = {

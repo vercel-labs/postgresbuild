@@ -6,9 +6,11 @@ import tomllib
 import unittest
 from unittest import mock
 
+from ggbuild.packages.sources import HttpsSource
 from ggbuild.planner import registered_releases, selected_versions
 from ggbuild.project import load_project
 
+from postgresbuild.kerberos import Kerberos
 from postgresbuild.postgresql import PostgreSQL
 
 
@@ -40,6 +42,24 @@ class ProjectLayoutTests(unittest.TestCase):
         ):
             self.assertEqual(PostgreSQL.discover_releases(), ("17.11", "18.5"))
         self.assertEqual(PostgreSQL.canonical_ref("17.11"), "REL_17_11")
+
+    def test_kerberos_prefers_verified_mirror_before_canonical_source(
+        self,
+    ) -> None:
+        release = Kerberos.registered_release("1.22.2")
+        self.assertIsNotNone(release)
+        assert release is not None
+        source = release.get_sources()[0]
+        self.assertIsInstance(source, HttpsSource)
+        assert isinstance(source, HttpsSource)
+
+        self.assertEqual(
+            source.urls,
+            (
+                "https://distfiles.macports.org/kerberos5/krb5-1.22.2.tar.gz",
+                "https://kerberos.org/dist/krb5/1.22/krb5-1.22.2.tar.gz",
+            ),
+        )
 
     def test_linux_and_arm_macos_targets_and_required_runners(self) -> None:
         targets = load_project().target_map
