@@ -1,0 +1,17 @@
+.cache/
+.ggt_cache/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.venv*
+.coverage*
+.env*
+.git/
+.vercel/
+__pycache__/
+build/
+dist/
+public/
+*.egg-info/
+*.pyc
+*.pyo

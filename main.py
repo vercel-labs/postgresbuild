@@ -91,7 +91,7 @@ def ingest_publication(
         )
     audience = os.environ.get(
         "PUBLICATION_AUDIENCE",
-        "https://postgresbuild.vercel.app/api/publication",
+        "https://postgresbuild.labs.vercel.dev/api/publication",
     )
     policy = PublicationPolicy.from_environment()
     try:

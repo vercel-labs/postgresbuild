@@ -118,7 +118,7 @@ pull-request = true
 
 [tool.ggbuild.publication]
 repository = "vercel-labs/postgresbuild"
-index-url = "https://postgresbuild.vercel.app/api/publication"
+index-url = "https://postgresbuild.labs.vercel.dev/api/publication"
 
 # ========================
 #           TOX

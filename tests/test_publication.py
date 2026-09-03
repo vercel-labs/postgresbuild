@@ -695,7 +695,7 @@ def test_publication_route_authenticates_and_materializes(
     assert calls == [
         (
             "github-token",
-            "https://postgresbuild.vercel.app/api/publication",
+            "https://postgresbuild.labs.vercel.dev/api/publication",
             REPOSITORY,
         )
     ]
