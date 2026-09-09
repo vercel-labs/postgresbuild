@@ -11,6 +11,7 @@ from unittest import mock
 import ggbuild.targets as _ggbuild_targets  # ruff: ignore[unused-import]
 import pytest
 from ggbuild import packages
+from ggbuild.updater import UpdateableBundledCAutoconfPackage
 
 from postgresbuild.postgresql import PostgreSQL
 
@@ -150,6 +151,39 @@ def test_postgresql_enables_glibc_integrations() -> None:
         assert option in arguments
 
 
+@pytest.mark.parametrize("version", ["16.15", "17.10", "18.4"])
+def test_macos_build_avoids_sysv_semaphores(version: str) -> None:
+    package = PostgreSQL.registered_release(version)
+    assert package is not None
+    build = mock.Mock()
+    build.target.triple = "aarch64-apple-darwin"
+
+    with mock.patch.object(
+        UpdateableBundledCAutoconfPackage,
+        "get_configure_env",
+        return_value={},
+    ):
+        environment = package.get_configure_env(build)
+
+    assert environment["PREFERRED_SEMAPHORES"] == "NAMED_POSIX"
+
+
+def test_linux_build_keeps_platform_semaphore_default() -> None:
+    package = PostgreSQL.registered_release("18.4")
+    assert package is not None
+    build = mock.Mock()
+    build.target.triple = "aarch64-unknown-linux-gnu"
+
+    with mock.patch.object(
+        UpdateableBundledCAutoconfPackage,
+        "get_configure_env",
+        return_value={},
+    ):
+        environment = package.get_configure_env(build)
+
+    assert "PREFERRED_SEMAPHORES" not in environment
+
+
 def test_artifact_test_environment_is_postgresql_specific(
     tmp_path: pathlib.Path,
 ) -> None:
@@ -166,6 +200,44 @@ def test_artifact_test_environment_is_postgresql_specific(
     assert "HOME" not in environment
     assert "PATH" not in environment
     assert "LD_LIBRARY_PATH" not in environment
+
+
+@pytest.mark.parametrize("version", ["16.15", "17.10", "18.4"])
+def test_artifact_test_avoids_sysv_ipc_for_patched_versions(
+    version: str,
+    tmp_path: pathlib.Path,
+) -> None:
+    package = PostgreSQL.registered_release(version)
+    assert package is not None
+    test = mock.Mock(spec=packages.Test)
+    test.get_build_install_dir.return_value = tmp_path / "postgresql"
+    test.get_test_install_dir.return_value = tmp_path / "tests"
+    test.get_temp_dir.return_value = tmp_path / "work"
+
+    script = package.get_test_script(test)
+
+    for option in (
+        "--set=data_directory_lock_type=file",
+        "--set=shared_memory_type=mmap",
+        "--set=dynamic_shared_memory_type=mmap",
+    ):
+        assert option in script
+
+
+def test_artifact_test_keeps_sysv_default_for_unpatched_versions(
+    tmp_path: pathlib.Path,
+) -> None:
+    package = PostgreSQL.registered_release("15.19")
+    assert package is not None
+    test = mock.Mock(spec=packages.Test)
+    test.get_build_install_dir.return_value = tmp_path / "postgresql"
+    test.get_test_install_dir.return_value = tmp_path / "tests"
+    test.get_temp_dir.return_value = tmp_path / "work"
+
+    script = package.get_test_script(test)
+
+    assert "data_directory_lock_type" not in script
+    assert "shared_memory_type" not in script
 
 
 def test_postgresql_builds_binary_and_test_world_without_docs() -> None:
@@ -261,7 +333,8 @@ def test_production_inventory_rejects_sdk_and_outside_prefix() -> None:
 def test_artifact_test_script_runs_shipped_server_and_staged_harness(
     tmp_path: pathlib.Path,
 ) -> None:
-    package = object.__new__(PostgreSQL)
+    package = PostgreSQL.registered_release("18.4")
+    assert package is not None
     installation = tmp_path / "installation"
     bin_dir = installation / "bin"
     bin_dir.mkdir(parents=True)
@@ -316,6 +389,9 @@ if name == "initdb":
         "--no-sync",
         "--locale=C",
         "--encoding=UTF8",
+        "--set=data_directory_lock_type=file",
+        "--set=shared_memory_type=mmap",
+        "--set=dynamic_shared_memory_type=mmap",
     ]
     assert calls[1][:6] == [
         "pg_ctl",

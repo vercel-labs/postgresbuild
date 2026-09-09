@@ -1,0 +1,1832 @@
+From cd64fb3d849e337ef46bd0f7989d59d425588190 Mon Sep 17 00:00:00 2001
+From: Elvis Pranskevichus <el@prans.net>
+Date: Tue, 8 Sep 2026 09:16:22 -0700
+Subject: [PATCH] Add file-based data directory interlock
+
+Add data_directory_lock_type, with the traditional SysV interlock
+remaining the default and a new file-based alternative.
+
+File mode acquires an open file description lock where available, or
+a flock() lock otherwise, before examining postmaster.pid.  Forked
+server children inherit the lock, preserving the interlock after
+postmaster death, while close-on-exec prevents external programs from
+extending its lifetime.
+
+Use anonymous mmap for main shared memory and keep a validated header
+shim in pg_dynshmem/postmaster.shmem.  On crash recovery, clean the
+recorded DSM control segment and replace the shim only after
+validating its size, identity, and contents.
+
+Propagate the setting through initdb, document the supported
+configuration and operational requirements, and add TAP coverage for
+normal operation, corrupt headers, crash recovery, and inherited lock
+lifetime.
+---
+ configure                                     |  16 +-
+ configure.ac                                  |   4 +
+ doc/src/sgml/config.sgml                      |  63 ++
+ doc/src/sgml/runtime.sgml                     |   9 +-
+ meson.build                                   |   2 +
+ src/backend/port/Makefile                     |   1 +
+ src/backend/port/file_shmem.c                 | 701 ++++++++++++++++++
+ src/backend/port/meson.build                  |   1 +
+ src/backend/port/sysv_shmem.c                 |  28 +-
+ src/backend/postmaster/launch_backend.c       |   6 +
+ src/backend/storage/ipc/ipci.c                |   8 +-
+ src/backend/utils/init/miscinit.c             |   6 +
+ src/backend/utils/misc/guc_tables.c           |  18 +
+ src/backend/utils/misc/postgresql.conf.sample |   2 +
+ src/bin/initdb/initdb.c                       |   6 +-
+ src/bin/initdb/t/001_initdb.pl                |  64 +-
+ src/include/pg_config.h.in                    |   7 +
+ src/include/storage/pg_shmem.h                |  20 +
+ src/test/perl/PostgreSQL/Test/Cluster.pm      |  28 +
+ src/test/perl/PostgreSQL/Test/Utils.pm        |  20 +
+ src/test/recovery/meson.build                 |   3 +-
+ src/test/recovery/t/017_shm.pl                |  37 +-
+ src/test/recovery/t/057_file_shmem.pl         | 349 +++++++++
+ 23 files changed, 1340 insertions(+), 59 deletions(-)
+ create mode 100644 src/backend/port/file_shmem.c
+ create mode 100644 src/test/recovery/t/057_file_shmem.pl
+
+diff --git a/configure b/configure
+index 472e4bb8cf7..ceb178ce4e3 100755
+--- a/configure
++++ b/configure
+@@ -15729,7 +15729,7 @@ fi
+ LIBS_including_readline="$LIBS"
+ LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
+ 
+-for ac_func in backtrace_symbols copyfile copy_file_range elf_aux_info getauxval getifaddrs getpeerucred inet_pton kqueue localeconv_l mbstowcs_l posix_fallocate ppoll pthread_is_threaded_np setproctitle setproctitle_fast strsignal syncfs sync_file_range uselocale wcstombs_l
++for ac_func in backtrace_symbols copyfile copy_file_range elf_aux_info flock getauxval getifaddrs getpeerucred inet_pton kqueue localeconv_l mbstowcs_l posix_fallocate ppoll pthread_is_threaded_np setproctitle setproctitle_fast strsignal syncfs sync_file_range uselocale wcstombs_l
+ do :
+   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+@@ -16333,6 +16333,20 @@ cat >>confdefs.h <<_ACEOF
+ _ACEOF
+ 
+ 
++# Open file description locks
++ac_fn_c_check_decl "$LINENO" "F_OFD_SETLK" "ac_cv_have_decl_F_OFD_SETLK" "#include <fcntl.h>
++"
++if test "x$ac_cv_have_decl_F_OFD_SETLK" = xyes; then :
++  ac_have_decl=1
++else
++  ac_have_decl=0
++fi
++
++cat >>confdefs.h <<_ACEOF
++#define HAVE_DECL_F_OFD_SETLK $ac_have_decl
++_ACEOF
++
++
+ ac_fn_c_check_func "$LINENO" "explicit_bzero" "ac_cv_func_explicit_bzero"
+ if test "x$ac_cv_func_explicit_bzero" = xyes; then :
+   $as_echo "#define HAVE_EXPLICIT_BZERO 1" >>confdefs.h
+diff --git a/configure.ac b/configure.ac
+index 636ba548920..aad28d55c4a 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1793,6 +1793,7 @@ AC_CHECK_FUNCS(m4_normalize([
+ 	copyfile
+ 	copy_file_range
+ 	elf_aux_info
++	flock
+ 	getauxval
+ 	getifaddrs
+ 	getpeerucred
+@@ -1851,6 +1852,9 @@ AC_CHECK_DECLS([memset_s], [], [], [#define __STDC_WANT_LIB_EXT1__ 1
+ # This is probably only present on macOS, but may as well check always
+ AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
+ 
++# Open file description locks
++AC_CHECK_DECLS([F_OFD_SETLK], [], [], [#include <fcntl.h>])
++
+ AC_REPLACE_FUNCS(m4_normalize([
+ 	explicit_bzero
+ 	getopt
+diff --git a/doc/src/sgml/config.sgml b/doc/src/sgml/config.sgml
+index 18ecdc1120f..33b040fee62 100644
+--- a/doc/src/sgml/config.sgml
++++ b/doc/src/sgml/config.sgml
+@@ -2259,6 +2259,69 @@ include_dir 'conf.d'
+       </listitem>
+      </varlistentry>
+ 
++     <varlistentry id="guc-data-directory-lock-type" xreflabel="data_directory_lock_type">
++      <term><varname>data_directory_lock_type</varname> (<type>enum</type>)
++      <indexterm>
++       <primary><varname>data_directory_lock_type</varname> configuration parameter</primary>
++      </indexterm>
++      </term>
++      <listitem>
++       <para>
++        Specifies how the server prevents multiple server instances from
++        using the same data directory.  The default, <literal>sysv</literal>,
++        retains the traditional interlock, based on a small System V shared
++        memory segment on Unix-like platforms.  The alternative,
++        <literal>file</literal>, uses <function>flock</function> on the data
++        directory and stores a mapped shared memory header in
++        <filename>pg_dynshmem/postmaster.shmem</filename>.  When open file
++        description locks are available, the server also locks the persistent
++        file <filename>pg_dynshmem/postmaster.lock</filename> as an additional
++        layer of protection.  The directory lock remains authoritative if
++        that file is removed while server processes remain.
++       </para>
++
++       <para>
++        The <literal>file</literal> setting requires
++        <varname>shared_memory_type</varname> to be <literal>mmap</literal>, a
++        build that uses <function>fork</function> for server children, and a
++        platform providing <function>flock</function>.  It is not supported on
++        Windows or in <symbol>EXEC_BACKEND</symbol> builds.  At each startup,
++        the server verifies on the data directory file system that
++        <function>flock</function> locks are inherited across
++        <function>fork</function>; startup fails if that test or lock
++        acquisition fails.  This setting does not constrain
++        <varname>dynamic_shared_memory_type</varname>.
++       </para>
++
++       <para>
++        In file mode, all builds use the same directory inode lock.  Forked
++        server children retain that inherited lock, so it survives a
++        postmaster crash until the last child using database state exits.  The
++        logging collector drops its copy because it can intentionally outlive
++        the postmaster while draining log output.  The descriptors are
++        close-on-exec and are therefore not
++        inherited by external programs.  The shared memory field in
++        <filename>postmaster.pid</filename> is left empty.  A crash-left header
++        is replaced only after its size and contents have been validated; a
++        corrupt header causes startup to fail for operator intervention.  A
++        data directory identity mismatch is treated as foreign, without
++        following its dynamic shared memory control reference, so that a
++        copied data directory or one whose file system identity changed can
++        start safely.
++       </para>
++
++       <para>
++        Changing from <literal>file</literal> to <literal>sysv</literal>
++        requires a clean server shutdown.  <literal>sysv</literal> startup
++        refuses to proceed while any directory entry remains at
++        <filename>pg_dynshmem/postmaster.shmem</filename>.  After a crash,
++        restart in <literal>file</literal> mode and shut down cleanly, or
++        remove that path only after verifying that no old server processes
++        remain.  This parameter can only be set at server start.
++       </para>
++      </listitem>
++     </varlistentry>
++
+      <varlistentry id="guc-shared-memory-type" xreflabel="shared_memory_type">
+       <term><varname>shared_memory_type</varname> (<type>enum</type>)
+       <indexterm>
+diff --git a/doc/src/sgml/runtime.sgml b/doc/src/sgml/runtime.sgml
+index 0c60bafac63..f2902e5402a 100644
+--- a/doc/src/sgml/runtime.sgml
++++ b/doc/src/sgml/runtime.sgml
+@@ -540,10 +540,11 @@ su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgs
+    <para>
+     While the server is running, its
+     <acronym>PID</acronym> is stored in the file
+-    <filename>postmaster.pid</filename> in the data directory. This is
+-    used to prevent multiple server instances from
+-    running in the same data directory and can also be used for
+-    shutting down the server.
++    <filename>postmaster.pid</filename> in the data directory. This can be
++    used for shutting down the server and normally participates in preventing
++    multiple server instances from running in the same data directory.  The
++    interlock mechanism is selected by
++    <xref linkend="guc-data-directory-lock-type"/>.
+    </para>
+ 
+    <sect2 id="server-start-failures">
+diff --git a/meson.build b/meson.build
+index 2c94236a072..e43f0efcd3d 100644
+--- a/meson.build
++++ b/meson.build
+@@ -2668,6 +2668,7 @@ endforeach
+ 
+ decl_checks = [
+   ['F_FULLFSYNC', 'fcntl.h'],
++  ['F_OFD_SETLK', 'fcntl.h'],
+   ['fdatasync', 'unistd.h'],
+   ['posix_fadvise', 'fcntl.h'],
+   ['strlcat', 'string.h'],
+@@ -2902,6 +2903,7 @@ func_checks = [
+   ['dlsym', {'dependencies': [dl_dep], 'define': false}],
+   ['elf_aux_info'],
+   ['explicit_bzero'],
++  ['flock'],
+   ['getauxval'],
+   ['getifaddrs'],
+   ['getopt', {'dependencies': [getopt_dep, gnugetopt_dep], 'skip': always_replace_getopt}],
+diff --git a/src/backend/port/Makefile b/src/backend/port/Makefile
+index 47338d99229..a543b57130b 100644
+--- a/src/backend/port/Makefile
++++ b/src/backend/port/Makefile
+@@ -24,6 +24,7 @@ include $(top_builddir)/src/Makefile.global
+ OBJS = \
+ 	$(TAS) \
+ 	atomics.o \
++	file_shmem.o \
+ 	pg_sema.o \
+ 	pg_shmem.o
+ 
+diff --git a/src/backend/port/file_shmem.c b/src/backend/port/file_shmem.c
+new file mode 100644
+index 00000000000..517fab79ff5
+--- /dev/null
++++ b/src/backend/port/file_shmem.c
+@@ -0,0 +1,701 @@
++/*-------------------------------------------------------------------------
++ *
++ * file_shmem.c
++ *	  Implement a file-based data directory interlock and shared memory shim.
++ *
++ * The data directory is protected with flock() on the directory inode.  At
++ * startup, we verify that the file system preserves that lock across fork(),
++ * so orphaned server children keep the lock after postmaster death.  Where
++ * available, an open file description lock provides an additional interlock.
++ * The syslogger drops its copies because it does not protect database state
++ * and can intentionally outlive the postmaster.  The descriptors are
++ * close-on-exec so unrelated external programs don't extend their lifetime.
++ *
++ * Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
++ *
++ * IDENTIFICATION
++ *	  src/backend/port/file_shmem.c
++ *
++ *-------------------------------------------------------------------------
++ */
++#include "postgres.h"
++
++#ifndef WIN32
++#include <fcntl.h>
++#ifdef HAVE_FLOCK
++#include <sys/file.h>
++#endif
++#include <sys/mman.h>
++#include <sys/stat.h>
++#include <sys/wait.h>
++#include <unistd.h>
++#endif
++
++#include "common/file_perm.h"
++#include "common/file_utils.h"
++#include "miscadmin.h"
++#include "storage/dsm.h"
++#include "storage/dsm_impl.h"
++#include "storage/fd.h"
++#include "storage/ipc.h"
++#include "storage/pg_shmem.h"
++#include "utils/pidfile.h"
++
++#define FILE_SHMEM_PATH PG_DYNSHMEM_DIR "/postmaster.shmem"
++#define FILE_LOCK_PATH PG_DYNSHMEM_DIR "/postmaster.lock"
++
++#ifdef USE_FILE_SHMEM
++
++static int	DataDirLockFD = -1;
++#if defined(HAVE_DECL_F_OFD_SETLK) && HAVE_DECL_F_OFD_SETLK
++static int	DataDirOFDLockFD = -1;
++#endif
++static PGShmemHeader *FileShmem = NULL;
++static int	FileShmemFD = -1;
++
++static void DataDirLockClose(int status, Datum arg);
++static void DataDirLockVerifyInheritance(void);
++static void FileShmemDelete(int status, Datum arg);
++
++/*
++ * Postmaster exit callback for closing the data directory descriptors.
++ * UnlinkLockFiles() is registered later, so it runs before this callback.
++ */
++static void
++DataDirLockClose(int status, Datum arg)
++{
++	PGFileCloseDataDirectoryLock();
++}
++
++#endif
++
++/*
++ * Close this process's copies of the data directory descriptors without
++ * explicitly unlocking them.  Other processes sharing the open file
++ * description continue to hold the lock.
++ */
++void
++PGFileCloseDataDirectoryLock(void)
++{
++#ifdef USE_FILE_SHMEM
++#if defined(HAVE_DECL_F_OFD_SETLK) && HAVE_DECL_F_OFD_SETLK
++	if (DataDirOFDLockFD >= 0)
++	{
++		if (close(DataDirOFDLockFD) != 0)
++			elog(LOG, "could not close data directory OFD lock descriptor: %m");
++		ReleaseExternalFD();
++		DataDirOFDLockFD = -1;
++	}
++#endif
++	if (DataDirLockFD >= 0)
++	{
++		if (close(DataDirLockFD) != 0)
++			elog(LOG, "could not close data directory descriptor: %m");
++		ReleaseExternalFD();
++		DataDirLockFD = -1;
++	}
++#endif
++}
++
++#ifdef USE_FILE_SHMEM
++
++/*
++ * Verify that flock() locks on this file system are inherited across fork().
++ * Some systems implement flock() using process-associated POSIX locks, which
++ * disappear in this test when the parent closes its descriptor.
++ *
++ * Use the global directory as a same-file-system probe without creating a
++ * temporary file.  Check its identity both before and after fork so pathname
++ * replacement cannot make a failed probe look successful.
++ */
++static void
++DataDirLockVerifyInheritance(void)
++{
++	struct stat datadir_stat;
++	struct stat path_stat;
++	struct stat probe_stat;
++	struct stat check_stat;
++	int			probe_fd = -1;
++	int			check_fd = -1;
++	int			pipefd[2] = {-1, -1};
++	pid_t		child_pid = -1;
++	int			child_status = 0;
++	int			save_errno = 0;
++	char		detail[256];
++
++	detail[0] = '\0';
++
++	if (fstat(DataDirLockFD, &datadir_stat) != 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not stat the data directory: %s.",
++				 strerror(save_errno));
++		goto fail;
++	}
++	if (lstat("global", &path_stat) != 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not stat directory \"global\": %s.",
++				 strerror(save_errno));
++		goto fail;
++	}
++	if (!S_ISDIR(path_stat.st_mode) || path_stat.st_dev != datadir_stat.st_dev)
++	{
++		strlcpy(detail,
++				"Directory \"global\" is not a real directory on the data directory file system.",
++				sizeof(detail));
++		goto fail;
++	}
++
++	probe_fd = open("global", O_RDONLY | O_CLOEXEC);
++	if (probe_fd < 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not open directory \"global\": %s.",
++				 strerror(save_errno));
++		goto fail;
++	}
++	if (fstat(probe_fd, &probe_stat) != 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not stat open directory \"global\": %s.",
++				 strerror(save_errno));
++		goto fail;
++	}
++	if (!S_ISDIR(probe_stat.st_mode) ||
++		probe_stat.st_dev != path_stat.st_dev ||
++		probe_stat.st_ino != path_stat.st_ino)
++	{
++		strlcpy(detail, "Directory \"global\" changed while it was being opened.",
++				sizeof(detail));
++		goto fail;
++	}
++	if (flock(probe_fd, LOCK_EX | LOCK_NB) != 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not lock directory \"global\": %s.",
++				 strerror(save_errno));
++		goto fail;
++	}
++	if (pipe(pipefd) != 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not create a pipe for the flock() inheritance test: %s.",
++				 strerror(save_errno));
++		goto fail;
++	}
++
++	child_pid = fork();
++	if (child_pid < 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not fork for the flock() inheritance test: %s.",
++				 strerror(save_errno));
++		goto fail;
++	}
++	if (child_pid == 0)
++	{
++		char		byte;
++		ssize_t		result;
++
++		close(pipefd[1]);
++		do
++			result = read(pipefd[0], &byte, 1);
++		while (result < 0 && errno == EINTR);
++		close(pipefd[0]);
++		close(probe_fd);
++		_exit(result < 0 ? 1 : 0);
++	}
++
++	close(pipefd[0]);
++	pipefd[0] = -1;
++	if (close(probe_fd) != 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not close the parent flock() probe descriptor: %s.",
++				 strerror(save_errno));
++	}
++	probe_fd = -1;
++
++	if (detail[0] == '\0')
++	{
++		check_fd = open("global", O_RDONLY | O_CLOEXEC);
++		if (check_fd < 0)
++		{
++			save_errno = errno;
++			snprintf(detail, sizeof(detail),
++					 "Could not reopen directory \"global\": %s.",
++					 strerror(save_errno));
++		}
++	}
++	if (detail[0] == '\0' && fstat(check_fd, &check_stat) != 0)
++	{
++		save_errno = errno;
++		snprintf(detail, sizeof(detail),
++				 "Could not stat reopened directory \"global\": %s.",
++				 strerror(save_errno));
++	}
++	if (detail[0] == '\0' &&
++		(check_stat.st_dev != probe_stat.st_dev ||
++		 check_stat.st_ino != probe_stat.st_ino))
++		strlcpy(detail, "Directory \"global\" changed during the flock() inheritance test.",
++				sizeof(detail));
++	if (detail[0] == '\0')
++	{
++		if (flock(check_fd, LOCK_EX | LOCK_NB) == 0)
++			strlcpy(detail, "flock() locks are not inherited across fork().",
++					sizeof(detail));
++		else if (errno != EACCES && errno != EAGAIN
++#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
++				 && errno != EWOULDBLOCK
++#endif
++			)
++		{
++			save_errno = errno;
++			snprintf(detail, sizeof(detail),
++					 "Could not test the inherited flock() lock: %s.",
++					 strerror(save_errno));
++		}
++	}
++
++fail:
++	if (check_fd >= 0)
++		close(check_fd);
++	if (probe_fd >= 0)
++		close(probe_fd);
++	if (pipefd[0] >= 0)
++		close(pipefd[0]);
++	if (pipefd[1] >= 0)
++		close(pipefd[1]);
++	if (child_pid > 0)
++	{
++		pid_t		result;
++
++		do
++			result = waitpid(child_pid, &child_status, 0);
++		while (result < 0 && errno == EINTR);
++		if (detail[0] == '\0' &&
++			(result != child_pid || !WIFEXITED(child_status) ||
++			 WEXITSTATUS(child_status) != 0))
++			strlcpy(detail, "The flock() inheritance test process failed.",
++					sizeof(detail));
++	}
++
++	if (detail[0] != '\0')
++		ereport(FATAL,
++				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
++				 errmsg("file data directory locking is not supported on this file system"),
++				 errdetail_internal("%s", detail)));
++}
++
++/*
++ * Unmap and remove the file shim.  dsm_postmaster_shutdown() is registered
++ * after this callback, so it runs first and clears the DSM control handle.
++ */
++static void
++FileShmemDelete(int status, Datum arg)
++{
++	PGFileSharedMemoryDetach();
++
++	if (unlink(FILE_SHMEM_PATH) != 0 && errno != ENOENT)
++		elog(LOG, "could not remove shared memory file \"%s\": %m",
++			 FILE_SHMEM_PATH);
++}
++
++/* Report an invalid old shim without changing or removing it. */
++static void
++FileShmemInvalid(const char *detail)
++{
++	ereport(FATAL,
++			(errcode(ERRCODE_DATA_CORRUPTED),
++			 errmsg("pre-existing shared memory file \"%s\" is invalid",
++					FILE_SHMEM_PATH),
++			 errdetail_internal("%s", detail),
++			 errhint("Remove the file only after verifying that no old server processes remain.")));
++}
++
++#endif
++
++/*
++ * Detach this process from the mapped file shim.  In the postmaster this is
++ * called by FileShmemDelete, after DSM shutdown has cleared dsm_control.
++ */
++void
++PGFileSharedMemoryDetach(void)
++{
++#ifdef USE_FILE_SHMEM
++	if (FileShmem != NULL)
++	{
++		if (munmap(FileShmem, sizeof(PGShmemHeader)) != 0)
++			elog(LOG, "could not unmap shared memory file \"%s\": %m",
++				 FILE_SHMEM_PATH);
++		FileShmem = NULL;
++	}
++
++	if (FileShmemFD >= 0)
++	{
++		int			fd = FileShmemFD;
++
++		FileShmemFD = -1;
++		if (CloseTransientFile(fd) != 0)
++			elog(LOG, "could not close shared memory file \"%s\": %m",
++				 FILE_SHMEM_PATH);
++	}
++#endif
++}
++
++/*
++ * Refuse to use the SysV interlock while a file-mode shim remains.  A clean
++ * file-mode shutdown removes the shim, so its presence might mean that
++ * orphaned server processes still hold the file lock.  Check this before
++ * postmaster.pid, since CreateLockFile() can remove a stale pidfile.
++ *
++ * Use lstat() so that any directory entry at this path fails closed, including
++ * a corrupt file or dangling symlink that cannot be validated as a shim.
++ */
++void
++PGFileSharedMemoryCheck(void)
++{
++#ifndef WIN32
++	struct stat statbuf;
++
++	if (lstat(FILE_SHMEM_PATH, &statbuf) == 0)
++		ereport(FATAL,
++				(errcode(ERRCODE_LOCK_FILE_EXISTS),
++				 errmsg("pre-existing shared memory file \"%s\" exists",
++						FILE_SHMEM_PATH),
++				 errhint("Restart the old server with \"data_directory_lock_type\" set to \"file\" and shut it down cleanly, or remove the file only after verifying that no old server processes remain.")));
++	else if (errno != ENOENT)
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not stat shared memory file \"%s\": %m",
++						FILE_SHMEM_PATH)));
++#endif
++}
++
++/*
++ * Lock the data directory.  Callers have already changed into DataDir, which
++ * avoids pathname replacement races.  Always flock() the directory inode.
++ * Where available, also use an OFD write lock on a persistent regular file; a
++ * write lock requires a descriptor open for writing, while directories cannot
++ * generally be opened that way.
++ */
++void
++PGFileLockDataDirectory(void)
++{
++#ifdef WIN32
++	ereport(FATAL,
++			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
++			 errmsg("file data directory locking is not supported on Windows")));
++#elif defined(EXEC_BACKEND)
++	ereport(FATAL,
++			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
++			 errmsg("file data directory locking is not supported in EXEC_BACKEND builds")));
++#elif !defined(USE_FILE_SHMEM)
++	ereport(FATAL,
++			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
++			 errmsg("file data directory locking is not supported by this build"),
++			 errdetail("PostgreSQL was built without flock().")));
++#else
++	int			lock_errno;
++
++	if (shared_memory_type != SHMEM_TYPE_MMAP)
++		ereport(FATAL,
++				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
++				 errmsg("file data directory locking requires \"shared_memory_type\" to be \"mmap\"")));
++
++	Assert(DataDirLockFD < 0);
++
++#if defined(HAVE_DECL_F_OFD_SETLK) && HAVE_DECL_F_OFD_SETLK
++	Assert(DataDirOFDLockFD < 0);
++#endif
++
++	DataDirLockFD = open(".", O_RDONLY | O_CLOEXEC);
++	if (DataDirLockFD < 0)
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not open data directory \"%s\": %m",
++						DataDir)));
++	ReserveExternalFD();
++
++	if (flock(DataDirLockFD, LOCK_EX | LOCK_NB) == 0)
++		lock_errno = 0;
++	else
++		lock_errno = errno;
++
++	if (lock_errno == 0)
++		DataDirLockVerifyInheritance();
++
++#if defined(HAVE_DECL_F_OFD_SETLK) && HAVE_DECL_F_OFD_SETLK
++	if (lock_errno == 0)
++	{
++		struct flock lock;
++
++		DataDirOFDLockFD = open(FILE_LOCK_PATH,
++								O_RDWR | O_CREAT | O_CLOEXEC,
++								pg_file_create_mode);
++		if (DataDirOFDLockFD < 0)
++			ereport(FATAL,
++					(errcode_for_file_access(),
++					 errmsg("could not open data directory lock file \"%s\": %m",
++							FILE_LOCK_PATH)));
++		ReserveExternalFD();
++
++		memset(&lock, 0, sizeof(lock));
++		lock.l_type = F_WRLCK;
++		lock.l_whence = SEEK_SET;
++		if (fcntl(DataDirOFDLockFD, F_OFD_SETLK, &lock) == 0)
++			lock_errno = 0;
++		else
++			lock_errno = errno;
++	}
++#endif
++
++	if (lock_errno != 0)
++	{
++		PGFileCloseDataDirectoryLock();
++		errno = lock_errno;
++		if (lock_errno == EACCES || lock_errno == EAGAIN
++#if defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN
++			|| lock_errno == EWOULDBLOCK
++#endif
++			)
++			ereport(FATAL,
++					(errcode(ERRCODE_LOCK_FILE_EXISTS),
++					 errmsg("data directory \"%s\" is already locked",
++							DataDir),
++					 errhint("Terminate any old server processes associated with this data directory.")));
++		else
++			ereport(FATAL,
++					(errcode_for_file_access(),
++					 errmsg("could not lock data directory \"%s\": %m",
++							DataDir)));
++	}
++
++	on_proc_exit(DataDirLockClose, 0);
++#endif
++}
++
++#ifdef USE_FILE_SHMEM
++
++/*
++ * Create anonymous main shared memory and a mapped, persistent header shim.
++ */
++PGShmemHeader *
++PGFileSharedMemoryCreate(Size size, PGShmemHeader **shim)
++{
++	void	   *main_shmem;
++	PGShmemHeader *hdr;
++	struct stat datadir_stat;
++	struct stat file_stat;
++	bool		same_datadir;
++	int			fd;
++
++	Assert(data_directory_lock_type == DATA_DIRECTORY_LOCK_FILE);
++	Assert(shared_memory_type == SHMEM_TYPE_MMAP);
++	Assert(DataDirLockFD >= 0);
++	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
++
++	/* Complain if hugepages demanded but we can't possibly support them */
++#if !defined(MAP_HUGETLB)
++	if (huge_pages == HUGE_PAGES_ON)
++		ereport(ERROR,
++				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
++				 errmsg("huge pages not supported on this platform")));
++#endif
++
++	if (fstat(DataDirLockFD, &datadir_stat) != 0)
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not stat locked data directory \"%s\": %m",
++						DataDir)));
++
++	/* Use the same anonymous mmap implementation as the SysV interlock. */
++	main_shmem = PGSharedMemoryCreateAnonymous(&size);
++
++	/*
++	 * Recycle a crash-left shim only after validating every field used to
++	 * interpret it.  Device and inode numbers can change after a reboot or
++	 * remount, and copied data directories retain the source values, so an
++	 * identity mismatch does not by itself make the shim invalid.
++	 */
++	fd = OpenTransientFile(FILE_SHMEM_PATH, O_RDONLY | O_CLOEXEC);
++	if (fd >= 0)
++	{
++		PGShmemHeader oldhdr;
++		ssize_t		read_result;
++
++		if (fstat(fd, &file_stat) != 0)
++			ereport(FATAL,
++					(errcode_for_file_access(),
++					 errmsg("could not stat shared memory file \"%s\": %m",
++							FILE_SHMEM_PATH)));
++		if (file_stat.st_size != (off_t) sizeof(PGShmemHeader))
++			FileShmemInvalid("The file has an unexpected size.");
++
++		read_result = pg_pread(fd, &oldhdr, sizeof(oldhdr), 0);
++		if (read_result < 0)
++			ereport(FATAL,
++					(errcode_for_file_access(),
++					 errmsg("could not read shared memory file \"%s\": %m",
++							FILE_SHMEM_PATH)));
++		if (read_result != sizeof(oldhdr))
++			FileShmemInvalid("The file could not be read completely.");
++
++		if (oldhdr.magic != PGShmemMagic)
++			FileShmemInvalid("The file has an invalid magic number.");
++		if (oldhdr.freeoffset != MAXALIGN(sizeof(PGShmemHeader)) ||
++			oldhdr.totalsize <= oldhdr.freeoffset)
++			FileShmemInvalid("The file has invalid shared memory size information.");
++
++		same_datadir = oldhdr.device == datadir_stat.st_dev &&
++			oldhdr.inode == datadir_stat.st_ino;
++
++		/*
++		 * A foreign shim can name global POSIX or System V DSM objects owned
++		 * by a still-running source cluster.  Do not follow its control
++		 * handle. Mmap DSM files need no special treatment here, since
++		 * startup removes them by scanning the locked data directory.
++		 */
++		if (same_datadir && oldhdr.dsm_control != 0)
++			dsm_cleanup_using_control_segment(oldhdr.dsm_control);
++
++		if (CloseTransientFile(fd) != 0)
++			ereport(FATAL,
++					(errcode_for_file_access(),
++					 errmsg("could not close shared memory file \"%s\": %m",
++							FILE_SHMEM_PATH)));
++		if (unlink(FILE_SHMEM_PATH) != 0)
++			ereport(FATAL,
++					(errcode_for_file_access(),
++					 errmsg("could not remove shared memory file \"%s\": %m",
++							FILE_SHMEM_PATH)));
++	}
++	else if (errno != ENOENT)
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not open shared memory file \"%s\": %m",
++						FILE_SHMEM_PATH)));
++
++	fd = OpenTransientFile(FILE_SHMEM_PATH,
++						   O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC);
++	if (fd < 0)
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not create shared memory file \"%s\": %m",
++						FILE_SHMEM_PATH)));
++	{
++		ssize_t		write_result;
++
++		write_result = pg_pwrite_zeros(fd, sizeof(PGShmemHeader), 0);
++		if (write_result != (ssize_t) sizeof(PGShmemHeader))
++		{
++			int			save_errno = write_result < 0 ? errno : ENOSPC;
++
++			CloseTransientFile(fd);
++			unlink(FILE_SHMEM_PATH);
++			errno = save_errno;
++			ereport(FATAL,
++					(errcode_for_file_access(),
++					 errmsg("could not allocate shared memory file \"%s\": %m",
++							FILE_SHMEM_PATH)));
++		}
++	}
++
++	hdr = mmap(NULL, sizeof(PGShmemHeader), PROT_READ | PROT_WRITE,
++			   MAP_SHARED, fd, 0);
++	if (hdr == MAP_FAILED)
++	{
++		int			save_errno = errno;
++
++		CloseTransientFile(fd);
++		unlink(FILE_SHMEM_PATH);
++		errno = save_errno;
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not map shared memory file \"%s\": %m",
++						FILE_SHMEM_PATH)));
++	}
++
++	FileShmem = hdr;
++	FileShmemFD = fd;
++	on_shmem_exit(FileShmemDelete, 0);
++
++	hdr->creatorPID = getpid();
++	hdr->magic = PGShmemMagic;
++	hdr->totalsize = size;
++	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
++	hdr->dsm_control = 0;
++	hdr->device = datadir_stat.st_dev;
++	hdr->inode = datadir_stat.st_ino;
++
++	*shim = hdr;
++	AddToDataDirLockFile(LOCK_FILE_LINE_SHMEM_KEY, "");
++	memcpy(main_shmem, hdr, sizeof(PGShmemHeader));
++
++	return (PGShmemHeader *) main_shmem;
++}
++
++/*
++ * Make the completed file shim durable and release its descriptor.  The DSM
++ * control handle is filled in after PGFileSharedMemoryCreate() returns, so
++ * this must be called only after dynamic shared memory has been initialized.
++ */
++void
++PGFileSharedMemorySync(void)
++{
++	int			fd;
++
++	Assert(FileShmem != NULL);
++	Assert(FileShmemFD >= 0);
++
++	/*
++	 * Flush the mapping explicitly for portability, then fsync the descriptor
++	 * to make the allocation metadata durable too.  Like other PostgreSQL
++	 * durability operations, both steps honor fsync=off.
++	 */
++	if (enableFsync &&
++		msync(FileShmem, sizeof(PGShmemHeader), MS_SYNC) != 0)
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not sync shared memory file \"%s\": %m",
++						FILE_SHMEM_PATH)));
++	if (pg_fsync(FileShmemFD) != 0)
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not sync shared memory file \"%s\": %m",
++						FILE_SHMEM_PATH)));
++
++	fd = FileShmemFD;
++	FileShmemFD = -1;
++	if (CloseTransientFile(fd) != 0)
++		ereport(FATAL,
++				(errcode_for_file_access(),
++				 errmsg("could not close shared memory file \"%s\": %m",
++						FILE_SHMEM_PATH)));
++}
++
++#else
++
++PGShmemHeader *
++PGFileSharedMemoryCreate(Size size, PGShmemHeader **shim)
++{
++	elog(FATAL, "file shared memory creation is not supported by this build");
++	pg_unreachable();
++}
++
++void
++PGFileSharedMemorySync(void)
++{
++	elog(FATAL, "file shared memory creation is not supported by this build");
++}
++
++#endif
+diff --git a/src/backend/port/meson.build b/src/backend/port/meson.build
+index 09d54e01d13..1e9eeaf1672 100644
+--- a/src/backend/port/meson.build
++++ b/src/backend/port/meson.build
+@@ -2,6 +2,7 @@
+ 
+ backend_sources += files(
+   'atomics.c',
++  'file_shmem.c',
+ )
+ 
+ 
+diff --git a/src/backend/port/sysv_shmem.c b/src/backend/port/sysv_shmem.c
+index 197926d44f6..7d67e253d45 100644
+--- a/src/backend/port/sysv_shmem.c
++++ b/src/backend/port/sysv_shmem.c
+@@ -684,6 +684,26 @@ AnonymousShmemDetach(int status, Datum arg)
+ 	}
+ }
+ 
++/*
++ * Allocate the anonymous main shared memory segment.
++ *
++ * This is also used by the file-based data directory interlock.  Keep the
++ * allocation and cleanup behavior identical in both paths.
++ */
++void *
++PGSharedMemoryCreateAnonymous(Size *size)
++{
++	Assert(AnonymousShmem == NULL);
++
++	AnonymousShmem = CreateAnonymousSegment(size);
++	AnonymousShmemSize = *size;
++
++	/* Register on-exit routine to unmap the anonymous segment. */
++	on_shmem_exit(AnonymousShmemDetach, (Datum) 0);
++
++	return AnonymousShmem;
++}
++
+ /*
+  * PGSharedMemoryCreate
+  *
+@@ -736,11 +756,7 @@ PGSharedMemoryCreate(Size size,
+ 
+ 	if (shared_memory_type == SHMEM_TYPE_MMAP)
+ 	{
+-		AnonymousShmem = CreateAnonymousSegment(&size);
+-		AnonymousShmemSize = size;
+-
+-		/* Register on-exit routine to unmap the anonymous segment */
+-		on_shmem_exit(AnonymousShmemDetach, (Datum) 0);
++		PGSharedMemoryCreateAnonymous(&size);
+ 
+ 		/* Now we need only allocate a minimal-sized SysV shmem block. */
+ 		sysvsize = sizeof(PGShmemHeader);
+@@ -969,6 +985,8 @@ PGSharedMemoryNoReAttach(void)
+ void
+ PGSharedMemoryDetach(void)
+ {
++	PGFileSharedMemoryDetach();
++
+ 	if (UsedShmemSegAddr != NULL)
+ 	{
+ 		if ((shmdt(UsedShmemSegAddr) < 0)
+diff --git a/src/backend/postmaster/launch_backend.c b/src/backend/postmaster/launch_backend.c
+index ae94cc99d31..5adc5627a79 100644
+--- a/src/backend/postmaster/launch_backend.c
++++ b/src/backend/postmaster/launch_backend.c
+@@ -259,6 +259,12 @@ postmaster_child_launch(BackendType child_type, int child_slot,
+ 		/* Close the postmaster's sockets */
+ 		ClosePostmasterPorts(child_type == B_LOGGER);
+ 
++		/*
++		 * Syslogger can outlive postmaster but does not protect database state.
++		 */
++		if (child_type == B_LOGGER)
++			PGFileCloseDataDirectoryLock();
++
+ 		/* Detangle from postmaster */
+ 		InitPostmasterChild();
+ 
+diff --git a/src/backend/storage/ipc/ipci.c b/src/backend/storage/ipc/ipci.c
+index 8d2b0f1193d..cc665bc6bd2 100644
+--- a/src/backend/storage/ipc/ipci.c
++++ b/src/backend/storage/ipc/ipci.c
+@@ -54,6 +54,7 @@
+ 
+ /* GUCs */
+ int			shared_memory_type = DEFAULT_SHARED_MEMORY_TYPE;
++int			data_directory_lock_type = DATA_DIRECTORY_LOCK_SYSV;
+ 
+ shmem_startup_hook_type shmem_startup_hook = NULL;
+ 
+@@ -213,7 +214,10 @@ CreateSharedMemoryAndSemaphores(void)
+ 	/*
+ 	 * Create the shmem segment
+ 	 */
+-	seghdr = PGSharedMemoryCreate(size, &shim);
++	if (data_directory_lock_type == DATA_DIRECTORY_LOCK_FILE)
++		seghdr = PGFileSharedMemoryCreate(size, &shim);
++	else
++		seghdr = PGSharedMemoryCreate(size, &shim);
+ 
+ 	/*
+ 	 * Make sure that huge pages are never reported as "unknown" while the
+@@ -241,6 +245,8 @@ CreateSharedMemoryAndSemaphores(void)
+ 
+ 	/* Initialize dynamic shared memory facilities. */
+ 	dsm_postmaster_startup(shim);
++	if (data_directory_lock_type == DATA_DIRECTORY_LOCK_FILE)
++		PGFileSharedMemorySync();
+ 
+ 	/*
+ 	 * Now give loadable modules a chance to set up their shmem allocations
+diff --git a/src/backend/utils/init/miscinit.c b/src/backend/utils/init/miscinit.c
+index df182577a19..39a69b59d35 100644
+--- a/src/backend/utils/init/miscinit.c
++++ b/src/backend/utils/init/miscinit.c
+@@ -1514,6 +1514,12 @@ CreateLockFile(const char *filename, bool amPostmaster,
+ void
+ CreateDataDirLockFile(bool amPostmaster)
+ {
++	/* Interlock-specific checks must precede inspection of postmaster.pid. */
++	if (data_directory_lock_type == DATA_DIRECTORY_LOCK_FILE)
++		PGFileLockDataDirectory();
++	else
++		PGFileSharedMemoryCheck();
++
+ 	CreateLockFile(DIRECTORY_LOCK_FILE, amPostmaster, "", true, DataDir);
+ }
+ 
+diff --git a/src/backend/utils/misc/guc_tables.c b/src/backend/utils/misc/guc_tables.c
+index 6b82a23435e..2058bc60b09 100644
+--- a/src/backend/utils/misc/guc_tables.c
++++ b/src/backend/utils/misc/guc_tables.c
+@@ -457,6 +457,14 @@ static const struct config_enum_entry shared_memory_options[] = {
+ 	{NULL, 0, false}
+ };
+ 
++static const struct config_enum_entry data_directory_lock_options[] = {
++	{"sysv", DATA_DIRECTORY_LOCK_SYSV, false},
++#ifdef USE_FILE_SHMEM
++	{"file", DATA_DIRECTORY_LOCK_FILE, false},
++#endif
++	{NULL, 0, false}
++};
++
+ static const struct config_enum_entry default_toast_compression_options[] = {
+ 	{"pglz", TOAST_PGLZ_COMPRESSION, false},
+ #ifdef  USE_LZ4
+@@ -5253,6 +5261,16 @@ struct config_enum ConfigureNamesEnum[] =
+ 		NULL, NULL, NULL
+ 	},
+ 
++	{
++		{"data_directory_lock_type", PGC_POSTMASTER, RESOURCES_MEM,
++			gettext_noop("Selects the data directory interlock implementation."),
++			NULL
++		},
++		&data_directory_lock_type,
++		DATA_DIRECTORY_LOCK_SYSV, data_directory_lock_options,
++		NULL, NULL, NULL
++	},
++
+ 	{
+ 		{"shared_memory_type", PGC_POSTMASTER, RESOURCES_MEM,
+ 			gettext_noop("Selects the shared memory implementation used for the main shared memory region."),
+diff --git a/src/backend/utils/misc/postgresql.conf.sample b/src/backend/utils/misc/postgresql.conf.sample
+index d91133dbd73..f96bc0ca8a5 100644
+--- a/src/backend/utils/misc/postgresql.conf.sample
++++ b/src/backend/utils/misc/postgresql.conf.sample
+@@ -146,6 +146,8 @@
+ #autovacuum_work_mem = -1		# min 64kB, or -1 to use maintenance_work_mem
+ #logical_decoding_work_mem = 64MB	# min 64kB
+ #max_stack_depth = 2MB			# min 100kB
++#data_directory_lock_type = sysv	# sysv, file
++					# (change requires restart)
+ #shared_memory_type = mmap		# the default is the first option
+ 					# supported by the operating system:
+ 					#   mmap
+diff --git a/src/bin/initdb/initdb.c b/src/bin/initdb/initdb.c
+index f1a6db1a532..7bc08ea270c 100644
+--- a/src/bin/initdb/initdb.c
++++ b/src/bin/initdb/initdb.c
+@@ -1616,7 +1616,6 @@ bootstrap_template1(void)
+ 	if (debug)
+ 		appendPQExpBufferStr(&cmd, " -d 5");
+ 
+-
+ 	PG_CMD_OPEN(cmd.data);
+ 
+ 	for (line = bki_lines; *line != NULL; line++)
+@@ -3109,8 +3108,9 @@ initialize_data_directory(void)
+ 	fflush(stdout);
+ 
+ 	initPQExpBuffer(&cmd);
+-	printfPQExpBuffer(&cmd, "\"%s\" %s %s template1 >%s",
+-					  backend_exec, backend_options, extra_options, DEVNULL);
++	printfPQExpBuffer(&cmd, "\"%s\" %s %s",
++					  backend_exec, backend_options, extra_options);
++	appendPQExpBuffer(&cmd, " template1 >%s", DEVNULL);
+ 
+ 	PG_CMD_OPEN(cmd.data);
+ 
+diff --git a/src/bin/initdb/t/001_initdb.pl b/src/bin/initdb/t/001_initdb.pl
+index b7ef7ed8d06..950717dd1dc 100644
+--- a/src/bin/initdb/t/001_initdb.pl
++++ b/src/bin/initdb/t/001_initdb.pl
+@@ -48,15 +48,14 @@ mkdir $datadir;
+ 	delete $ENV{TZ};
+ 
+ 	# while we are here, also exercise --text-search-config and --set options
+-	command_ok(
+-		[
+-			'initdb', '--no-sync',
+-			'--text-search-config' => 'german',
+-			'--set' => 'default_text_search_config=german',
+-			'--waldir' => $xlogdir,
+-			$datadir
+-		],
+-		'successful creation');
++	my @options = (
++		'initdb', '--no-sync',
++		'--text-search-config' => 'german',
++		'--set' => 'default_text_search_config=german');
++
++	push @options, '--waldir' => $xlogdir, $datadir;
++
++	command_ok(\@options, 'successful creation');
+ 
+ 	# Permissions on PGDATA should be default
+   SKIP:
+@@ -69,6 +68,29 @@ mkdir $datadir;
+ 	}
+ }
+ 
++my $supports_file_lock = supports_file_shmem(
++	check_pg_config("#define EXEC_BACKEND 1") ? 'on' : 'off');
++
++# A build-time flock() check cannot determine whether the data directory file
++# system preserves locks across fork(), so probe the file-mode startup path.
++if ($supports_file_lock)
++{
++	my ($stdout, $stderr);
++
++	$supports_file_lock = IPC::Run::run(
++		[
++			'postgres', '--check', '-D' => $datadir,
++			'-c' => 'data_directory_lock_type=file',
++			'-c' => 'shared_memory_type=mmap'
++		],
++		'>' => \$stdout,
++		'2>' => \$stderr);
++	like($stderr,
++		qr/file data directory locking is not supported on this file system/,
++		'file locking reports unsupported filesystem operation')
++	  unless $supports_file_lock;
++}
++
+ # Control file should tell that data checksums are enabled by default.
+ command_like(
+ 	[ 'pg_controldata', $datadir ],
+@@ -102,11 +124,33 @@ SKIP:
+ 	# Init a new db with group access
+ 	my $datadir_group = "$tempdir/data_group";
+ 
+-	command_ok([ 'initdb', '--allow-group-access', $datadir_group ],
++	my @options = ('initdb', '--allow-group-access');
++
++	# Exercise file locking in this existing successful initdb invocation.  The
++	# mixed-case earlier value verifies that the final --set value wins.
++	push @options,
++	  '--set' => 'shared_memory_type=mmap',
++	  '--set' => 'dynamic_shared_memory_type=mmap',
++	  '--set' => 'DATA_DIRECTORY_LOCK_TYPE=sysv',
++	  '--set' => 'data_directory_lock_type=file'
++	  if $supports_file_lock;
++	push @options, $datadir_group;
++
++	command_ok(\@options,
+ 		'successful creation with group access');
+ 
+ 	ok(check_mode_recursive($datadir_group, 0750, 0640),
+ 		'check PGDATA permissions');
++
++	if ($supports_file_lock)
++	{
++		like(
++			slurp_file("$datadir_group/postgresql.conf"),
++			qr/^data_directory_lock_type\s*=\s*file(?:\s+#.*)?$/m,
++			'final data directory lock type written to configuration');
++		ok(!-e "$datadir_group/pg_dynshmem/postmaster.shmem",
++			'bootstrap shared memory header removed');
++	}
+ }
+ 
+ # Locale provider tests
+diff --git a/src/include/pg_config.h.in b/src/include/pg_config.h.in
+index 14833363dd9..f7d9af911b1 100644
+--- a/src/include/pg_config.h.in
++++ b/src/include/pg_config.h.in
+@@ -83,6 +83,10 @@
+    don't. */
+ #undef HAVE_DECL_F_FULLFSYNC
+ 
++/* Define to 1 if you have the declaration of `F_OFD_SETLK', and to 0 if you
++   don't. */
++#undef HAVE_DECL_F_OFD_SETLK
++
+ /* Define to 1 if you have the declaration of
+    `LLVMCreateGDBRegistrationListener', and to 0 if you don't. */
+ #undef HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER
+@@ -146,6 +150,9 @@
+ /* Define to 1 if you have the `explicit_bzero' function. */
+ #undef HAVE_EXPLICIT_BZERO
+ 
++/* Define to 1 if you have the `flock' function. */
++#undef HAVE_FLOCK
++
+ /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
+ #undef HAVE_FSEEKO
+ 
+diff --git a/src/include/storage/pg_shmem.h b/src/include/storage/pg_shmem.h
+index 5f7d4b83a60..41a5463140e 100644
+--- a/src/include/storage/pg_shmem.h
++++ b/src/include/storage/pg_shmem.h
+@@ -26,6 +26,10 @@
+ 
+ #include "storage/dsm_impl.h"
+ 
++#if !defined(WIN32) && !defined(EXEC_BACKEND) && defined(HAVE_FLOCK)
++#define USE_FILE_SHMEM
++#endif
++
+ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
+ {
+ 	int32		magic;			/* magic # to identify Postgres segments */
+@@ -43,6 +47,7 @@ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
+ 
+ /* GUC variables */
+ extern PGDLLIMPORT int shared_memory_type;
++extern PGDLLIMPORT int data_directory_lock_type;
+ extern PGDLLIMPORT int huge_pages;
+ extern PGDLLIMPORT int huge_page_size;
+ extern PGDLLIMPORT int huge_pages_status;
+@@ -64,6 +69,13 @@ typedef enum
+ 	SHMEM_TYPE_MMAP,
+ }			PGShmemType;
+ 
++/* Possible values for data_directory_lock_type */
++typedef enum
++{
++	DATA_DIRECTORY_LOCK_SYSV,
++	DATA_DIRECTORY_LOCK_FILE,
++}			PGDataDirectoryLockType;
++
+ #ifndef WIN32
+ extern PGDLLIMPORT unsigned long UsedShmemSegID;
+ #else
+@@ -87,6 +99,14 @@ extern void PGSharedMemoryNoReAttach(void);
+ 
+ extern PGShmemHeader *PGSharedMemoryCreate(Size size,
+ 										   PGShmemHeader **shim);
++extern PGShmemHeader *PGFileSharedMemoryCreate(Size size,
++											   PGShmemHeader **shim);
++extern void PGFileSharedMemorySync(void);
++extern void PGFileSharedMemoryDetach(void);
++extern void *PGSharedMemoryCreateAnonymous(Size *size);
++extern void PGFileSharedMemoryCheck(void);
++extern void PGFileLockDataDirectory(void);
++extern void PGFileCloseDataDirectoryLock(void);
+ extern bool PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2);
+ extern void PGSharedMemoryDetach(void);
+ extern void GetHugePageSize(Size *hugepagesize, int *mmap_flags);
+diff --git a/src/test/perl/PostgreSQL/Test/Cluster.pm b/src/test/perl/PostgreSQL/Test/Cluster.pm
+index 2e31c23a6ac..ef1f3487853 100644
+--- a/src/test/perl/PostgreSQL/Test/Cluster.pm
++++ b/src/test/perl/PostgreSQL/Test/Cluster.pm
+@@ -1164,6 +1164,34 @@ sub start
+ 
+ =pod
+ 
++=item $node->poll_start()
++
++Retry startup while the operating system finishes delivering postmaster and
++backend death.  If all retry attempts fail, make one final attempt that bails
++out on failure.
++
++=cut
++
++sub poll_start
++{
++	my ($self) = @_;
++	my $attempts = 0;
++	my $max_attempts =
++	  10 * $PostgreSQL::Test::Utils::timeout_default;
++
++	while ($attempts++ < $max_attempts)
++	{
++		return 1 if $self->start(fail_ok => 1);
++		usleep(100_000);
++		$self->stop('fast', fail_ok => 1);
++	}
++
++	$self->start;
++	return 1;
++}
++
++=pod
++
+ =item $node->kill9()
+ 
+ Send SIGKILL (signal 9) to the postmaster.
+diff --git a/src/test/perl/PostgreSQL/Test/Utils.pm b/src/test/perl/PostgreSQL/Test/Utils.pm
+index 3aa3ec1892a..b91e58d95c2 100644
+--- a/src/test/perl/PostgreSQL/Test/Utils.pm
++++ b/src/test/perl/PostgreSQL/Test/Utils.pm
+@@ -71,6 +71,7 @@ our @EXPORT = qw(
+   check_mode_recursive
+   chmod_recursive
+   check_pg_config
++  supports_file_shmem
+   compare_files
+   dir_symlink
+   scan_server_header
+@@ -780,6 +781,25 @@ sub check_pg_config
+ 
+ =pod
+ 
++=item supports_file_shmem(debug_exec_backend)
++
++Return whether this build can support file-backed shared memory, given the
++value of C<debug_exec_backend>.  This does not test whether the filesystem
++used by a particular data directory supports the required locking semantics.
++
++=cut
++
++sub supports_file_shmem
++{
++	my ($debug_exec_backend) = @_;
++
++	return !$windows_os
++	  && $debug_exec_backend eq 'off'
++	  && check_pg_config("#define HAVE_FLOCK 1");
++}
++
++=pod
++
+ =item compare_files(file1, file2, testname)
+ 
+ Check that two files match, printing the difference if any.
+diff --git a/src/test/recovery/meson.build b/src/test/recovery/meson.build
+index 52993c32dbb..4c9347c36d6 100644
+--- a/src/test/recovery/meson.build
++++ b/src/test/recovery/meson.build
+@@ -56,7 +56,8 @@ tests += {
+       't/045_archive_restartpoint.pl',
+       't/046_checkpoint_logical_slot.pl',
+       't/047_checkpoint_physical_slot.pl',
+-      't/048_vacuum_horizon_floor.pl'
++      't/048_vacuum_horizon_floor.pl',
++      't/057_file_shmem.pl',
+     ],
+   },
+ }
+diff --git a/src/test/recovery/t/017_shm.pl b/src/test/recovery/t/017_shm.pl
+index c73aa3f0c2c..e6544c3b1a6 100644
+--- a/src/test/recovery/t/017_shm.pl
++++ b/src/test/recovery/t/017_shm.pl
+@@ -67,7 +67,7 @@ log_ipcs();
+ # Upon postmaster death, postmaster children exit automatically.
+ $gnat->kill9;
+ log_ipcs();
+-poll_start($gnat);    # gnat recycles its former shm key.
++$gnat->poll_start();    # gnat recycles its former shm key.
+ log_ipcs();
+ 
+ note "removing the conflicting shmem ...";
+@@ -82,7 +82,7 @@ log_ipcs();
+ # the higher-keyed segment that the previous postmaster was using.
+ # That's not great, but key collisions should be rare enough to not
+ # make this a big problem.
+-poll_start($gnat);
++$gnat->poll_start();
+ log_ipcs();
+ $gnat->stop;
+ log_ipcs();
+@@ -174,7 +174,7 @@ $slow_client->finish;    # client has detected backend termination
+ log_ipcs();
+ 
+ # now startup should work
+-poll_start($gnat);
++$gnat->poll_start();
+ log_ipcs();
+ 
+ # finish testing
+@@ -182,35 +182,4 @@ $gnat->stop;
+ log_ipcs();
+ 
+ 
+-# We may need retries to start a new postmaster.  Causes:
+-# - kernel is slow to deliver SIGKILL
+-# - postmaster parent is slow to waitpid()
+-# - postmaster child is slow to exit in response to SIGQUIT
+-# - postmaster child is slow to exit after postmaster death
+-sub poll_start
+-{
+-	my ($node) = @_;
+-
+-	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
+-	my $attempts = 0;
+-
+-	while ($attempts < $max_attempts)
+-	{
+-		$node->start(fail_ok => 1) && return 1;
+-
+-		# Wait 0.1 second before retrying.
+-		usleep(100_000);
+-
+-		# Clean up in case the start attempt just timed out or some such.
+-		$node->stop('fast', fail_ok => 1);
+-
+-		$attempts++;
+-	}
+-
+-	# Try one last time without fail_ok, which will BAIL_OUT unless it
+-	# succeeds.
+-	$node->start && return 1;
+-	return 0;
+-}
+-
+ done_testing();
+diff --git a/src/test/recovery/t/057_file_shmem.pl b/src/test/recovery/t/057_file_shmem.pl
+new file mode 100644
+index 00000000000..72bf3125d19
+--- /dev/null
++++ b/src/test/recovery/t/057_file_shmem.pl
+@@ -0,0 +1,349 @@
++# Copyright (c) 2026, PostgreSQL Global Development Group
++
++# Tests of the file-based data directory interlock.
++
++use strict;
++use warnings FATAL => 'all';
++use Fcntl qw(LOCK_EX LOCK_NB);
++use File::stat qw(stat);
++use IPC::Run;
++use PostgreSQL::Test::Cluster;
++use PostgreSQL::Test::Utils;
++use Test::More;
++use Time::HiRes qw(time usleep);
++
++my $has_ofd_lock =
++  check_pg_config("#define HAVE_DECL_F_OFD_SETLK 1");
++
++my $header_name = 'pg_dynshmem/postmaster.shmem';
++my $lock_error = qr/data directory .* is already locked/;
++my $existing_header = qr/pre-existing shared memory file .* exists/;
++
++# The unchanged default continues to use the traditional interlock.
++my $default = PostgreSQL::Test::Cluster->new('default_lock');
++$default->init;
++$default->start;
++is($default->safe_psql('postgres', 'SHOW data_directory_lock_type'),
++	'sysv', 'default lock type is sysv');
++my $supports_file_lock = supports_file_shmem(
++	check_pg_config("#define EXEC_BACKEND 1") ? 'on' : 'off');
++is(
++	$default->safe_psql(
++		'postgres',
++		q{SELECT enumvals @> ARRAY['file'] FROM pg_settings WHERE name = 'data_directory_lock_type'}),
++	$supports_file_lock ? 't' : 'f',
++	'file lock type is advertised only when supported');
++ok(!-e $default->data_dir . "/$header_name",
++	'file shared memory header absent in default mode');
++$default->stop;
++
++command_fails_like(
++	[
++		'postgres', '--check', '-D' => $default->data_dir,
++		'-c' => 'data_directory_lock_type=invalid'
++	],
++	qr/invalid value for parameter "data_directory_lock_type": "invalid"/,
++	'invalid lock type is rejected');
++
++if (!$supports_file_lock)
++{
++	command_fails_like(
++		[
++			'postgres', '--check', '-D' => $default->data_dir,
++			'-c' => 'data_directory_lock_type=file'
++		],
++		qr/invalid value for parameter "data_directory_lock_type": "file"/,
++		'file locking reports an unsupported build');
++	done_testing();
++	exit;
++}
++
++command_fails_like(
++	[
++		'postgres', '--check', '-D' => $default->data_dir,
++		'-c' => 'data_directory_lock_type=file',
++		'-c' => 'shared_memory_type=sysv'
++	],
++	qr/file data directory locking requires "shared_memory_type" to be "mmap"/,
++	'file locking rejects SysV main shared memory');
++
++# PostgreSQL's mmap huge page support is currently Linux-only.  File mode
++# should reject a demand for huge pages cleanly on other supported systems.
++if ($^O ne 'linux')
++{
++	command_fails_like(
++		[
++			'postgres', '--check', '-D' => $default->data_dir,
++			'-c' => 'data_directory_lock_type=file',
++			'-c' => 'shared_memory_type=mmap',
++			'-c' => 'huge_pages=on'
++		],
++		qr/huge pages not supported on this platform/,
++		'file locking rejects unsupported huge pages');
++}
++
++my $node = PostgreSQL::Test::Cluster->new('file_lock');
++$node->init;
++$node->append_conf(
++	'postgresql.conf', qq(
++data_directory_lock_type = file
++shared_memory_type = mmap
++dynamic_shared_memory_type = mmap
++logging_collector = on
++));
++
++my $header = $node->data_dir . "/$header_name";
++
++# If the build has locking primitives but this filesystem rejects the runtime
++# operation, verify the targeted failure and finish the platform test here.
++if (!$node->start(fail_ok => 1))
++{
++	like(slurp_file($node->logfile),
++		qr/file data directory locking is not supported on this file system/,
++		'file locking reports unsupported filesystem operation');
++	done_testing();
++	exit;
++}
++
++is($node->safe_psql('postgres',
++		'SELECT current_setting(\'data_directory_lock_type\'), '
++		  . 'current_setting(\'shared_memory_type\'), '
++		  . 'current_setting(\'dynamic_shared_memory_type\')'),
++	'file|mmap|mmap', 'file mode accepts queries with mmap memory');
++ok(-e $header, 'file shared memory header exists while running');
++open(my $directory_lock, '<', $node->data_dir)
++  or die "could not open data directory: $!";
++ok(!flock($directory_lock, LOCK_EX | LOCK_NB),
++	'running server holds an external directory flock');
++close($directory_lock) or die "could not close data directory: $!";
++my @pidfile = split(/\n/, slurp_file($node->data_dir . '/postmaster.pid'), -1);
++is($pidfile[6], '', 'postmaster.pid shared memory line is empty');
++$node->stop;
++ok(!-e $header, 'file shared memory header removed after clean stop');
++$node->start;
++is($node->safe_psql('postgres', 'SELECT 1'), '1',
++	'collector-enabled file-mode server restarts without retry');
++$node->stop;
++ok(!-e $header, 'immediately restarted server removes header');
++
++symlink('missing-postmaster.shmem', $header)
++  or die "could not create dangling shim symlink $header: $!";
++command_fails_like(
++	[
++		'postgres', '--single', '-D' => $node->data_dir,
++		'-c' => 'data_directory_lock_type=sysv', 'template1'
++	],
++	$existing_header,
++	'SysV startup rejects non-regular file-mode shim');
++unlink($header) or die "could not remove dangling shim symlink $header: $!";
++
++$node->append_conf('postgresql.conf', 'data_directory_lock_type = sysv');
++$node->start;
++is($node->safe_psql('postgres', 'SHOW data_directory_lock_type'),
++	'sysv', 'clean shutdown permits switch from file mode to SysV');
++ok(!-e $header, 'file shared memory header remains absent in SysV mode');
++$node->stop;
++$node->append_conf('postgresql.conf', 'data_directory_lock_type = file');
++
++$node->start;
++ok(-e $header, 'file shared memory header recreated on restart');
++is($node->safe_psql('postgres', 'SELECT 1'), '1',
++	'restarted file-mode server accepts queries');
++$node->stop;
++ok(!-e $header, 'restarted server removes header after clean stop');
++
++# A corrupt crash-left header must fail closed and remain in place.  Preserve
++# the original bytes so the same node can subsequently prove valid recovery.
++$node->start;
++my $valid_header = slurp_file($header);
++$node->kill9;
++unlink($node->data_dir . '/postmaster.pid')
++  or die "could not remove postmaster.pid: $!";
++open(my $corrupt, '+<', $header) or die "could not open $header: $!";
++binmode($corrupt);
++print {$corrupt} "\0\0\0\0" or die "could not corrupt $header: $!";
++close($corrupt) or die "could not close $header: $!";
++my $corrupt_stat = stat($header) or die "could not stat $header: $!";
++
++command_fails_like(
++	[
++		'postgres', '--single', '-D' => $node->data_dir,
++		'-c' => 'data_directory_lock_type=sysv', 'template1'
++	],
++	$existing_header,
++	'SysV startup rejects corrupt file-mode shim');
++
++my $invalid_header = qr/pre-existing shared memory file .* is invalid/;
++{
++	my $attempts = 0;
++	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
++	while ($attempts++ < $max_attempts)
++	{
++		$node->start(fail_ok => 1);
++		last if slurp_file($node->logfile) =~ $invalid_header;
++		usleep(100_000);
++	}
++}
++like(slurp_file($node->logfile), $invalid_header,
++	'corrupt crash-left header is rejected');
++my $after_failure_stat = stat($header) or die "could not stat $header: $!";
++is($after_failure_stat->ino, $corrupt_stat->ino,
++	'corrupt header is not replaced');
++open(my $restore, '>', $header) or die "could not open $header: $!";
++binmode($restore);
++print {$restore} $valid_header or die "could not restore $header: $!";
++close($restore) or die "could not close $header: $!";
++
++# A copied crash-left cluster has a new data directory inode while its shim
++# retains the source identity.  It must start without following a possibly
++# foreign DSM control handle.
++$node->backup_fs_cold('crash_copy');
++my $copy = PostgreSQL::Test::Cluster->new('file_lock_copy');
++$copy->init_from_backup($node, 'crash_copy');
++isnt(stat($copy->data_dir)->ino, stat($node->data_dir)->ino,
++	'copied cluster has a different data directory identity');
++$copy->start;
++is($copy->safe_psql('postgres', 'SELECT 1'), '1',
++	'copied crash-left cluster accepts queries');
++$copy->stop;
++
++$node->poll_start();
++$node->stop;
++
++# Keep one connected backend stopped while killing the postmaster.  The END
++# guard prevents a failed assertion from leaking a stopped server process.
++my ($stopped_pid, $client);
++END
++{
++	if (defined($stopped_pid))
++	{
++		kill 'CONT', $stopped_pid;
++		kill 'KILL', $stopped_pid;
++	}
++	eval { $client->finish if defined($client); };
++}
++
++$node->start;
++my $sleep_query = 'SELECT pg_backend_pid(), pg_sleep(3600)';
++my ($stdout, $stderr);
++$client = IPC::Run::start(
++	[
++		'psql', '--no-psqlrc', '--quiet', '--no-align', '--tuples-only',
++		'--dbname' => $node->connstr('postgres'),
++		'--command' => $sleep_query
++	],
++	'<' => \undef,
++	'>' => \$stdout,
++	'2>' => \$stderr,
++	IPC::Run::timeout(5 * $PostgreSQL::Test::Utils::timeout_default));
++ok($node->poll_query_until(
++		'postgres',
++		"SELECT 1 FROM pg_stat_activity WHERE query = '$sleep_query'", '1'),
++	'connected backend started');
++$stopped_pid = $node->safe_psql('postgres',
++	"SELECT pid FROM pg_stat_activity WHERE query = '$sleep_query'");
++is(kill('STOP', $stopped_pid), 1, 'connected backend stopped');
++usleep(100_000);
++
++my $saved_header = $node->data_dir . '/pg_dynshmem/postmaster.shmem.saved';
++link($header, $saved_header) or die "could not link old header: $!";
++opendir(my $dh, $node->data_dir . '/pg_dynshmem')
++  or die "could not open pg_dynshmem: $!";
++my @stale_dsm = map { $node->data_dir . "/pg_dynshmem/$_" }
++  grep { /^mmap\./ } readdir($dh);
++closedir($dh);
++ok(@stale_dsm > 0, 'mmap DSM files exist before crash');
++
++$node->kill9;
++usleep(100_000);
++is(kill(0, $stopped_pid), 1,
++	'stopped backend survives postmaster death');
++if ($has_ofd_lock)
++{
++	my $lock_file = $node->data_dir . '/pg_dynshmem/postmaster.lock';
++
++	ok(-e $lock_file, 'OFD lock file survives postmaster death');
++	unlink($lock_file) or die "could not remove $lock_file: $!";
++	ok(!-e $lock_file, 'OFD lock file removed while backend survives');
++}
++$node->rotate_logfile;
++
++$node->append_conf('postgresql.conf', 'data_directory_lock_type = sysv');
++my $started = $node->start(fail_ok => 1);
++ok(!$started, 'SysV startup is rejected while file-mode shim remains');
++if ($started)
++{
++	$node->stop('immediate');
++	BAIL_OUT('SysV startup bypassed the file-mode interlock');
++}
++like(slurp_file($node->logfile), $existing_header,
++	'SysV startup reports crash-left file-mode shim');
++ok(-e $node->data_dir . '/postmaster.pid',
++	'failed SysV startup preserves stale postmaster.pid');
++my @stale_pidfile =
++  split(/\n/, slurp_file($node->data_dir . '/postmaster.pid'), -1);
++is($stale_pidfile[6], '',
++	'preserved postmaster.pid retains empty shared memory line');
++command_fails_like(
++	[
++		'postgres', '--single', '-D' => $node->data_dir,
++		'-c' => 'data_directory_lock_type=sysv', 'template1'
++	],
++	$existing_header,
++	'SysV single-user startup rejects crash-left file-mode shim');
++ok(-e $node->data_dir . '/postmaster.pid',
++	'failed single-user startup preserves stale postmaster.pid');
++
++$node->append_conf('postgresql.conf', 'data_directory_lock_type = file');
++unlink($node->data_dir . '/postmaster.pid')
++  or die "could not remove postmaster.pid: $!";
++$node->rotate_logfile;
++
++$started = $node->start(fail_ok => 1);
++ok(!$started, 'normal startup is rejected while backend survives');
++if ($started)
++{
++	$node->stop('immediate');
++	BAIL_OUT('normal startup acquired the inherited data directory lock');
++}
++like(slurp_file($node->logfile), $lock_error,
++	'normal startup reports lock inherited by backend');
++command_fails_like(
++	[
++		'postgres', '--single', '-D' => $node->data_dir,
++		'template1'
++	],
++	$lock_error,
++	'single-user startup detects lock inherited by backend');
++
++is(kill('KILL', $stopped_pid), 1, 'stopped backend killed');
++
++# Wait out asynchronous signal delivery to the backend, but not syslogger
++# shutdown.  Once the data-using child is gone, startup must not need retries.
++my $deadline = time() + $PostgreSQL::Test::Utils::timeout_default;
++while (kill(0, $stopped_pid) && time() < $deadline)
++{
++	usleep(1_000);
++}
++my $backend_gone = !kill(0, $stopped_pid);
++ok($backend_gone, 'stopped backend exited');
++BAIL_OUT('stopped backend did not exit') unless $backend_gone;
++$stopped_pid = undef;
++
++$node->start;
++$client->finish;
++$client = undef;
++ok(-e $saved_header, 'hard link preserves the old header identity');
++isnt(stat($header)->ino, stat($saved_header)->ino,
++	'old header identity was replaced');
++for my $stale (@stale_dsm)
++{
++	ok(!-e $stale, "removed stale mmap DSM file $stale");
++}
++is($node->safe_psql('postgres', 'SELECT 1'), '1',
++	'recovered file-mode server accepts queries');
++unlink($saved_header) or die "could not remove saved header: $!";
++$node->stop;
++ok(!-e $header, 'recovery header removed after clean stop');
++
++done_testing();
+-- 
+2.55.0
+
+

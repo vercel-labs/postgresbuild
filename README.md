@@ -61,6 +61,10 @@ testing uses the same hook:
 uv run ggbuild test dist/<target>/<version>/postgresql__*.tar.zst
 ```
 
+For PostgreSQL 16 through 18, the hook selects the file data-directory lock
+and mmap shared-memory modes so native tests do not require SysV IPC. Darwin
+builds of those versions also select named POSIX semaphores.
+
 Artifact tests require an exact architecture, OS, and libc host match. Docker
 nodes use the invoking UID/GID with a rootful daemon; rootless Docker keeps its
 mapped identity. Registry-backed CI containers also drop root before building

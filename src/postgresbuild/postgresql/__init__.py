@@ -119,6 +119,21 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
         work = test.get_temp_dir(self)
         data = work / "cluster"
         log = work / "postgres.log"
+        initdb_options = [
+            "--no-sync",
+            "--locale=C",
+            "--encoding=UTF8",
+        ]
+        major = int(self.source_version.split(".", maxsplit=1)[0])
+        if 16 <= major <= 18:
+            initdb_options.extend(
+                (
+                    "--set=data_directory_lock_type=file",
+                    "--set=shared_memory_type=mmap",
+                    "--set=dynamic_shared_memory_type=mmap",
+                )
+            )
+        initdb_args = " ".join(initdb_options)
 
         def quote(path: pathlib.Path) -> str:
             return shlex.quote(str(path))
@@ -142,8 +157,7 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             test -d "$root/share"
             mkdir -p "$socket"
 
-            "$root/bin/initdb" -D "$data" --no-sync \
-                --locale=C --encoding=UTF8
+            "$root/bin/initdb" -D "$data" {initdb_args}
             cleanup() {{
                 "$pg_ctl" -D "$data" stop -m immediate -w || true
                 rmdir "$socket" 2>/dev/null || true
@@ -206,6 +220,9 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
         self, build: targets.Build, wd: str | None = None
     ) -> packages.Args:
         env = super().get_configure_env(build, wd)
+        major = int(self.source_version.split(".", maxsplit=1)[0])
+        if 16 <= major <= 18 and build.target.triple.endswith("-apple-darwin"):
+            env["PREFERRED_SEMAPHORES"] = "NAMED_POSIX"
         build.sh_append_quoted_flags(env, "LIBS", ["-lintl"])
         return env
 
