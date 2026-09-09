@@ -714,6 +714,13 @@ def test_public_index_reads_blob_without_github(
     assert response.headers["cache-control"] == (
         "public, s-maxage=300, stale-while-revalidate=3600"
     )
+    head = TestClient(main.app).head("/versions.ndjson")
+    assert head.status_code == 200
+    assert head.content == b""
+    assert head.headers["content-type"].startswith("application/x-ndjson")
+    assert head.headers["cache-control"] == (
+        "public, s-maxage=300, stale-while-revalidate=3600"
+    )
 
 
 def test_versions_ndjson_groups_orders_and_advertises_primary_only(

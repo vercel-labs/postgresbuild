@@ -103,6 +103,7 @@ def get_index() -> Response:
     )
 
 
+@app.head("/versions.ndjson", response_class=Response)
 @app.get("/versions.ndjson", response_class=Response)
 def get_versions() -> Response:
     policy = PublicationPolicy.from_environment()

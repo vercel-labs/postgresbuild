@@ -80,7 +80,8 @@ identity to match the configured publication policy.
 After authentication, the workflow's ephemeral, read-scoped GitHub token is
 used to verify release assets through GitHub's API; it is not stored.
 Verified primary archives are copied to immutable public Vercel Blob paths.
-`/versions.ndjson` advertises stable service-owned ordered URL lists;
+`GET` and `HEAD` on `/versions.ndjson` advertise stable service-owned ordered
+URL lists;
 static 307 redirects send primary requests to GitHub and fallback requests to
 Blob without proxying archive bytes through a function. Consumers try URLs in
 order for network failures, HTTP 404/408/429, and 5xx responses, but treat a
