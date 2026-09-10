@@ -29,16 +29,41 @@ class VercelBlobStore:
     def public_url(self, path: str) -> str:
         return self._url(path)
 
+    def _api_headers(self) -> dict[str, str]:
+        return {
+            "authorization": f"Bearer {self.token}",
+            "x-api-blob-request-attempt": "0",
+            "x-api-blob-request-id": f"{self.store_id}:{uuid.uuid4().hex}",
+            "x-api-version": "12",
+            "x-vercel-blob-store-id": self.store_id,
+        }
+
     def _get(self, url: str) -> tuple[bytes, str]:
         separator = "&" if "?" in url else "?"
         value = get(f"{url}{separator}v={uuid.uuid4().hex}", token=self.token)
         return value.content, value.etag
 
+    def _strong_etag(self, url: str) -> str:
+        response = requests.get(
+            "https://vercel.com/api/blob",
+            params={"url": url},
+            headers=self._api_headers(),
+            timeout=30,
+        )
+        response.raise_for_status()
+        metadata = response.json()
+        etag = metadata.get("etag") if isinstance(metadata, dict) else None
+        if not isinstance(etag, str) or not etag or etag.startswith("W/"):
+            raise TypeError("Vercel Blob metadata response has no strong ETag")
+        return etag
+
     def get(self, path: str) -> tuple[bytes, str] | None:
+        url = self._url(path)
         try:
-            return self._get(self._url(path))
+            content, _ = self._get(url)
         except BlobNotFoundError:
             return None
+        return content, self._strong_etag(url)
 
     def _put(
         self,
@@ -51,17 +76,13 @@ class VercelBlobStore:
         # The Python SDK does not yet expose Blob's OIDC store-id or if-match
         # arguments. Match its wire protocol for these two options only.
         headers = {
-            "authorization": f"Bearer {self.token}",
+            **self._api_headers(),
             "content-type": "application/octet-stream",
             "x-add-random-suffix": "0",
             "x-allow-overwrite": "1" if overwrite else "0",
-            "x-api-blob-request-attempt": "0",
-            "x-api-blob-request-id": f"{self.store_id}:{uuid.uuid4().hex}",
-            "x-api-version": "12",
             "x-cache-control-max-age": "0",
             "x-content-type": "application/json",
             "x-vercel-blob-access": "public",
-            "x-vercel-blob-store-id": self.store_id,
         }
         if etag is not None:
             headers["x-if-match"] = etag
@@ -116,15 +137,7 @@ class VercelBlobStore:
                     "prefix": "snapshots/",
                     **({"cursor": cursor} if cursor is not None else {}),
                 },
-                headers={
-                    "authorization": f"Bearer {self.token}",
-                    "x-api-blob-request-attempt": "0",
-                    "x-api-blob-request-id": (
-                        f"{self.store_id}:{uuid.uuid4().hex}"
-                    ),
-                    "x-api-version": "12",
-                    "x-vercel-blob-store-id": self.store_id,
-                },
+                headers=self._api_headers(),
                 timeout=30,
             )
             response.raise_for_status()

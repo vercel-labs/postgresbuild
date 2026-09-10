@@ -648,6 +648,30 @@ def test_materialize_is_idempotent_retries_cas_and_rebuilds() -> None:
     )
 
 
+def test_materialize_rebuilds_stale_index_from_immutable_fragments() -> None:
+    store = MemoryBlob()
+    materialize(store, _snapshot(TAG), "2026-01-01T00:00:00Z", REPOSITORY)
+    second_tag = "202601020000"
+    second = publication.fragment(
+        _snapshot(second_tag, "18.1"), "2026-01-02T00:00:00Z"
+    )
+    store.put_immutable(f"snapshots/{second_tag}.json", canonical_json(second))
+
+    third_tag = "202601030000"
+    index = materialize(
+        store,
+        _snapshot(third_tag, "17.2"),
+        "2026-01-03T00:00:00Z",
+        REPOSITORY,
+    )
+
+    assert [snapshot["tag"] for snapshot in index["snapshots"]] == [
+        third_tag,
+        second_tag,
+        TAG,
+    ]
+
+
 def test_materialize_rejects_immutable_conflict_and_corrupt_index() -> None:
     store = MemoryBlob()
     tag = TAG

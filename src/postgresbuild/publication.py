@@ -776,26 +776,13 @@ def materialize(
     store.put_immutable(f"snapshots/{item['tag']}.json", payload)
     for _ in range(8):
         existing = store.get("index.json")
-        if existing is None:
-            fragments = [
-                validate_fragment(json.loads(raw), repository)
-                for raw in store.list_fragments()
-            ]
-            etag = None
-        else:
-            index = validate_index(json.loads(existing[0]), repository)
-            fragments = [
-                validate_fragment(
-                    {
-                        "format": "postgresbuild-snapshot-fragment-v1",
-                        **snapshot,
-                        "repository": repository,
-                    },
-                    repository,
-                )
-                for snapshot in index["snapshots"]
-            ]
-            etag = existing[1]
+        if existing is not None:
+            validate_index(json.loads(existing[0]), repository)
+        fragments = [
+            validate_fragment(json.loads(raw), repository)
+            for raw in store.list_fragments()
+        ]
+        etag = existing[1] if existing is not None else None
         by_tag = {
             fragment_value["tag"]: fragment_value
             for fragment_value in fragments
