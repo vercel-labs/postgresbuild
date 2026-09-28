@@ -237,7 +237,6 @@ def test_beta_release_uses_19_dependencies_and_patch_series() -> None:
         "pkgconfig",
         "predictable_install",
         "truncate_log",
-        "wsl1",
     }
     assert all(
         patch.path.stem.endswith("19beta4-20")
