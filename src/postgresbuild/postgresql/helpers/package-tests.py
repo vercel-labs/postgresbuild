@@ -95,6 +95,32 @@ def copy_ecpg_library(
         copy_file(source, destination / "lib" / shlib_major)
 
 
+def copy_regression_catalogs(
+    source: pathlib.Path,
+    build: pathlib.Path,
+    destination: pathlib.Path,
+) -> None:
+    directory = "src/test/regress"
+    if not (source / directory / "nls.mk").is_file():
+        return
+    catalog = make_value(build, directory, "CATALOG_NAME")
+    major = make_value(build, directory, "MAJORVERSION")
+    so_major = make_value(build, directory, "SO_MAJOR_VERSION")
+    languages = shlex.split(make_value(build, directory, "LANGUAGES"))
+    for value in (catalog, major, so_major, *languages):
+        if value and not re.fullmatch(r"[A-Za-z0-9_.@-]+", value):
+            raise ValueError(f"unsafe PostgreSQL catalog component: {value!r}")
+    for language in languages:
+        copy_file(
+            build / directory / "po" / f"{language}.mo",
+            destination
+            / "locale"
+            / language
+            / "LC_MESSAGES"
+            / f"{catalog}{so_major}-{major}.mo",
+        )
+
+
 def normalize_line_directives(path: pathlib.Path) -> None:
     content = path.read_text(encoding="utf-8")
     content = re.sub(
@@ -410,6 +436,10 @@ test_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 pgroot=${GGBUILD_POSTGRES_ROOT:?}
 work=${GGBUILD_TEST_WORK:?}
 mkdir -p "$work"
+if [ -d "$test_root/locale" ]; then
+    mkdir -p "$pgroot/share/locale"
+    cp -R "$test_root/locale/." "$pgroot/share/locale/"
+fi
 run() {
     driver=$1
     shift
@@ -457,6 +487,7 @@ def package(
     ):
         copy_ecpg_library(build, destination, directory)
     copy_suite_libraries(build, destination, "src/test/regress")
+    copy_regression_catalogs(source, build, destination)
     lines: list[str] = []
     for directory in suite_directories(build):
         install_suite(source, build, destination, directory, lines)

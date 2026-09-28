@@ -59,7 +59,7 @@ jobs:
       - name: Create canonical build plan
         run: >-
           uv run ggbuild ci plan
-          --expected-digest 578002ea473e7440fc65015ff989f6099f51831ce4514903bcc7b2bc26a46c6b
+          --expected-digest bb08e596e17d941f4350c42b35ccfe79affaf52b78ff32d06eadbdd24d74aa29
           --output .cache/ggbuild-plan.json
       - name: Resolve publication tag
         if: >-
@@ -3594,14 +3594,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-e5a427491d60f42a986a23ba7d22d544ba5cefc89f27a0babd6db999a947138e"
+            cache_key: "ggbuild-v3-2e1d94b57e1a89de4ecb187a9178590f9a3c64b7e5717690db293c21c816182f"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: ""
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-apple-darwin-e5a427491d60f42a986a23ba7d22d544ba5cefc89f27a0babd6db999a947138e"
+            upload_name: "ggbuild-root-aarch64-apple-darwin-2e1d94b57e1a89de4ecb187a9178590f9a3c64b7e5717690db293c21c816182f"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_apple_darwin_postgresql_15_19"
@@ -3611,14 +3611,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-46fcdd41969c757566ca8e7c261f08287c32623e3371cc1774d4b8f516d4947a"
+            cache_key: "ggbuild-v3-e26832719dbe7a04a6384121ec75603dab1833d5f366228d5bb5ad73c370e45e"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: ""
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-apple-darwin-46fcdd41969c757566ca8e7c261f08287c32623e3371cc1774d4b8f516d4947a"
+            upload_name: "ggbuild-root-aarch64-apple-darwin-e26832719dbe7a04a6384121ec75603dab1833d5f366228d5bb5ad73c370e45e"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_apple_darwin_postgresql_16_15"
@@ -3628,14 +3628,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-3284f56d33049bf34f86bf0a05695a835d043ad01f52f5ea1a351801d513c3b9"
+            cache_key: "ggbuild-v3-d5c6b19735e32c149953fa520558bdc8689286a9622d24f35c140be2e22e6f54"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: ""
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-apple-darwin-3284f56d33049bf34f86bf0a05695a835d043ad01f52f5ea1a351801d513c3b9"
+            upload_name: "ggbuild-root-aarch64-apple-darwin-d5c6b19735e32c149953fa520558bdc8689286a9622d24f35c140be2e22e6f54"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_apple_darwin_postgresql_17_10"
@@ -3645,14 +3645,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-acb4619c8b50f3d4d08682ce44acc49095f9177187415f138a226cfdcd5dfe24"
+            cache_key: "ggbuild-v3-1a1baedf5095fd98b151a1a9a4026c70d8057dba085af2937bf00373d453c6ea"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: ""
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-apple-darwin-acb4619c8b50f3d4d08682ce44acc49095f9177187415f138a226cfdcd5dfe24"
+            upload_name: "ggbuild-root-aarch64-apple-darwin-1a1baedf5095fd98b151a1a9a4026c70d8057dba085af2937bf00373d453c6ea"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_apple_darwin_postgresql_18_4"
@@ -3662,14 +3662,31 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-5101625ee1c84d6af71a297303ca853ee2dbbd984b86bbbaf497e0f9473624d9"
+            cache_key: "ggbuild-v3-75898042b2f53d8ff641deef55e56b17770d27397ae9591671c20e96f0aa0282"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: ""
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-apple-darwin-5101625ee1c84d6af71a297303ca853ee2dbbd984b86bbbaf497e0f9473624d9"
+            upload_name: "ggbuild-root-aarch64-apple-darwin-75898042b2f53d8ff641deef55e56b17770d27397ae9591671c20e96f0aa0282"
+            temporary_upload: true
+            publish_root: false
+          - node: "artifact_aarch64_apple_darwin_postgresql_19beta4"
+            target: "aarch64-apple-darwin"
+            runner: "macos-latest"
+            execution: "host"
+            role: "artifact"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-c34750646cd97b82855a6b4b1595efe8580d3f777ed7d99176d9b0014cc2d569"
+            bundle_artifact: ""
+            has_bundles: true
+            bare_linux_test: false
+            build_image: ""
+            test_image: ""
+            input_artifact: ""
+            upload_name: "ggbuild-root-aarch64-apple-darwin-c34750646cd97b82855a6b4b1595efe8580d3f777ed7d99176d9b0014cc2d569"
             temporary_upload: true
             publish_root: false
     steps:
@@ -3838,14 +3855,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-f13b9736ed82a3e05ee38430764bc646e2384341a3ffa3746449d1d85f390553"
+            cache_key: "ggbuild-v3-916f3c9db9d49f1147a5e41fcf3cd8229752bc2b9d21133794bf001f274f8e36"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-f13b9736ed82a3e05ee38430764bc646e2384341a3ffa3746449d1d85f390553"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-916f3c9db9d49f1147a5e41fcf3cd8229752bc2b9d21133794bf001f274f8e36"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_unknown_linux_gnu_postgresql_15_19"
@@ -3855,14 +3872,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-aadaf82343ea67676cda209d5efa6caf9a6af99e1d2cf6c7ffaf1bc89fc8b4d5"
+            cache_key: "ggbuild-v3-689da8b436f032db0ef854558480bf5db51cd85bfa1648a27f03437f898af636"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-aadaf82343ea67676cda209d5efa6caf9a6af99e1d2cf6c7ffaf1bc89fc8b4d5"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-689da8b436f032db0ef854558480bf5db51cd85bfa1648a27f03437f898af636"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_unknown_linux_gnu_postgresql_16_15"
@@ -3872,14 +3889,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-a223619c49818795cfce7a0f550017415037f54646a4f47b13bb32e95c87d420"
+            cache_key: "ggbuild-v3-8f4c9e4523377f2bf0d7dfee4289ecf0a1cece415a3e33b0e5d574c043e31d36"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-a223619c49818795cfce7a0f550017415037f54646a4f47b13bb32e95c87d420"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-8f4c9e4523377f2bf0d7dfee4289ecf0a1cece415a3e33b0e5d574c043e31d36"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_unknown_linux_gnu_postgresql_17_10"
@@ -3889,14 +3906,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-aa4af437a6404fd0b7c92cc942cb54c6f00516d4f31689883429f9980aaacd01"
+            cache_key: "ggbuild-v3-f7e6017ffda07fb602849634c06dcf569e94fcf4d1fe51359addb4fc729c8328"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-aa4af437a6404fd0b7c92cc942cb54c6f00516d4f31689883429f9980aaacd01"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-f7e6017ffda07fb602849634c06dcf569e94fcf4d1fe51359addb4fc729c8328"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_unknown_linux_gnu_postgresql_18_4"
@@ -3906,14 +3923,31 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-a57c9afab74ec2069f919723b321cc3af97f1bedc7d09a1d96cfec47e37b67d3"
+            cache_key: "ggbuild-v3-f96e2c3598e52159b93ef1c35e337058b0a84349b971a25abbbd82300cbd7890"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-a57c9afab74ec2069f919723b321cc3af97f1bedc7d09a1d96cfec47e37b67d3"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-f96e2c3598e52159b93ef1c35e337058b0a84349b971a25abbbd82300cbd7890"
+            temporary_upload: true
+            publish_root: false
+          - node: "artifact_aarch64_unknown_linux_gnu_postgresql_19beta4"
+            target: "aarch64-unknown-linux-gnu"
+            runner: "ubuntu-24.04-arm"
+            execution: "docker"
+            role: "artifact"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-8baea20f86dc49652a83c2474b2a27f519458ffb8224abe35998b53eb7d0e8de"
+            bundle_artifact: ""
+            has_bundles: true
+            bare_linux_test: false
+            build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
+            test_image: ""
+            input_artifact: ""
+            upload_name: "ggbuild-root-aarch64-unknown-linux-gnu-8baea20f86dc49652a83c2474b2a27f519458ffb8224abe35998b53eb7d0e8de"
             temporary_upload: true
             publish_root: false
     steps:
@@ -4082,14 +4116,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-19b779021f70afd2f618810cffecbb706dd6535b87eef7478e7896d4fdd23761"
+            cache_key: "ggbuild-v3-069a20b257d5e656d242035f854a82b7f2b7e8949ad805697796f16d9c8bacdf"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-19b779021f70afd2f618810cffecbb706dd6535b87eef7478e7896d4fdd23761"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-069a20b257d5e656d242035f854a82b7f2b7e8949ad805697796f16d9c8bacdf"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_unknown_linux_musl_postgresql_15_19"
@@ -4099,14 +4133,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-9c428874d921b94bb50a9c27bb35d08ee62e4c02df9f947dfc59d88417030446"
+            cache_key: "ggbuild-v3-02f165c33cd52052f08a1b2ef6150e2b2cb2e88b29c48a1aef6850587ee98978"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-9c428874d921b94bb50a9c27bb35d08ee62e4c02df9f947dfc59d88417030446"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-02f165c33cd52052f08a1b2ef6150e2b2cb2e88b29c48a1aef6850587ee98978"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_unknown_linux_musl_postgresql_16_15"
@@ -4116,14 +4150,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-cbe9fc65ce7c73aed45672b8a036a8b286c934e058544a0264bdd978ef1feee1"
+            cache_key: "ggbuild-v3-2747d51984ad710ba0a2b41aee01cf69f585f5f772d50b865ab8821c57ab2f04"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-cbe9fc65ce7c73aed45672b8a036a8b286c934e058544a0264bdd978ef1feee1"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-2747d51984ad710ba0a2b41aee01cf69f585f5f772d50b865ab8821c57ab2f04"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_unknown_linux_musl_postgresql_17_10"
@@ -4133,14 +4167,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-4f5660546f31f6eb4fbd63e3df3563f8bc07fca59ae41d2a843a9707309a35a9"
+            cache_key: "ggbuild-v3-3a9b8d310961f6cbc1acc72167279ad65c6e1068690c1d65a9f349f4799a57cf"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-4f5660546f31f6eb4fbd63e3df3563f8bc07fca59ae41d2a843a9707309a35a9"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-3a9b8d310961f6cbc1acc72167279ad65c6e1068690c1d65a9f349f4799a57cf"
             temporary_upload: true
             publish_root: false
           - node: "artifact_aarch64_unknown_linux_musl_postgresql_18_4"
@@ -4150,14 +4184,31 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-6518b481c49e4d0b7b53b6e83e57b3c6e3d11c866ceba3004fc3eefdfd5a8407"
+            cache_key: "ggbuild-v3-a77cb150a6350d42dc6e420b99a0d97f4d42631c18ef1eb09f3363d022f03e83"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-6518b481c49e4d0b7b53b6e83e57b3c6e3d11c866ceba3004fc3eefdfd5a8407"
+            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-a77cb150a6350d42dc6e420b99a0d97f4d42631c18ef1eb09f3363d022f03e83"
+            temporary_upload: true
+            publish_root: false
+          - node: "artifact_aarch64_unknown_linux_musl_postgresql_19beta4"
+            target: "aarch64-unknown-linux-musl"
+            runner: "ubuntu-24.04-arm"
+            execution: "docker"
+            role: "artifact"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-bf5a3bf89c34b308f33deb20b57e3e4c878a6f029606fb71d1e31b93e2531e3a"
+            bundle_artifact: ""
+            has_bundles: true
+            bare_linux_test: false
+            build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
+            test_image: ""
+            input_artifact: ""
+            upload_name: "ggbuild-root-aarch64-unknown-linux-musl-bf5a3bf89c34b308f33deb20b57e3e4c878a6f029606fb71d1e31b93e2531e3a"
             temporary_upload: true
             publish_root: false
     steps:
@@ -4326,14 +4377,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-39c79768c0f86aa257ee18e7d81aeaf03f272b0ca0999df1af86e544a7a42c55"
+            cache_key: "ggbuild-v3-71a8a2c0727f8e3f1be6e72b6e1b2d8c0d74cfb561aa3523bd2fe9469fddbe72"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-39c79768c0f86aa257ee18e7d81aeaf03f272b0ca0999df1af86e544a7a42c55"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-71a8a2c0727f8e3f1be6e72b6e1b2d8c0d74cfb561aa3523bd2fe9469fddbe72"
             temporary_upload: true
             publish_root: false
           - node: "artifact_x86_64_unknown_linux_gnu_postgresql_15_19"
@@ -4343,14 +4394,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-5688db77a44542fb712b49ed58455e4a108c538a309c27ae0f3db55c67447a2b"
+            cache_key: "ggbuild-v3-f1cf5e7c151565c69448fddb2dc251bbd2599a5295f11e001ae55d82a1cac462"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-5688db77a44542fb712b49ed58455e4a108c538a309c27ae0f3db55c67447a2b"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-f1cf5e7c151565c69448fddb2dc251bbd2599a5295f11e001ae55d82a1cac462"
             temporary_upload: true
             publish_root: false
           - node: "artifact_x86_64_unknown_linux_gnu_postgresql_16_15"
@@ -4360,14 +4411,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-674326013e05f048afc60a337416ac393ebb95685f50be941eb1e407437a5507"
+            cache_key: "ggbuild-v3-01adea0e230433ba1c851cbe85e7ce919acec848215430442be7a3112946e38d"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-674326013e05f048afc60a337416ac393ebb95685f50be941eb1e407437a5507"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-01adea0e230433ba1c851cbe85e7ce919acec848215430442be7a3112946e38d"
             temporary_upload: true
             publish_root: false
           - node: "artifact_x86_64_unknown_linux_gnu_postgresql_17_10"
@@ -4377,14 +4428,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-e985a303b5b8e5480363fbd2709b38001be396e17dfa151bab6c05f127e9ab73"
+            cache_key: "ggbuild-v3-896e3c15d1b51779b490cc6dc7845a1f812bae97da7ffef89b5c48681a7c296a"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-e985a303b5b8e5480363fbd2709b38001be396e17dfa151bab6c05f127e9ab73"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-896e3c15d1b51779b490cc6dc7845a1f812bae97da7ffef89b5c48681a7c296a"
             temporary_upload: true
             publish_root: false
           - node: "artifact_x86_64_unknown_linux_gnu_postgresql_18_4"
@@ -4394,14 +4445,31 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-1b7c9ed0516bc75b0d72e8da66ae564d8557e651f4017f35de66566b56d72a18"
+            cache_key: "ggbuild-v3-b04fc58fab89d53e6249ea481b88693ebeeccf2477efae3e3742966305b89ad5"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-1b7c9ed0516bc75b0d72e8da66ae564d8557e651f4017f35de66566b56d72a18"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-b04fc58fab89d53e6249ea481b88693ebeeccf2477efae3e3742966305b89ad5"
+            temporary_upload: true
+            publish_root: false
+          - node: "artifact_x86_64_unknown_linux_gnu_postgresql_19beta4"
+            target: "x86_64-unknown-linux-gnu"
+            runner: "ubuntu-latest"
+            execution: "docker"
+            role: "artifact"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-bc2bc0e5b70ed4de03f309dce1ff948d4bca6cd10b203092b9bdfde9ef7a3256"
+            bundle_artifact: ""
+            has_bundles: true
+            bare_linux_test: false
+            build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
+            test_image: ""
+            input_artifact: ""
+            upload_name: "ggbuild-root-x86_64-unknown-linux-gnu-bc2bc0e5b70ed4de03f309dce1ff948d4bca6cd10b203092b9bdfde9ef7a3256"
             temporary_upload: true
             publish_root: false
     steps:
@@ -4570,14 +4638,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-aa98dd6bfa1729b6e0d43034062f85c01047184d211931d07d4f21734f308f09"
+            cache_key: "ggbuild-v3-9663948808c6b7e6cdee685a0bdc1c5bd769140a06d4042da01efd75924d31c4"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-aa98dd6bfa1729b6e0d43034062f85c01047184d211931d07d4f21734f308f09"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-9663948808c6b7e6cdee685a0bdc1c5bd769140a06d4042da01efd75924d31c4"
             temporary_upload: true
             publish_root: false
           - node: "artifact_x86_64_unknown_linux_musl_postgresql_15_19"
@@ -4587,14 +4655,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-2ad4227e6b7f8e2ed3298ac3c5642a8e06cbac8a27b2848c92cd9bcf7e83cbd4"
+            cache_key: "ggbuild-v3-556f9c2b99a098f156ed60a6efa53c72a8e63c6590e0a905ce1ed5e9e107dc25"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-2ad4227e6b7f8e2ed3298ac3c5642a8e06cbac8a27b2848c92cd9bcf7e83cbd4"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-556f9c2b99a098f156ed60a6efa53c72a8e63c6590e0a905ce1ed5e9e107dc25"
             temporary_upload: true
             publish_root: false
           - node: "artifact_x86_64_unknown_linux_musl_postgresql_16_15"
@@ -4604,14 +4672,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-82c157f58ef7c1f3630805a8ff4ef5bb27dffde7fd5072dfe9317752dbf6b646"
+            cache_key: "ggbuild-v3-7f64cbc0d56fcb9c28075b408f1eb323b121d16edd90f0dedec0cdda92c09066"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-82c157f58ef7c1f3630805a8ff4ef5bb27dffde7fd5072dfe9317752dbf6b646"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-7f64cbc0d56fcb9c28075b408f1eb323b121d16edd90f0dedec0cdda92c09066"
             temporary_upload: true
             publish_root: false
           - node: "artifact_x86_64_unknown_linux_musl_postgresql_17_10"
@@ -4621,14 +4689,14 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-c3e20e962120c12ab48a1a4f37e60e6e9ffd9d663f38251f153c3af3c89b6d6e"
+            cache_key: "ggbuild-v3-1ca9f8b08c3e3ad4bff9761271b483f01baaa12411dd74aad37670d2a8035467"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-c3e20e962120c12ab48a1a4f37e60e6e9ffd9d663f38251f153c3af3c89b6d6e"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-1ca9f8b08c3e3ad4bff9761271b483f01baaa12411dd74aad37670d2a8035467"
             temporary_upload: true
             publish_root: false
           - node: "artifact_x86_64_unknown_linux_musl_postgresql_18_4"
@@ -4638,14 +4706,31 @@ jobs:
             role: "artifact"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-c511962dd2fecabec2d082c28a2ebfa43c938b7a6856bfc484897c84a19b0a2a"
+            cache_key: "ggbuild-v3-8331e488b0ddbe44f43ad6b495b415a42224db305998e74515dcd2ea35993d02"
             bundle_artifact: ""
             has_bundles: true
             bare_linux_test: false
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: ""
             input_artifact: ""
-            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-c511962dd2fecabec2d082c28a2ebfa43c938b7a6856bfc484897c84a19b0a2a"
+            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-8331e488b0ddbe44f43ad6b495b415a42224db305998e74515dcd2ea35993d02"
+            temporary_upload: true
+            publish_root: false
+          - node: "artifact_x86_64_unknown_linux_musl_postgresql_19beta4"
+            target: "x86_64-unknown-linux-musl"
+            runner: "ubuntu-latest"
+            execution: "docker"
+            role: "artifact"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-f8801323e5cf5f155e6a7c9fb4cfcd40d0eb31f55af9dcde94549b779e902249"
+            bundle_artifact: ""
+            has_bundles: true
+            bare_linux_test: false
+            build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
+            test_image: ""
+            input_artifact: ""
+            upload_name: "ggbuild-root-x86_64-unknown-linux-musl-f8801323e5cf5f155e6a7c9fb4cfcd40d0eb31f55af9dcde94549b779e902249"
             temporary_upload: true
             publish_root: false
     steps:
@@ -4814,14 +4899,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-1ab7aee6ca89f6942a95ce31cbf263f6e79478263d45919f46184cb4af5c99bc"
+            cache_key: "ggbuild-v3-8e1d1890402face15f9b1e2e2830f12d7b5dfee7cc09f2509ccb6d2f8c038793"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: false
             build_image: ""
             test_image: ""
-            input_artifact: "ggbuild-root-aarch64-apple-darwin-e5a427491d60f42a986a23ba7d22d544ba5cefc89f27a0babd6db999a947138e"
-            upload_name: "ggbuild-publication-1ab7aee6ca89f6942a95ce31cbf263f6e79478263d45919f46184cb4af5c99bc"
+            input_artifact: "ggbuild-root-aarch64-apple-darwin-2e1d94b57e1a89de4ecb187a9178590f9a3c64b7e5717690db293c21c816182f"
+            upload_name: "ggbuild-publication-8e1d1890402face15f9b1e2e2830f12d7b5dfee7cc09f2509ccb6d2f8c038793"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_apple_darwin_postgresql_15_19"
@@ -4831,14 +4916,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-b8b212d4c642c9a4e45b928174369903ea80a3f08d7d75473e39655945312022"
+            cache_key: "ggbuild-v3-627ce80c09202601dc74cc4a3d20cd8d325bd5e148c8228428e9b927bb01f70f"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: false
             build_image: ""
             test_image: ""
-            input_artifact: "ggbuild-root-aarch64-apple-darwin-46fcdd41969c757566ca8e7c261f08287c32623e3371cc1774d4b8f516d4947a"
-            upload_name: "ggbuild-publication-b8b212d4c642c9a4e45b928174369903ea80a3f08d7d75473e39655945312022"
+            input_artifact: "ggbuild-root-aarch64-apple-darwin-e26832719dbe7a04a6384121ec75603dab1833d5f366228d5bb5ad73c370e45e"
+            upload_name: "ggbuild-publication-627ce80c09202601dc74cc4a3d20cd8d325bd5e148c8228428e9b927bb01f70f"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_apple_darwin_postgresql_16_15"
@@ -4848,14 +4933,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-d9050cbc5a639f3af9d4e86d316c2d7756a1455872d8d007880078c244f2d2da"
+            cache_key: "ggbuild-v3-033c3c54de098bf7f206f4f10b694ae74d18314152722107c86c16cc1b15bd90"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: false
             build_image: ""
             test_image: ""
-            input_artifact: "ggbuild-root-aarch64-apple-darwin-3284f56d33049bf34f86bf0a05695a835d043ad01f52f5ea1a351801d513c3b9"
-            upload_name: "ggbuild-publication-d9050cbc5a639f3af9d4e86d316c2d7756a1455872d8d007880078c244f2d2da"
+            input_artifact: "ggbuild-root-aarch64-apple-darwin-d5c6b19735e32c149953fa520558bdc8689286a9622d24f35c140be2e22e6f54"
+            upload_name: "ggbuild-publication-033c3c54de098bf7f206f4f10b694ae74d18314152722107c86c16cc1b15bd90"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_apple_darwin_postgresql_17_10"
@@ -4865,14 +4950,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-1a89a7b5b6c98c509ab5d12c22a7593ae85b37ae2d988ab847c7d25aaa40cefa"
+            cache_key: "ggbuild-v3-6a17c551937f9a2fa56c496b63637a27914a29af082f90e0cbea66605a344bd0"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: false
             build_image: ""
             test_image: ""
-            input_artifact: "ggbuild-root-aarch64-apple-darwin-acb4619c8b50f3d4d08682ce44acc49095f9177187415f138a226cfdcd5dfe24"
-            upload_name: "ggbuild-publication-1a89a7b5b6c98c509ab5d12c22a7593ae85b37ae2d988ab847c7d25aaa40cefa"
+            input_artifact: "ggbuild-root-aarch64-apple-darwin-1a1baedf5095fd98b151a1a9a4026c70d8057dba085af2937bf00373d453c6ea"
+            upload_name: "ggbuild-publication-6a17c551937f9a2fa56c496b63637a27914a29af082f90e0cbea66605a344bd0"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_apple_darwin_postgresql_18_4"
@@ -4882,14 +4967,31 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-aa74c5e6af4af06fc15433291468fab137c72858abcf0784b6c883bcf3ce4040"
+            cache_key: "ggbuild-v3-f7b15522fd30e5f96f3dbf6dcab0bcb6b8e53c6d8f8e7de53ff3de603b00285c"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: false
             build_image: ""
             test_image: ""
-            input_artifact: "ggbuild-root-aarch64-apple-darwin-5101625ee1c84d6af71a297303ca853ee2dbbd984b86bbbaf497e0f9473624d9"
-            upload_name: "ggbuild-publication-aa74c5e6af4af06fc15433291468fab137c72858abcf0784b6c883bcf3ce4040"
+            input_artifact: "ggbuild-root-aarch64-apple-darwin-75898042b2f53d8ff641deef55e56b17770d27397ae9591671c20e96f0aa0282"
+            upload_name: "ggbuild-publication-f7b15522fd30e5f96f3dbf6dcab0bcb6b8e53c6d8f8e7de53ff3de603b00285c"
+            temporary_upload: false
+            publish_root: true
+          - node: "test_aarch64_apple_darwin_postgresql_19beta4"
+            target: "aarch64-apple-darwin"
+            runner: "macos-latest"
+            execution: "host"
+            role: "test"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-de455f034b7aa207e39e1918edaa43be3c4936aa854fcd20ab1b3006fe0ddfe0"
+            bundle_artifact: ""
+            has_bundles: false
+            bare_linux_test: false
+            build_image: ""
+            test_image: ""
+            input_artifact: "ggbuild-root-aarch64-apple-darwin-c34750646cd97b82855a6b4b1595efe8580d3f777ed7d99176d9b0014cc2d569"
+            upload_name: "ggbuild-publication-de455f034b7aa207e39e1918edaa43be3c4936aa854fcd20ab1b3006fe0ddfe0"
             temporary_upload: false
             publish_root: true
     steps:
@@ -5058,14 +5160,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-10d7cd9ab9ef845c0b846b3661c9d5c3cd8df5a9b1112f3e147d63b28f7d7ef5"
+            cache_key: "ggbuild-v3-df19e377ca7e2417b9a621dc6d7f66affa1fdd04673579fde0208cc4c6cd1dd9"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-f13b9736ed82a3e05ee38430764bc646e2384341a3ffa3746449d1d85f390553"
-            upload_name: "ggbuild-publication-10d7cd9ab9ef845c0b846b3661c9d5c3cd8df5a9b1112f3e147d63b28f7d7ef5"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-916f3c9db9d49f1147a5e41fcf3cd8229752bc2b9d21133794bf001f274f8e36"
+            upload_name: "ggbuild-publication-df19e377ca7e2417b9a621dc6d7f66affa1fdd04673579fde0208cc4c6cd1dd9"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_unknown_linux_gnu_postgresql_15_19"
@@ -5075,14 +5177,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-8f5644b20481412d58dfc97b06c394ad952c302ec03f9c1de777f230d61541f0"
+            cache_key: "ggbuild-v3-0e150f42e9f0092b3133f5889cd94b3342b3b14ee4981d5eae382aa496488195"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-aadaf82343ea67676cda209d5efa6caf9a6af99e1d2cf6c7ffaf1bc89fc8b4d5"
-            upload_name: "ggbuild-publication-8f5644b20481412d58dfc97b06c394ad952c302ec03f9c1de777f230d61541f0"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-689da8b436f032db0ef854558480bf5db51cd85bfa1648a27f03437f898af636"
+            upload_name: "ggbuild-publication-0e150f42e9f0092b3133f5889cd94b3342b3b14ee4981d5eae382aa496488195"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_unknown_linux_gnu_postgresql_16_15"
@@ -5092,14 +5194,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-939194a3532c5dc345bc7494322f00a16315a3d111b35a9079ddef6491e40310"
+            cache_key: "ggbuild-v3-ac0679f689a4cfb7a947772054afc3ed5d99fcb09ceea20f0b09d904669bdc83"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-a223619c49818795cfce7a0f550017415037f54646a4f47b13bb32e95c87d420"
-            upload_name: "ggbuild-publication-939194a3532c5dc345bc7494322f00a16315a3d111b35a9079ddef6491e40310"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-8f4c9e4523377f2bf0d7dfee4289ecf0a1cece415a3e33b0e5d574c043e31d36"
+            upload_name: "ggbuild-publication-ac0679f689a4cfb7a947772054afc3ed5d99fcb09ceea20f0b09d904669bdc83"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_unknown_linux_gnu_postgresql_17_10"
@@ -5109,14 +5211,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-de2c8644f3cdaa7707021849685cdfd6cca4b00d7b52b16b9b98c80798b78e41"
+            cache_key: "ggbuild-v3-fe7aaf7dc1dfaecd0bc2995eab8b42ce0e668048da3b9f863a89d3f699e50129"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-aa4af437a6404fd0b7c92cc942cb54c6f00516d4f31689883429f9980aaacd01"
-            upload_name: "ggbuild-publication-de2c8644f3cdaa7707021849685cdfd6cca4b00d7b52b16b9b98c80798b78e41"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-f7e6017ffda07fb602849634c06dcf569e94fcf4d1fe51359addb4fc729c8328"
+            upload_name: "ggbuild-publication-fe7aaf7dc1dfaecd0bc2995eab8b42ce0e668048da3b9f863a89d3f699e50129"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_unknown_linux_gnu_postgresql_18_4"
@@ -5126,14 +5228,31 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-6a2be790a33116803a53bc146b07a89b4b016f88a4a623d25dcd0599a42df771"
+            cache_key: "ggbuild-v3-40d6c2a4e710ad3ef400c51d548ab4ba4bd70e22c56e233d8875d58e76cce6d6"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-a57c9afab74ec2069f919723b321cc3af97f1bedc7d09a1d96cfec47e37b67d3"
-            upload_name: "ggbuild-publication-6a2be790a33116803a53bc146b07a89b4b016f88a4a623d25dcd0599a42df771"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-f96e2c3598e52159b93ef1c35e337058b0a84349b971a25abbbd82300cbd7890"
+            upload_name: "ggbuild-publication-40d6c2a4e710ad3ef400c51d548ab4ba4bd70e22c56e233d8875d58e76cce6d6"
+            temporary_upload: false
+            publish_root: true
+          - node: "test_aarch64_unknown_linux_gnu_postgresql_19beta4"
+            target: "aarch64-unknown-linux-gnu"
+            runner: "ubuntu-24.04-arm"
+            execution: "docker"
+            role: "test"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-82509151b2874ad143411a9f0e0bf08de8eedd1ced6c62a8e2e40ffe8aac3d33"
+            bundle_artifact: ""
+            has_bundles: false
+            bare_linux_test: true
+            build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
+            test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-gnu-8baea20f86dc49652a83c2474b2a27f519458ffb8224abe35998b53eb7d0e8de"
+            upload_name: "ggbuild-publication-82509151b2874ad143411a9f0e0bf08de8eedd1ced6c62a8e2e40ffe8aac3d33"
             temporary_upload: false
             publish_root: true
     steps:
@@ -5302,14 +5421,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-37a062907eb5d53d91b812d61638f877b5f53d06bab484029ac143ac7cfa7e3b"
+            cache_key: "ggbuild-v3-5082cfcfb891e73ef4a67d6b94a3e22db88f3e3e76e1a8a1b8c16e209881808d"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-19b779021f70afd2f618810cffecbb706dd6535b87eef7478e7896d4fdd23761"
-            upload_name: "ggbuild-publication-37a062907eb5d53d91b812d61638f877b5f53d06bab484029ac143ac7cfa7e3b"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-069a20b257d5e656d242035f854a82b7f2b7e8949ad805697796f16d9c8bacdf"
+            upload_name: "ggbuild-publication-5082cfcfb891e73ef4a67d6b94a3e22db88f3e3e76e1a8a1b8c16e209881808d"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_unknown_linux_musl_postgresql_15_19"
@@ -5319,14 +5438,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-a3467c4c59760209b5258c55ea9e850e9a2df750f06f29dccf0633dbaf904f70"
+            cache_key: "ggbuild-v3-46355649e2741da23a11db2abae2f66aba9fc6d81331e33ef2a2ab5c5f29ac77"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-9c428874d921b94bb50a9c27bb35d08ee62e4c02df9f947dfc59d88417030446"
-            upload_name: "ggbuild-publication-a3467c4c59760209b5258c55ea9e850e9a2df750f06f29dccf0633dbaf904f70"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-02f165c33cd52052f08a1b2ef6150e2b2cb2e88b29c48a1aef6850587ee98978"
+            upload_name: "ggbuild-publication-46355649e2741da23a11db2abae2f66aba9fc6d81331e33ef2a2ab5c5f29ac77"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_unknown_linux_musl_postgresql_16_15"
@@ -5336,14 +5455,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-fb3ef106087e97832cc0e2864c8b311a663308a8e6f1fe6a92cffb2e063d5dfc"
+            cache_key: "ggbuild-v3-e22196a5b0311e5f7604b39e8d31417f9a89f38890dc1e783a8801a0e1454867"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-cbe9fc65ce7c73aed45672b8a036a8b286c934e058544a0264bdd978ef1feee1"
-            upload_name: "ggbuild-publication-fb3ef106087e97832cc0e2864c8b311a663308a8e6f1fe6a92cffb2e063d5dfc"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-2747d51984ad710ba0a2b41aee01cf69f585f5f772d50b865ab8821c57ab2f04"
+            upload_name: "ggbuild-publication-e22196a5b0311e5f7604b39e8d31417f9a89f38890dc1e783a8801a0e1454867"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_unknown_linux_musl_postgresql_17_10"
@@ -5353,14 +5472,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-6c14b390bc0a98742693c8c1ed0c5f5bcadd7fbe0275d98a592006475f558cc1"
+            cache_key: "ggbuild-v3-0c2054a428e38921dd7a32dafcfdee5486a472791adacbe3f3fedc2abab1ccbf"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-4f5660546f31f6eb4fbd63e3df3563f8bc07fca59ae41d2a843a9707309a35a9"
-            upload_name: "ggbuild-publication-6c14b390bc0a98742693c8c1ed0c5f5bcadd7fbe0275d98a592006475f558cc1"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-3a9b8d310961f6cbc1acc72167279ad65c6e1068690c1d65a9f349f4799a57cf"
+            upload_name: "ggbuild-publication-0c2054a428e38921dd7a32dafcfdee5486a472791adacbe3f3fedc2abab1ccbf"
             temporary_upload: false
             publish_root: true
           - node: "test_aarch64_unknown_linux_musl_postgresql_18_4"
@@ -5370,14 +5489,31 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-8f3addd4734ff6ff484fe244145ea8e4d6689a7d888af8e4795b6791bb188797"
+            cache_key: "ggbuild-v3-ec5a04110d35befe0d957f4a332b9860a422dadbc8c3a4d895d3bbf30c8598bc"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-6518b481c49e4d0b7b53b6e83e57b3c6e3d11c866ceba3004fc3eefdfd5a8407"
-            upload_name: "ggbuild-publication-8f3addd4734ff6ff484fe244145ea8e4d6689a7d888af8e4795b6791bb188797"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-a77cb150a6350d42dc6e420b99a0d97f4d42631c18ef1eb09f3363d022f03e83"
+            upload_name: "ggbuild-publication-ec5a04110d35befe0d957f4a332b9860a422dadbc8c3a4d895d3bbf30c8598bc"
+            temporary_upload: false
+            publish_root: true
+          - node: "test_aarch64_unknown_linux_musl_postgresql_19beta4"
+            target: "aarch64-unknown-linux-musl"
+            runner: "ubuntu-24.04-arm"
+            execution: "docker"
+            role: "test"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-a021825330dce50fba01dbeaa3f1f79ca452ebdb0593e5592d8e6443ae02bd5d"
+            bundle_artifact: ""
+            has_bundles: false
+            bare_linux_test: true
+            build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
+            test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
+            input_artifact: "ggbuild-root-aarch64-unknown-linux-musl-bf5a3bf89c34b308f33deb20b57e3e4c878a6f029606fb71d1e31b93e2531e3a"
+            upload_name: "ggbuild-publication-a021825330dce50fba01dbeaa3f1f79ca452ebdb0593e5592d8e6443ae02bd5d"
             temporary_upload: false
             publish_root: true
     steps:
@@ -5546,14 +5682,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-ca7ffcf3aab4922e2c904b14cac8a7830d29b97ad23fb4817410874b9dadac92"
+            cache_key: "ggbuild-v3-7858a41c1d1755c68a9579b7344753e936c55c30f58a5529d9b7cd77764c7f24"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-39c79768c0f86aa257ee18e7d81aeaf03f272b0ca0999df1af86e544a7a42c55"
-            upload_name: "ggbuild-publication-ca7ffcf3aab4922e2c904b14cac8a7830d29b97ad23fb4817410874b9dadac92"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-71a8a2c0727f8e3f1be6e72b6e1b2d8c0d74cfb561aa3523bd2fe9469fddbe72"
+            upload_name: "ggbuild-publication-7858a41c1d1755c68a9579b7344753e936c55c30f58a5529d9b7cd77764c7f24"
             temporary_upload: false
             publish_root: true
           - node: "test_x86_64_unknown_linux_gnu_postgresql_15_19"
@@ -5563,14 +5699,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-6a9f680d703dacadbacf988aba7b314d04c3cd21728c9f666eca219ad45e9983"
+            cache_key: "ggbuild-v3-af528b35a56c6df155a458f55dafac9e31c17152682d729e3448bac3e204137c"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-5688db77a44542fb712b49ed58455e4a108c538a309c27ae0f3db55c67447a2b"
-            upload_name: "ggbuild-publication-6a9f680d703dacadbacf988aba7b314d04c3cd21728c9f666eca219ad45e9983"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-f1cf5e7c151565c69448fddb2dc251bbd2599a5295f11e001ae55d82a1cac462"
+            upload_name: "ggbuild-publication-af528b35a56c6df155a458f55dafac9e31c17152682d729e3448bac3e204137c"
             temporary_upload: false
             publish_root: true
           - node: "test_x86_64_unknown_linux_gnu_postgresql_16_15"
@@ -5580,14 +5716,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-e766b0089ac9aee4cf1480daf82ea5792937d8c029bb8d8e01361bb1cfd3298f"
+            cache_key: "ggbuild-v3-d7140a598978fda05328c7f801d044fd6b8e0a619404058090af1f50b99fac9e"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-674326013e05f048afc60a337416ac393ebb95685f50be941eb1e407437a5507"
-            upload_name: "ggbuild-publication-e766b0089ac9aee4cf1480daf82ea5792937d8c029bb8d8e01361bb1cfd3298f"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-01adea0e230433ba1c851cbe85e7ce919acec848215430442be7a3112946e38d"
+            upload_name: "ggbuild-publication-d7140a598978fda05328c7f801d044fd6b8e0a619404058090af1f50b99fac9e"
             temporary_upload: false
             publish_root: true
           - node: "test_x86_64_unknown_linux_gnu_postgresql_17_10"
@@ -5597,14 +5733,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-36c0cd8136e6277530506ae3551e88eca62637263d9dcb32453344a22f220ddc"
+            cache_key: "ggbuild-v3-8018d2898390fdecc30ca5dd74ddeb997fb01f19a0325f53bcd386251dd07028"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-e985a303b5b8e5480363fbd2709b38001be396e17dfa151bab6c05f127e9ab73"
-            upload_name: "ggbuild-publication-36c0cd8136e6277530506ae3551e88eca62637263d9dcb32453344a22f220ddc"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-896e3c15d1b51779b490cc6dc7845a1f812bae97da7ffef89b5c48681a7c296a"
+            upload_name: "ggbuild-publication-8018d2898390fdecc30ca5dd74ddeb997fb01f19a0325f53bcd386251dd07028"
             temporary_upload: false
             publish_root: true
           - node: "test_x86_64_unknown_linux_gnu_postgresql_18_4"
@@ -5614,14 +5750,31 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-e21925baab5030a97eca9ed81dd9053f8cff5b98f286eb9f37ea34daca9e74fe"
+            cache_key: "ggbuild-v3-4f63922caaa18c3ccb338755063c0884bbf0337323ff535e46c4bbbe1f242912"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-1b7c9ed0516bc75b0d72e8da66ae564d8557e651f4017f35de66566b56d72a18"
-            upload_name: "ggbuild-publication-e21925baab5030a97eca9ed81dd9053f8cff5b98f286eb9f37ea34daca9e74fe"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-b04fc58fab89d53e6249ea481b88693ebeeccf2477efae3e3742966305b89ad5"
+            upload_name: "ggbuild-publication-4f63922caaa18c3ccb338755063c0884bbf0337323ff535e46c4bbbe1f242912"
+            temporary_upload: false
+            publish_root: true
+          - node: "test_x86_64_unknown_linux_gnu_postgresql_19beta4"
+            target: "x86_64-unknown-linux-gnu"
+            runner: "ubuntu-latest"
+            execution: "docker"
+            role: "test"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-645d36910c07737f7152b634ab913b27f296b6b9b2876572fcfd477c57ec43a3"
+            bundle_artifact: ""
+            has_bundles: false
+            bare_linux_test: true
+            build_image: "ghcr.io/vercel-labs/ggbuild/linux-gnu:sha256-319f1410f4d5521f1f337475764277bc4ee842f2e3a83bbbff9790002554c500"
+            test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-gnu:sha256-5d882fc3f1927f7e9d999c6483bf71b59bdf5cab47e26b8c91a251ede5658a2b"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-gnu-bc2bc0e5b70ed4de03f309dce1ff948d4bca6cd10b203092b9bdfde9ef7a3256"
+            upload_name: "ggbuild-publication-645d36910c07737f7152b634ab913b27f296b6b9b2876572fcfd477c57ec43a3"
             temporary_upload: false
             publish_root: true
     steps:
@@ -5790,14 +5943,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "14.24"
-            cache_key: "ggbuild-v3-1fb3ec3f170e6860fde411de93f0262a126f33f4237c0b7bbe71e401590b757c"
+            cache_key: "ggbuild-v3-8385f3b9bae7aae18c8c011503dcd7aeaf2b78d0d4312db03ed7ac58f4fb506e"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-aa98dd6bfa1729b6e0d43034062f85c01047184d211931d07d4f21734f308f09"
-            upload_name: "ggbuild-publication-1fb3ec3f170e6860fde411de93f0262a126f33f4237c0b7bbe71e401590b757c"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-9663948808c6b7e6cdee685a0bdc1c5bd769140a06d4042da01efd75924d31c4"
+            upload_name: "ggbuild-publication-8385f3b9bae7aae18c8c011503dcd7aeaf2b78d0d4312db03ed7ac58f4fb506e"
             temporary_upload: false
             publish_root: true
           - node: "test_x86_64_unknown_linux_musl_postgresql_15_19"
@@ -5807,14 +5960,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "15.19"
-            cache_key: "ggbuild-v3-6821eed82bddbc2eff211bc76c1756f341c5205d42fc30c9c823ec44098890f3"
+            cache_key: "ggbuild-v3-2b875159ef748fde1b3b9e8cd79f9dfe59c0ba2eaad4c59f062b519921b52dc6"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-2ad4227e6b7f8e2ed3298ac3c5642a8e06cbac8a27b2848c92cd9bcf7e83cbd4"
-            upload_name: "ggbuild-publication-6821eed82bddbc2eff211bc76c1756f341c5205d42fc30c9c823ec44098890f3"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-556f9c2b99a098f156ed60a6efa53c72a8e63c6590e0a905ce1ed5e9e107dc25"
+            upload_name: "ggbuild-publication-2b875159ef748fde1b3b9e8cd79f9dfe59c0ba2eaad4c59f062b519921b52dc6"
             temporary_upload: false
             publish_root: true
           - node: "test_x86_64_unknown_linux_musl_postgresql_16_15"
@@ -5824,14 +5977,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "16.15"
-            cache_key: "ggbuild-v3-0641bac1c5ba675694b4820775ed951102275672bcd0307e44c41700852281bb"
+            cache_key: "ggbuild-v3-7d487070a1f60e8b8750a21a1393e5cc04143c89df69fab34f9cddded2640167"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-82c157f58ef7c1f3630805a8ff4ef5bb27dffde7fd5072dfe9317752dbf6b646"
-            upload_name: "ggbuild-publication-0641bac1c5ba675694b4820775ed951102275672bcd0307e44c41700852281bb"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-7f64cbc0d56fcb9c28075b408f1eb323b121d16edd90f0dedec0cdda92c09066"
+            upload_name: "ggbuild-publication-7d487070a1f60e8b8750a21a1393e5cc04143c89df69fab34f9cddded2640167"
             temporary_upload: false
             publish_root: true
           - node: "test_x86_64_unknown_linux_musl_postgresql_17_10"
@@ -5841,14 +5994,14 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "17.10"
-            cache_key: "ggbuild-v3-b0f224d1bd1776b17b4af5b755d40bd4462da07369c943010552b0468539ad66"
+            cache_key: "ggbuild-v3-5c4522c7772922cd3d23056df72b32b853be391fbe77b82036a78ac20ede404c"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-c3e20e962120c12ab48a1a4f37e60e6e9ffd9d663f38251f153c3af3c89b6d6e"
-            upload_name: "ggbuild-publication-b0f224d1bd1776b17b4af5b755d40bd4462da07369c943010552b0468539ad66"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-1ca9f8b08c3e3ad4bff9761271b483f01baaa12411dd74aad37670d2a8035467"
+            upload_name: "ggbuild-publication-5c4522c7772922cd3d23056df72b32b853be391fbe77b82036a78ac20ede404c"
             temporary_upload: false
             publish_root: true
           - node: "test_x86_64_unknown_linux_musl_postgresql_18_4"
@@ -5858,14 +6011,31 @@ jobs:
             role: "test"
             package: "postgresql"
             version: "18.4"
-            cache_key: "ggbuild-v3-2d57b4c260403af3d0bec71bc967b6352e9f3ffaf39280e91d55a11051ebeaf5"
+            cache_key: "ggbuild-v3-10d245a22692c1959f87f233fb447651690a8e5483a07c2586ff0dc33d40be49"
             bundle_artifact: ""
             has_bundles: false
             bare_linux_test: true
             build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
             test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
-            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-c511962dd2fecabec2d082c28a2ebfa43c938b7a6856bfc484897c84a19b0a2a"
-            upload_name: "ggbuild-publication-2d57b4c260403af3d0bec71bc967b6352e9f3ffaf39280e91d55a11051ebeaf5"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-8331e488b0ddbe44f43ad6b495b415a42224db305998e74515dcd2ea35993d02"
+            upload_name: "ggbuild-publication-10d245a22692c1959f87f233fb447651690a8e5483a07c2586ff0dc33d40be49"
+            temporary_upload: false
+            publish_root: true
+          - node: "test_x86_64_unknown_linux_musl_postgresql_19beta4"
+            target: "x86_64-unknown-linux-musl"
+            runner: "ubuntu-latest"
+            execution: "docker"
+            role: "test"
+            package: "postgresql"
+            version: "19beta4"
+            cache_key: "ggbuild-v3-b9889ed24de17e873f5a370e8e1e1ba66ba0452e0db6fc34fb4af1c2d2aecb05"
+            bundle_artifact: ""
+            has_bundles: false
+            bare_linux_test: true
+            build_image: "ghcr.io/vercel-labs/ggbuild/linux-musl:sha256-3ba571076eb1b531a1d2e7b87a73eb68b8c776135735e6d7e63a1ce2309077da"
+            test_image: "ghcr.io/vercel-labs/ggbuild/test-linux-musl:sha256-b43f217974cc8a43c91d6dac9a4bad967baf00857e98b89dc07462a369c492b3"
+            input_artifact: "ggbuild-root-x86_64-unknown-linux-musl-f8801323e5cf5f155e6a7c9fb4cfcd40d0eb31f55af9dcde94549b779e902249"
+            upload_name: "ggbuild-publication-b9889ed24de17e873f5a370e8e1e1ba66ba0452e0db6fc34fb4af1c2d2aecb05"
             temporary_upload: false
             publish_root: true
     steps:

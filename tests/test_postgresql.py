@@ -11,6 +11,7 @@ from unittest import mock
 import ggbuild.targets as _ggbuild_targets  # ruff: ignore[unused-import]
 import pytest
 from ggbuild import packages
+from ggbuild.patches import select_patch_variants
 from ggbuild.updater import UpdateableBundledCAutoconfPackage
 
 from postgresbuild.postgresql import PostgreSQL
@@ -151,7 +152,7 @@ def test_postgresql_enables_glibc_integrations() -> None:
         assert option in arguments
 
 
-@pytest.mark.parametrize("version", ["16.15", "17.10", "18.4"])
+@pytest.mark.parametrize("version", ["16.15", "17.10", "18.4", "19beta4"])
 def test_macos_build_avoids_sysv_semaphores(version: str) -> None:
     package = PostgreSQL.registered_release(version)
     assert package is not None
@@ -202,7 +203,7 @@ def test_artifact_test_environment_is_postgresql_specific(
     assert "LD_LIBRARY_PATH" not in environment
 
 
-@pytest.mark.parametrize("version", ["16.15", "17.10", "18.4"])
+@pytest.mark.parametrize("version", ["16.15", "17.10", "18.4", "19beta4"])
 def test_artifact_test_avoids_sysv_ipc_for_patched_versions(
     version: str,
     tmp_path: pathlib.Path,
@@ -222,6 +223,26 @@ def test_artifact_test_avoids_sysv_ipc_for_patched_versions(
         "--set=dynamic_shared_memory_type=mmap",
     ):
         assert option in script
+
+
+def test_beta_release_uses_19_dependencies_and_patch_series() -> None:
+    package = PostgreSQL.registered_release("19beta4")
+    assert package is not None
+
+    assert len(package.get_requirements()) == 12
+    assert len(package.get_build_requirements()) == 15
+    assert {patch.name for patch in select_patch_variants(package)} == {
+        "data_directory_lock",
+        "no_env_clobbering",
+        "pkgconfig",
+        "predictable_install",
+        "truncate_log",
+        "wsl1",
+    }
+    assert all(
+        patch.path.stem.endswith("19beta4-20")
+        for patch in select_patch_variants(package)
+    )
 
 
 def test_artifact_test_keeps_sysv_default_for_unpatched_versions(
@@ -330,10 +351,12 @@ def test_production_inventory_rejects_sdk_and_outside_prefix() -> None:
     assert "usr/bin/postgres" in str(error.value)
 
 
+@pytest.mark.parametrize("version", ["18.4", "19beta4"])
 def test_artifact_test_script_runs_shipped_server_and_staged_harness(
+    version: str,
     tmp_path: pathlib.Path,
 ) -> None:
-    package = PostgreSQL.registered_release("18.4")
+    package = PostgreSQL.registered_release(version)
     assert package is not None
     installation = tmp_path / "installation"
     bin_dir = installation / "bin"

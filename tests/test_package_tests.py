@@ -67,6 +67,37 @@ def test_suite_path_preserves_upstream_hierarchy() -> None:
         helper.suite_path("../outside")
 
 
+def test_copy_regression_catalogs_stages_versioned_nls_catalog(
+    tmp_path: pathlib.Path,
+) -> None:
+    helper = load_helper()
+    source = tmp_path / "source"
+    build = tmp_path / "build"
+    destination = tmp_path / "sidecar"
+    directory = "src/test/regress"
+    (source / directory).mkdir(parents=True)
+    (source / directory / "nls.mk").touch()
+    (build / directory / "po").mkdir(parents=True)
+    (build / directory / "po/es.mo").write_bytes(b"catalog")
+    values = {
+        "CATALOG_NAME": "postgresql-regress",
+        "MAJORVERSION": "19",
+        "SO_MAJOR_VERSION": "",
+        "LANGUAGES": "es",
+    }
+
+    with mock.patch.object(
+        helper,
+        "make_value",
+        side_effect=lambda _build, _directory, variable: values[variable],
+    ):
+        helper.copy_regression_catalogs(source, build, destination)
+
+    assert (
+        destination / "locale/es/LC_MESSAGES/postgresql-regress-19.mo"
+    ).read_bytes() == b"catalog"
+
+
 def test_install_suite_preserves_upstream_hierarchy(
     tmp_path: pathlib.Path,
 ) -> None:
@@ -390,6 +421,9 @@ def test_runner_creates_nested_suite_output_directory(
     driver.chmod(0o755)
     suite = destination / "suites/src/test/regress"
     suite.mkdir(parents=True)
+    catalog = destination / "locale/es/LC_MESSAGES/postgresql-regress-19.mo"
+    catalog.parent.mkdir(parents=True)
+    catalog.write_bytes(b"catalog")
     helper.write_runner(
         destination,
         [
@@ -416,3 +450,7 @@ def test_runner_creates_nested_suite_output_directory(
 
     assert (work / "src/test/regress").is_dir()
     assert cwd_file.read_text(encoding="utf-8").strip() == str(suite)
+    assert (
+        tmp_path
+        / "postgresql/share/locale/es/LC_MESSAGES/postgresql-regress-19.mo"
+    ).read_bytes() == b"catalog"

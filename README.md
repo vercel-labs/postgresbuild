@@ -22,7 +22,7 @@ Run one configured target locally (the source reference is optional; omitting
 it selects the latest registered release of every supported major):
 
 ```console
-uv run ggbuild build --target aarch64-unknown-linux-gnu --source-ref 17.10
+uv run ggbuild build --target aarch64-unknown-linux-gnu --source-ref 19beta4
 ```
 
 Or inspect the complete local schedule without executing it:
@@ -61,7 +61,7 @@ testing uses the same hook:
 uv run ggbuild test dist/<target>/<version>/postgresql__*.tar.zst
 ```
 
-For PostgreSQL 16 through 18, the hook selects the file data-directory lock
+For PostgreSQL 16 through 19, the hook selects the file data-directory lock
 and mmap shared-memory modes so native tests do not require SysV IPC. Darwin
 builds of those versions also select named POSIX semaphores.
 
@@ -106,6 +106,8 @@ uv run ggbuild update
 
 PostgreSQL overrides release discovery to track the latest point release of
 every supported major. The same update rerolls patches when a release changes.
+PostgreSQL 19 beta 4 is registered separately as a verified prerelease and
+selected as the latest release of major 19.
 
 ## Development
 
@@ -114,6 +116,11 @@ uv sync
 uv run poe setup
 uv run poe qa
 ```
+
+To watch a pull request's checks, mergeability, and published review feedback
+until CI passes or needs attention, run `python scripts/babysit-pr.py` on its
+branch. Pass a PR number or URL to watch another PR, or `--follow` to continue
+watching after checks pass.
 
 `ggbuild==0.1.0` is pinned so plans use the same protocol and cache identity.
 Until that release is published, uv resolves it from the immutable Git commit
