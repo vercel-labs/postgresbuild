@@ -36,6 +36,7 @@ class Snapshot:
     pr: dict[str, Any]
     checks: CheckSummary
     feedback: tuple[dict[str, str], ...]
+    runs: tuple[dict[str, Any], ...] = ()
 
 
 def run_gh(*args: str) -> subprocess.CompletedProcess[str]:
@@ -112,6 +113,24 @@ def read_checks(pr: dict[str, Any]) -> list[dict[str, Any]]:
         raise RuntimeError("invalid JSON from gh pr checks") from error
     # gh pr checks exits nonzero for failed or pending checks.
     return records(payload, "pr checks")
+
+
+def read_runs(pr: dict[str, Any]) -> tuple[dict[str, Any], ...]:
+    payload = gh_json(
+        "run",
+        "list",
+        "-R",
+        repo_from_pr(pr),
+        "--commit",
+        str(pr["headRefOid"]),
+        "--event",
+        "pull_request",
+        "--json",
+        "databaseId,status,conclusion,workflowName,url",
+        "--limit",
+        "100",
+    )
+    return tuple(records(payload, "run list"))
 
 
 def classify_checks(checks: list[dict[str, Any]]) -> CheckSummary:
@@ -196,16 +215,23 @@ def read_feedback(pr: dict[str, Any]) -> tuple[dict[str, str], ...]:
 
 def read_snapshot(spec: str) -> Snapshot:
     pr = read_pr(spec)
-    return Snapshot(pr, classify_checks(read_checks(pr)), read_feedback(pr))
+    return Snapshot(
+        pr, classify_checks(read_checks(pr)), read_feedback(pr), read_runs(pr)
+    )
 
 
 def report(snapshot: Snapshot, seen: set[tuple[str, str]]) -> None:
     pr = snapshot.pr
     checks = snapshot.checks
+    pending_run_count = sum(
+        str(run.get("status")).lower() != "completed" for run in snapshot.runs
+    )
     print(
         f"PR #{pr['number']} {str(pr['headRefOid'])[:12]}: "
         f"{checks.passed} passed, {checks.skipped} skipped, "
-        f"{len(checks.pending)} pending, {len(checks.failed)} failed "
+        f"{len(checks.pending)} pending, {len(checks.failed)} failed, "
+        f"{pending_run_count} "
+        "workflow runs pending "
         f"(mergeable={pr.get('mergeable')}, "
         f"review={pr.get('reviewDecision')})",
         flush=True,
@@ -225,7 +251,7 @@ def report(snapshot: Snapshot, seen: set[tuple[str, str]]) -> None:
 def watch(spec: str, interval: int, timeout: int, *, follow: bool) -> int:
     started = time.monotonic()
     seen: set[tuple[str, str]] = set()
-    last_green_key: tuple[str, int, int, int] | None = None
+    last_green_key: tuple[str, int, int, int, int] | None = None
     last_green_sha = ""
     errors = 0
     while True:
@@ -263,7 +289,31 @@ def watch(spec: str, interval: int, timeout: int, *, follow: bool) -> int:
                     flush=True,
                 )
             return 1
-        green = snapshot.checks.total > 0 and not snapshot.checks.pending
+        pending_runs = [
+            run
+            for run in snapshot.runs
+            if str(run.get("status") or "").lower() != "completed"
+        ]
+        failed_runs = [
+            run
+            for run in snapshot.runs
+            if str(run.get("status") or "").lower() == "completed"
+            and str(run.get("conclusion") or "").lower()
+            not in {"success", "skipped", "neutral"}
+        ]
+        if failed_runs:
+            for run in failed_runs:
+                print(
+                    f"FAILED workflow {run.get('workflowName')}: "
+                    f"{run.get('url')}",
+                    flush=True,
+                )
+            return 1
+        green = (
+            snapshot.checks.total > 0
+            and not snapshot.checks.pending
+            and not pending_runs
+        )
         if green and str(pr.get("mergeable") or "") == "MERGEABLE":
             sha = str(pr["headRefOid"])
             green_key = (
@@ -271,6 +321,7 @@ def watch(spec: str, interval: int, timeout: int, *, follow: bool) -> int:
                 snapshot.checks.total,
                 snapshot.checks.passed,
                 snapshot.checks.skipped,
+                len(snapshot.runs),
             )
             if last_green_key == green_key:
                 current = read_pr(spec)

@@ -128,3 +128,27 @@ def test_watch_requires_stable_green_checks(
 
     assert watcher.watch("7", 1, 0, follow=False) == 0
     assert sleeps == [1, 1]
+
+
+def test_watch_waits_for_workflow_before_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    watcher = load_watcher()
+    pr = sample_pr()
+    green = watcher.CheckSummary(1, 1, 0, (), ())
+    pending = {"status": "pending", "conclusion": ""}
+    completed = {"status": "completed", "conclusion": "success"}
+    snapshots = iter(
+        [
+            watcher.Snapshot(pr, green, (), (pending,)),
+            watcher.Snapshot(pr, green, (), (completed,)),
+            watcher.Snapshot(pr, green, (), (completed,)),
+        ]
+    )
+    sleeps: list[int] = []
+    monkeypatch.setattr(watcher, "read_snapshot", lambda spec: next(snapshots))
+    monkeypatch.setattr(watcher, "read_pr", lambda spec: pr)
+    monkeypatch.setattr(watcher.time, "sleep", sleeps.append)
+
+    assert watcher.watch("7", 1, 0, follow=False) == 0
+    assert sleeps == [1, 1]
