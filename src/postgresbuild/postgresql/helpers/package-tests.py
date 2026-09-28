@@ -438,7 +438,11 @@ work=${GGBUILD_TEST_WORK:?}
 mkdir -p "$work"
 if [ -d "$test_root/locale" ]; then
     mkdir -p "$pgroot/share/locale"
-    cp -R "$test_root/locale/." "$pgroot/share/locale/"
+    if command -v cp >/dev/null 2>&1; then
+        cp -R "$test_root/locale/." "$pgroot/share/locale/"
+    else
+        /bin/busybox cp -R "$test_root/locale/." "$pgroot/share/locale/"
+    fi
 fi
 run() {
     driver=$1
