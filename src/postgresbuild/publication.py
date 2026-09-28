@@ -729,13 +729,21 @@ def versions_ndjson(index: Mapping[str, Any]) -> bytes:
                 }
             )
 
-        def version_key(version: str) -> tuple[int, ...]:
-            try:
-                return tuple(int(part) for part in version.split("."))
-            except ValueError as error:
+        def version_key(version: str) -> tuple[tuple[int, ...], int, int]:
+            match = re.fullmatch(
+                r"([0-9]+(?:\.[0-9]+)*)(?:(alpha|beta|rc)([0-9]+))?",
+                version,
+            )
+            if match is None:
                 raise ValueError(
-                    "index contains a non-numeric PostgreSQL version"
-                ) from error
+                    "index contains an invalid PostgreSQL version"
+                )
+            numbers = tuple(int(part) for part in match.group(1).split("."))
+            phase = match.group(2)
+            phase_order = (
+                3 if phase is None else {"alpha": 0, "beta": 1, "rc": 2}[phase]
+            )
+            return numbers, phase_order, int(match.group(3) or "0")
 
         for version in sorted(by_version, key=version_key, reverse=True):
             artifacts = sorted(

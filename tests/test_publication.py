@@ -818,6 +818,40 @@ def test_versions_ndjson_groups_orders_and_advertises_primary_only(
     assert response.status_code == 200
     assert response.content == versions_ndjson(index)
     assert response.headers["content-type"].startswith("application/x-ndjson")
+
+
+def test_versions_ndjson_orders_prereleases_and_serves_beta(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fragment = {
+        "format": "postgresbuild-snapshot-fragment-v1",
+        "published_at": "2026-01-02T00:00:00Z",
+        "repository": REPOSITORY,
+        "source_commit": "a" * 40,
+        "successful": [
+            _record(version)
+            for version in ("18.4", "19beta4", "19beta10", "19rc1", "19.0")
+        ],
+        "tag": TAG,
+    }
+    index = project_index([fragment])
+    monkeypatch.setenv("PUBLICATION_REPOSITORY", REPOSITORY)
+
+    class Store:
+        def get(self, path: str) -> tuple[bytes, str]:
+            assert path == "index.json"
+            return canonical_json(index), "etag"
+
+    monkeypatch.setattr(main, "VercelBlobStore", Store)
+    response = TestClient(main.app).get("/versions.ndjson")
+
+    assert response.status_code == 200
+    assert [
+        json.loads(line)["version"] for line in response.content.splitlines()
+    ] == [
+        f"{version}+{TAG}"
+        for version in ("19.0", "19rc1", "19beta10", "19beta4", "18.4")
+    ]
     assert response.headers["cache-control"] == (
         "public, s-maxage=300, stale-while-revalidate=3600"
     )

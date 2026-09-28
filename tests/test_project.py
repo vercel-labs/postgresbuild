@@ -24,7 +24,8 @@ class ProjectLayoutTests(unittest.TestCase):
 
         self.assertTrue(releases)
         self.assertEqual(
-            selected, ("14.24", "15.19", "16.15", "17.10", "18.4")
+            selected,
+            ("14.24", "15.19", "16.15", "17.10", "18.4", "19beta4"),
         )
         for release in releases:
             self.assertIs(
@@ -42,6 +43,7 @@ class ProjectLayoutTests(unittest.TestCase):
         ):
             self.assertEqual(PostgreSQL.discover_releases(), ("17.11", "18.5"))
         self.assertEqual(PostgreSQL.canonical_ref("17.11"), "REL_17_11")
+        self.assertEqual(PostgreSQL.canonical_ref("19beta4"), "REL_19_BETA4")
 
     def test_kerberos_prefers_verified_mirror_before_canonical_source(
         self,

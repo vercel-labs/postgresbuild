@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import shlex
 import textwrap
 from typing import TYPE_CHECKING, ClassVar
@@ -38,7 +39,8 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
 
     @classmethod
     def canonical_ref(cls, source_version: str) -> str:
-        return f"REL_{source_version.replace('.', '_')}"
+        version = re.sub(r"(?<=\d)(?=[A-Za-z])", "_", source_version)
+        return f"REL_{version.replace('.', '_').upper()}"
 
     @classmethod
     def discover_releases(cls) -> tuple[str, ...]:
@@ -58,7 +60,7 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
         )
 
     artifact_requirements: ClassVar[packages.RequirementsSpec] = {
-        ">=14,<19": [
+        ">=14,<20": [
             f"{Gettext.ident} (==0.26)",
             f"{ICU.ident} (==78.3)",
             f"{Kerberos.ident} (==1.22.2)",
@@ -74,7 +76,7 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
         ]
     }
     artifact_build_requirements: ClassVar[packages.RequirementsSpec] = {
-        ">=14,<19": [
+        ">=14,<20": [
             "bison",
             "flex",
             "perl",
@@ -124,8 +126,8 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             "--locale=C",
             "--encoding=UTF8",
         ]
-        major = int(self.source_version.split(".", maxsplit=1)[0])
-        if 16 <= major <= 18:
+        major = self.version.major
+        if 16 <= major <= 19:
             initdb_options.extend(
                 (
                     "--set=data_directory_lock_type=file",
@@ -220,8 +222,8 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
         self, build: targets.Build, wd: str | None = None
     ) -> packages.Args:
         env = super().get_configure_env(build, wd)
-        major = int(self.source_version.split(".", maxsplit=1)[0])
-        if 16 <= major <= 18 and build.target.triple.endswith("-apple-darwin"):
+        major = self.version.major
+        if 16 <= major <= 19 and build.target.triple.endswith("-apple-darwin"):
             env["PREFERRED_SEMAPHORES"] = "NAMED_POSIX"
         build.sh_append_quoted_flags(env, "LIBS", ["-lintl"])
         return env
@@ -332,4 +334,9 @@ PostgreSQL(
 PostgreSQL(
     "18.4",
     sha256="81a81ec695fb0c7901407defaa1d2f7973617154cf27ba74e3a7ab8e64436094",
+)
+
+PostgreSQL(
+    "19beta4",
+    sha256="83157ee9c599d03b2f7a3d73ef3a56ec24e0e79cc2b3501a64d1364f56398c86",
 )

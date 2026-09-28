@@ -1,5 +1,6 @@
 bin/**
 lib/**
+locale/**
 suites/**
 manifest.sh
 run-tests.sh
