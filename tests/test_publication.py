@@ -775,9 +775,9 @@ def test_versions_ndjson_groups_orders_and_advertises_primary_only(
         json.loads(line) for line in versions_ndjson(index).splitlines()
     ]
     assert [item["version"] for item in records] == [
-        "17.1+202601020000",
-        "16.9+202601020000",
-        f"18.2+{TAG}",
+        "17.1.0+202601020000",
+        "16.9.0+202601020000",
+        f"18.2.0+{TAG}",
     ]
     assert [item["platform"] for item in records[0]["artifacts"]] == [
         "a-target",
@@ -830,7 +830,14 @@ def test_versions_ndjson_orders_prereleases_and_serves_beta(
         "source_commit": "a" * 40,
         "successful": [
             _record(version)
-            for version in ("18.4", "19beta4", "19beta10", "19rc1", "19.0")
+            for version in (
+                "18.4",
+                "19alpha1",
+                "19beta4",
+                "19beta10",
+                "19rc1",
+                "19.0",
+            )
         ],
         "tag": TAG,
     }
@@ -850,11 +857,71 @@ def test_versions_ndjson_orders_prereleases_and_serves_beta(
         json.loads(line)["version"] for line in response.content.splitlines()
     ] == [
         f"{version}+{TAG}"
-        for version in ("19.0", "19rc1", "19beta10", "19beta4", "18.4")
+        for version in (
+            "19.0.0",
+            "19.0.0-rc.1",
+            "19.0.0-beta.10",
+            "19.0.0-beta.4",
+            "19.0.0-alpha.1",
+            "18.4.0",
+        )
     ]
     assert response.headers["cache-control"] == (
         "public, s-maxage=300, stale-while-revalidate=3600"
     )
+
+
+def _version_index(version: str) -> dict[str, Any]:
+    return project_index(
+        [
+            {
+                "format": "postgresbuild-snapshot-fragment-v1",
+                "published_at": "2026-01-01T00:00:00Z",
+                "repository": REPOSITORY,
+                "source_commit": "a" * 40,
+                "successful": [_record(version)],
+                "tag": TAG,
+            }
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    ("source", "canonical"),
+    [
+        ("18.4", "18.4.0"),
+        ("19alpha1", "19.0.0-alpha.1"),
+        ("19beta4", "19.0.0-beta.4"),
+        ("19rc1", "19.0.0-rc.1"),
+        ("19.0", "19.0.0"),
+        ("9.6.24", "9.6.24"),
+    ],
+)
+def test_feed_semver_preserves_source_artifact_identity(
+    source: str, canonical: str
+) -> None:
+    index = _version_index(source)
+    record = json.loads(versions_ndjson(index))
+
+    assert record["version"] == f"{canonical}+{TAG}"
+    artifact = record["artifacts"][0]
+    assert f"postgresql-{source}%2B{TAG}-" in artifact["urls"][0]
+    original = index["snapshots"][0]["successful"][0]
+    assert original["coordinate"]["source_version"] == source
+    assert artifact["sha256"] == next(
+        item["sha256"]
+        for item in original["files"]
+        if item["role"] == "primary-archive"
+    )
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["19beta", "19beta4junk", "19beta01", "019.0", "19.0.0.1"],
+)
+def test_feed_rejects_malformed_source_versions(version: str) -> None:
+    with pytest.raises(ValueError, match="invalid PostgreSQL version"):
+        versions_ndjson(_version_index(version))
 
 
 def test_consumer_artifact_url_encodes_tag_and_filename_segments() -> None:

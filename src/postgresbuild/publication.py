@@ -694,6 +694,40 @@ def _consumer_artifact_url(route: str, tag: str, name: str) -> str:
     )
 
 
+def _postgres_version_key(
+    version: str,
+) -> tuple[tuple[int, int, int], int, int]:
+    """Normalize native PostgreSQL versions into SemVer precedence."""
+    number = r"(?:0|[1-9][0-9]*)"
+    match = re.fullmatch(
+        rf"({number}(?:\.{number}){{0,2}})(?:(alpha|beta|rc)({number}))?",
+        version,
+    )
+    if match is None:
+        raise ValueError("index contains an invalid PostgreSQL version")
+    components = [int(part) for part in match.group(1).split(".")]
+    components.extend([0] * (3 - len(components)))
+    phase = match.group(2)
+    phase_order = (
+        3 if phase is None else {"alpha": 0, "beta": 1, "rc": 2}[phase]
+    )
+    return (
+        (components[0], components[1], components[2]),
+        phase_order,
+        int(match.group(3) or "0"),
+    )
+
+
+def _postgres_semver(version: str) -> str:
+    """Format a PostgreSQL source release as SemVer for the public feed."""
+    numbers, phase_order, phase_number = _postgres_version_key(version)
+    result = ".".join(map(str, numbers))
+    if phase_order < 3:
+        phase = ("alpha", "beta", "rc")[phase_order]
+        result += f"-{phase}.{phase_number}"
+    return result
+
+
 def versions_ndjson(index: Mapping[str, Any]) -> bytes:
     """Project the validated v1 index into the PBS-compatible version feed."""
     lines: list[str] = []
@@ -729,23 +763,9 @@ def versions_ndjson(index: Mapping[str, Any]) -> bytes:
                 }
             )
 
-        def version_key(version: str) -> tuple[tuple[int, ...], int, int]:
-            match = re.fullmatch(
-                r"([0-9]+(?:\.[0-9]+)*)(?:(alpha|beta|rc)([0-9]+))?",
-                version,
-            )
-            if match is None:
-                raise ValueError(
-                    "index contains an invalid PostgreSQL version"
-                )
-            numbers = tuple(int(part) for part in match.group(1).split("."))
-            phase = match.group(2)
-            phase_order = (
-                3 if phase is None else {"alpha": 0, "beta": 1, "rc": 2}[phase]
-            )
-            return numbers, phase_order, int(match.group(3) or "0")
-
-        for version in sorted(by_version, key=version_key, reverse=True):
+        for version in sorted(
+            by_version, key=_postgres_version_key, reverse=True
+        ):
             artifacts = sorted(
                 by_version[version], key=operator.itemgetter("platform")
             )
@@ -754,7 +774,9 @@ def versions_ndjson(index: Mapping[str, Any]) -> bytes:
                     {
                         "artifacts": artifacts,
                         "date": snapshot["published_at"],
-                        "version": f"{version}+{snapshot['tag']}",
+                        "version": (
+                            f"{_postgres_semver(version)}+{snapshot['tag']}"
+                        ),
                     },
                     ensure_ascii=False,
                     separators=(",", ":"),

@@ -96,6 +96,14 @@ inventory is available at `/index.json` and `/versions.ndjson`. If release
 publication succeeds but index ingestion fails, dispatch `ingest-existing`
 with the immutable release tag; that operation skips planning and all builds.
 
+The `/versions.ndjson` version field uses SemVer: PostgreSQL `18.4` is
+`18.4.0+<timestamp>` and `19beta4` is `19.0.0-beta.4+<timestamp>` (likewise
+for alpha and rc releases). Source versions, archive names, download URLs,
+and checksums retain their published identities. Snapshot timestamps select
+the newest build of an equal upstream version; SemVer precedence itself
+ignores build metadata. Install clients should require an explicit
+prerelease request before selecting alpha, beta, or rc versions.
+
 ## Updating releases
 
 Dependency recipes declare ggbuild update policies. Update them with:
