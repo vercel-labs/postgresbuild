@@ -25,7 +25,7 @@ class ProjectLayoutTests(unittest.TestCase):
         self.assertTrue(releases)
         self.assertEqual(
             selected,
-            ("14.24", "15.19", "16.15", "17.10", "18.4", "19beta4"),
+            ("14.24", "15.19", "16.15", "17.11", "18.6", "19rc1"),
         )
         for release in releases:
             self.assertIs(
@@ -35,15 +35,37 @@ class ProjectLayoutTests(unittest.TestCase):
     def test_postgresql_update_discovery_and_canonical_ref(self) -> None:
         payload = b"""[
             {"major": 17, "latestMinor": 11, "supported": true},
-            {"major": 18, "latestMinor": 5, "supported": true},
+            {"major": 18, "latestMinor": 6, "supported": true},
             {"major": 13, "latestMinor": 23, "supported": false}
         ]"""
+        index = b"""<a href="v19beta4/">v19beta4</a>
+            <a href="v19rc1/">v19rc1</a>
+            <a href="v19beta10/">v19beta10</a>
+            <a href="v19alpha1/">v19alpha1</a>
+            <a href="v18rc1/">v18rc1</a>
+            <a href="v13beta1/">v13beta1</a>
+            <a href="v19rc1-invalid/">invalid</a>"""
+        responses = {
+            "https://www.postgresql.org/versions.json": payload,
+            "https://ftp.postgresql.org/pub/source/": index,
+        }
         with mock.patch(
-            "postgresbuild.postgresql.fetch", return_value=payload
+            "postgresbuild.postgresql.fetch", side_effect=responses.__getitem__
         ):
-            self.assertEqual(PostgreSQL.discover_releases(), ("17.11", "18.5"))
+            self.assertEqual(
+                PostgreSQL.discover_releases(), ("17.11", "18.6", "19rc1")
+            )
         self.assertEqual(PostgreSQL.canonical_ref("17.11"), "REL_17_11")
         self.assertEqual(PostgreSQL.canonical_ref("19beta4"), "REL_19_BETA4")
+        self.assertEqual(PostgreSQL.canonical_ref("19rc1"), "REL_19_RC1")
+
+    def test_stable_release_replaces_prereleases_in_discovery(self) -> None:
+        payload = b'[{"major": 19, "latestMinor": 0, "supported": true}]'
+        with mock.patch(
+            "postgresbuild.postgresql.fetch",
+            side_effect=[payload, b'<a href="v19rc1/">v19rc1</a>'],
+        ):
+            self.assertEqual(PostgreSQL.discover_releases(), ("19.0",))
 
     def test_kerberos_prefers_verified_mirror_before_canonical_source(
         self,

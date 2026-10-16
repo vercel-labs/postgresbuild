@@ -8,6 +8,7 @@ import textwrap
 from typing import TYPE_CHECKING, ClassVar
 
 from ggbuild.updater import UpdateableBundledCAutoconfPackage, fetch
+from packaging.version import Version
 
 from postgresbuild.gettext import Gettext
 from postgresbuild.icu import ICU
@@ -50,14 +51,22 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             for item in payload
             if item["supported"] and str(item["major"]).isdigit()
         }
-        return tuple(
-            sorted(
-                releases,
-                key=lambda version: tuple(
-                    int(part) for part in version.split(".")
-                ),
-            )
+        latest_stable_major = max(
+            Version(version).major for version in releases
         )
+        index = fetch("https://ftp.postgresql.org/pub/source/").decode("utf-8")
+        prereleases: dict[int, str] = {}
+        for version in re.findall(
+            r'href="v(\d+(?:alpha|beta|rc)\d+)/"', index
+        ):
+            parsed = Version(version)
+            if parsed.major <= latest_stable_major:
+                continue
+            previous = prereleases.get(parsed.major)
+            if previous is None or parsed > Version(previous):
+                prereleases[parsed.major] = version
+        releases.update(prereleases.values())
+        return tuple(sorted(releases, key=Version))
 
     artifact_requirements: ClassVar[packages.RequirementsSpec] = {
         ">=14,<20": [
@@ -327,16 +336,16 @@ PostgreSQL(
 )
 
 PostgreSQL(
-    "17.10",
-    sha256="078a03516dcdbdb705fecaf415ea3d13a956c589e46f09fed68a06fb00598c90",
+    "17.11",
+    sha256="dd27f2b3c59e73ed14aa3324901242bf69a032a6347805f274e6260322d42979",
 )
 
 PostgreSQL(
-    "18.4",
-    sha256="81a81ec695fb0c7901407defaa1d2f7973617154cf27ba74e3a7ab8e64436094",
+    "18.6",
+    sha256="555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
 )
 
 PostgreSQL(
-    "19beta4",
-    sha256="83157ee9c599d03b2f7a3d73ef3a56ec24e0e79cc2b3501a64d1364f56398c86",
+    "19rc1",
+    sha256="af105fc8e960fc836a09fc2cd7f582b49fd17675d9d36631abe3a565bfd7d701",
 )

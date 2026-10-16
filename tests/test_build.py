@@ -53,7 +53,7 @@ def test_node_build_command_uses_portable_low_level_interface() -> None:
     plan = create_plan(
         config,
         PlanOptions(
-            targets=("aarch64-unknown-linux-gnu",), versions=("17.10",)
+            targets=("aarch64-unknown-linux-gnu",), versions=("17.11",)
         ),
     )
     root = next(node for node in plan["nodes"] if node["role"] == "artifact")
@@ -63,5 +63,5 @@ def test_node_build_command_uses_portable_low_level_interface() -> None:
     assert "--generic" in command
     assert "--arch=aarch64" in command
     assert "--libc=gnu" in command
-    assert "--source-ref=17.10" in command
+    assert "--source-ref=17.11" in command
     assert command[-1] == "postgresbuild.postgresql:PostgreSQL"

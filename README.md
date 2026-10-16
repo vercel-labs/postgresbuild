@@ -22,7 +22,7 @@ Run one configured target locally (the source reference is optional; omitting
 it selects the latest registered release of every supported major):
 
 ```console
-uv run ggbuild build --target aarch64-unknown-linux-gnu --source-ref 19beta4
+uv run ggbuild build --target aarch64-unknown-linux-gnu --source-ref 19rc1
 ```
 
 Or inspect the complete local schedule without executing it:
@@ -113,9 +113,10 @@ uv run ggbuild update
 ```
 
 PostgreSQL overrides release discovery to track the latest point release of
-every supported major. The same update rerolls patches when a release changes.
-PostgreSQL 19 beta 4 is registered separately as a verified prerelease and
-selected as the latest release of major 19.
+every supported major and the latest alpha, beta, or release candidate for
+upcoming majors from the official source index. Stable releases replace their
+prereleases once supported. The same update rerolls patches when a release
+changes. PostgreSQL 19rc1 is selected as the latest release of major 19.
 
 ## Development
 

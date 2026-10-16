@@ -152,7 +152,7 @@ def test_postgresql_enables_glibc_integrations() -> None:
         assert option in arguments
 
 
-@pytest.mark.parametrize("version", ["16.15", "17.10", "18.4", "19beta4"])
+@pytest.mark.parametrize("version", ["16.15", "17.11", "18.6", "19rc1"])
 def test_macos_build_avoids_sysv_semaphores(version: str) -> None:
     package = PostgreSQL.registered_release(version)
     assert package is not None
@@ -170,7 +170,7 @@ def test_macos_build_avoids_sysv_semaphores(version: str) -> None:
 
 
 def test_linux_build_keeps_platform_semaphore_default() -> None:
-    package = PostgreSQL.registered_release("18.4")
+    package = PostgreSQL.registered_release("18.6")
     assert package is not None
     build = mock.Mock()
     build.target.triple = "aarch64-unknown-linux-gnu"
@@ -203,7 +203,7 @@ def test_artifact_test_environment_is_postgresql_specific(
     assert "LD_LIBRARY_PATH" not in environment
 
 
-@pytest.mark.parametrize("version", ["16.15", "17.10", "18.4", "19beta4"])
+@pytest.mark.parametrize("version", ["16.15", "17.11", "18.6", "19rc1"])
 def test_artifact_test_avoids_sysv_ipc_for_patched_versions(
     version: str,
     tmp_path: pathlib.Path,
@@ -225,8 +225,8 @@ def test_artifact_test_avoids_sysv_ipc_for_patched_versions(
         assert option in script
 
 
-def test_beta_release_uses_19_dependencies_and_patch_series() -> None:
-    package = PostgreSQL.registered_release("19beta4")
+def test_rc_release_uses_19_dependencies_and_patch_series() -> None:
+    package = PostgreSQL.registered_release("19rc1")
     assert package is not None
 
     assert len(package.get_requirements()) == 12
@@ -238,10 +238,8 @@ def test_beta_release_uses_19_dependencies_and_patch_series() -> None:
         "predictable_install",
         "truncate_log",
     }
-    assert all(
-        patch.path.stem.endswith("19beta4-20")
-        for patch in select_patch_variants(package)
-    )
+    patches = {patch.name: patch for patch in select_patch_variants(package)}
+    assert patches["data_directory_lock"].path.stem.endswith("19rc1")
 
 
 def test_artifact_test_keeps_sysv_default_for_unpatched_versions(
@@ -350,7 +348,7 @@ def test_production_inventory_rejects_sdk_and_outside_prefix() -> None:
     assert "usr/bin/postgres" in str(error.value)
 
 
-@pytest.mark.parametrize("version", ["18.4", "19beta4"])
+@pytest.mark.parametrize("version", ["18.6", "19rc1"])
 def test_artifact_test_script_runs_shipped_server_and_staged_harness(
     version: str,
     tmp_path: pathlib.Path,
