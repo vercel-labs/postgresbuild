@@ -30,7 +30,9 @@ class Kerberos(UpdateableBundledCAutoconfPackage):
     update_policy: ClassVar[UpdatePolicy] = {
         "type": "html-index",
         "url": "https://web.mit.edu/kerberos/dist/",
-        "pattern": r"Current release:.*krb5-(\d+\.\d+(?:\.\d+)?)",
+        "pattern": (
+            r"Kerberos V5 Release (\d+\.\d+(?:\.\d+)?)\s+- current release"
+        ),
     }
 
     def sh_get_configure_command(self, build: targets.Build) -> str:
