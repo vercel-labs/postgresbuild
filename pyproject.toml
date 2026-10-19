@@ -16,6 +16,7 @@ classifiers = [
 dependencies = [
     "fastapi>=0.130,<1",
     "ggbuild==0.1.0",
+    "pygithub>=2.8,<3",
     "pyjwt[crypto]>=2.10,<3",
     "vercel>=0.8",
 ]

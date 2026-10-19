@@ -1,0 +1,38 @@
+name: Dependency checks
+
+on:
+  # Always run trusted main; PR content is checked as data.
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled, edited]
+  workflow_run: # zizmor: ignore[dangerous-triggers]
+    workflows: [CI, PostgreSQL builds]
+    types: [requested, in_progress, completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-checks
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.repository == 'vercel-labs/postgresbuild'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: ./.github/actions/postgresbuild-setup
+      - name: Aggregate checks for human review and merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --frozen python -m postgresbuild.automation check
