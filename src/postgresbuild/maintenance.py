@@ -22,9 +22,10 @@ from ggbuild import updater
 from ggbuild.packages import HttpsSource
 from ggbuild.planner import load_recipe
 from ggbuild.project import load_project
-from github import Auth, Github
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
+
+from postgresbuild.github import GitHubRepository
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -441,21 +442,14 @@ def main() -> None:
     )
     if args.command == "discover":
         token = os.environ.get("GH_TOKEN", "")
-        with Github(
-            auth=Auth.Token(token) if token else None,
-            per_page=100,
-            timeout=60,
-            lazy=True,
-        ) as client:
-            repository = client.get_repo(
-                os.environ.get(
-                    "GITHUB_REPOSITORY", "vercel-labs/postgresbuild"
-                )
-            )
+        with GitHubRepository(
+            os.environ.get("GITHUB_REPOSITORY", "vercel-labs/postgresbuild"),
+            token,
+        ) as repository:
             covered = {
                 digest
                 for pr in repository.get_pulls(state="open")
-                for digest in MARKER.findall(pr.body or "")
+                for digest in MARKER.findall(pr.get("body") or "")
             }
         report = discover(covered=covered)
         report["main_sha"] = subprocess.check_output(

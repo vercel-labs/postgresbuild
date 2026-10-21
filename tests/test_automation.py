@@ -6,18 +6,12 @@ import subprocess
 from typing import Any
 from unittest import mock
 
+import httpx2
 import pytest
-from github import GithubException
-from github.Commit import Commit
-from github.ContentFile import ContentFile
-from github.File import File
-from github.GithubObject import GithubObject
-from github.PullRequest import PullRequest
-from github.Repository import Repository
-from github.WorkflowRun import WorkflowRun
 from packaging.version import Version
 
 from postgresbuild import automation, maintenance
+from postgresbuild.github import GitHubRepository
 
 SHA = "a" * 40
 CURRENT_SSL = maintenance.recipes()["openssl"][-1].source_version
@@ -61,16 +55,12 @@ def runs() -> list[dict[str, Any]]:
     ]
 
 
-def resource[T: GithubObject](kind: type[T], data: dict[str, Any]) -> T:
-    return kind(mock.Mock(), {}, data)
+def pull_request(data: dict[str, Any] | None = None) -> dict[str, Any]:
+    return pull() if data is None else data
 
 
-def pull_request(data: dict[str, Any] | None = None) -> PullRequest:
-    return resource(PullRequest, pull() if data is None else data)
-
-
-def workflow_runs(data: list[dict[str, Any]]) -> list[WorkflowRun]:
-    return [resource(WorkflowRun, item) for item in data]
+def workflow_runs(data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return data
 
 
 @pytest.mark.parametrize(
@@ -324,7 +314,11 @@ def test_generated_workflow_is_independently_validated() -> None:
         (True, ValueError("blocked"), "failure"),
         (
             True,
-            GithubException(403, {"message": "API unavailable"}),
+            httpx2.HTTPStatusError(
+                "API unavailable",
+                request=httpx2.Request("GET", "https://api.github.com"),
+                response=httpx2.Response(403),
+            ),
             "failure",
         ),
         (False, None, "failure"),
@@ -336,7 +330,7 @@ def test_checks_report_eligibility_without_merging_or_app_credentials(
     error: Exception | None,
     expected: str,
 ) -> None:
-    repository = mock.Mock(spec=Repository)
+    repository = mock.Mock(spec=GitHubRepository)
     repository.full_name = "vercel-labs/postgresbuild"
     pr = pull_request()
     results = runs()
@@ -345,8 +339,7 @@ def test_checks_report_eligibility_without_merging_or_app_credentials(
     repository.get_pulls.return_value = [pr]
     repository.get_pull.return_value = pr
     repository.get_workflow_runs.return_value = workflow_runs(results)
-    commit = repository.get_commit.return_value
-    commit.get_statuses.return_value = []
+    repository.get_statuses.return_value = []
     with mock.patch.object(automation, "qualify", side_effect=error):
         automation.check(repository)
     repository.get_pulls.assert_called_once_with(state="open", base="main")
@@ -354,11 +347,12 @@ def test_checks_report_eligibility_without_merging_or_app_credentials(
         head_sha=SHA, event="pull_request"
     )
     # Even a passing PR only receives status; the workflow cannot merge it.
-    repository.get_commit.assert_called_once_with(SHA)
-    assert commit.create_status.call_count == 1
-    assert commit.create_status.call_args.args == (expected,)
+    repository.get_statuses.assert_called_once_with(SHA)
+    assert repository.create_status.call_count == 1
+    assert repository.create_status.call_args.args == (SHA, expected)
     assert (
-        commit.create_status.call_args.kwargs["context"] == automation.STATUS
+        repository.create_status.call_args.kwargs["context"]
+        == automation.STATUS
     )
 
 
@@ -373,33 +367,30 @@ def test_checks_report_eligibility_without_merging_or_app_credentials(
 def test_unsigned_or_human_authored_commits_cannot_qualify(
     author: dict[str, Any] | None, *, verified: bool
 ) -> None:
-    repository = mock.Mock(spec=Repository)
-    repository.compare.return_value.behind_by = 0
-    commit = resource(
-        Commit,
+    repository = mock.Mock(spec=GitHubRepository)
+    repository.compare.return_value = {"behind_by": 0}
+    repository.get_commits.return_value = [
         {
             "author": author,
             "commit": {"verification": {"verified": verified}},
-        },
-    )
+        }
+    ]
     pr = pull_request()
-    with mock.patch.object(pr, "get_commits", return_value=[commit]):
-        with pytest.raises(ValueError, match="signed"):
-            automation.qualify(repository, pr)
+    with pytest.raises(ValueError, match="signed"):
+        automation.qualify(repository, pr)
 
 
 def test_stale_base_prevents_qualification() -> None:
-    repository = mock.Mock(spec=Repository)
-    repository.compare.return_value.behind_by = 1
+    repository = mock.Mock(spec=GitHubRepository)
+    repository.compare.return_value = {"behind_by": 1}
     pr = pull_request()
-    with mock.patch.object(pr, "get_commits") as commits:
-        with pytest.raises(ValueError, match="current main"):
-            automation.qualify(repository, pr)
-    commits.assert_not_called()
+    with pytest.raises(ValueError, match="current main"):
+        automation.qualify(repository, pr)
+    repository.get_commits.assert_not_called()
 
 
 def test_head_change_during_validation_prevents_success_status() -> None:
-    repository = mock.Mock(spec=Repository)
+    repository = mock.Mock(spec=GitHubRepository)
     repository.full_name = "vercel-labs/postgresbuild"
     changed = copy.deepcopy(pull())
     changed["head"]["sha"] = "c" * 40
@@ -409,68 +400,59 @@ def test_head_change_during_validation_prevents_success_status() -> None:
     repository.get_workflow_runs.return_value = workflow_runs(runs())
     with mock.patch.object(automation, "qualify"):
         automation.check(repository)
-    repository.get_commit.assert_not_called()
+    repository.create_status.assert_not_called()
 
 
-def test_qualification_uses_sdk_commit_verification_and_file_contents() -> (
-    None
-):
+def test_qualification_uses_commit_verification_and_file_contents() -> None:
     files, body = bump_files()
-    repository = mock.Mock(spec=Repository)
-    repository.compare.return_value.behind_by = 0
+    repository = mock.Mock(spec=GitHubRepository)
+    repository.compare.return_value = {"behind_by": 0}
     pr = pull_request({**pull(), "body": body})
-    commit = resource(
-        Commit,
+    repository.get_commits.return_value = [
         {
             "author": {"id": int(automation.FACTORY_BOT_ID)},
             "commit": {"verification": {"verified": True}},
-        },
-    )
-    changed = [
-        resource(File, {"filename": path, "status": "modified"})
-        for path in files
+        }
+    ]
+    repository.get_files.return_value = [
+        {"filename": path, "status": "modified"} for path in files
     ]
 
-    def contents(path: str, *, ref: str) -> ContentFile:
+    def contents(path: str, *, ref: str) -> dict[str, str]:
         before, after = files[path]
         text = after if ref == SHA else before
-        return resource(
-            ContentFile,
-            {
-                "encoding": "base64",
-                "content": base64.b64encode(text.encode()).decode(),
-            },
-        )
+        return {
+            "encoding": "base64",
+            "content": base64.b64encode(text.encode()).decode(),
+        }
 
     repository.get_contents.side_effect = contents
-    with (
-        mock.patch.object(pr, "get_commits", return_value=[commit]),
-        mock.patch.object(pr, "get_files", return_value=changed),
-        mock.patch.object(automation, "verify_generated") as generated,
-    ):
+    with mock.patch.object(automation, "verify_generated") as generated:
         automation.qualify(repository, pr)
     repository.compare.assert_called_once_with("main", SHA)
     generated.assert_called_once_with(files)
     path = next(iter(files))
     assert repository.get_contents.call_args_list == [
-        mock.call(path, ref=pr.base.sha),
+        mock.call(path, ref=pr["base"]["sha"]),
         mock.call(path, ref=SHA),
     ]
 
 
 def test_status_is_not_reposted_when_the_result_is_unchanged() -> None:
-    repository = mock.Mock(spec=Repository)
-    commit = repository.get_commit.return_value
-    status = mock.Mock(
-        context=automation.STATUS, state="success", description="passed"
-    )
-    commit.get_statuses.return_value = [status]
+    repository = mock.Mock(spec=GitHubRepository)
+    repository.get_statuses.return_value = [
+        {
+            "context": automation.STATUS,
+            "state": "success",
+            "description": "passed",
+        }
+    ]
     automation.set_status(repository, SHA, "success", "passed")
-    commit.create_status.assert_not_called()
+    repository.create_status.assert_not_called()
 
 
 def test_file_read_rejects_a_directory() -> None:
-    repository = mock.Mock(spec=Repository)
+    repository = mock.Mock(spec=GitHubRepository)
     repository.get_contents.return_value = []
     with pytest.raises(ValueError, match="cannot read"):
         automation.read_content(repository, "src", SHA)

@@ -8,9 +8,9 @@ import time
 import urllib.parse
 from typing import Any, cast
 
+import httpx2
 import jwt
 import pytest
-import requests
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
@@ -377,47 +377,47 @@ def test_unknown_oidc_key_refreshes_once() -> None:
     assert session.calls == 2
 
 
-def test_github_client_downloads_private_release_assets_through_api(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_github_client_downloads_private_release_assets_through_api() -> None:
     browser_url = _url(SNAPSHOT_NAME)
     api_url = f"https://api.github.com/repos/{REPOSITORY}/releases/assets/123"
+    download_url = "https://release-assets.githubusercontent.com/asset"
+    calls = []
 
-    calls: list[tuple[str, dict[str, str] | None, int]] = []
-
-    def get(
-        url: str,
-        *,
-        headers: dict[str, str] | None = None,
-        timeout: int,
-    ) -> FakeResponse:
-        calls.append((url, headers, timeout))
-        if url.endswith(f"/releases/tags/{TAG}"):
-            return FakeResponse(
-                {
+    def respond(request: httpx2.Request) -> httpx2.Response:
+        calls.append(str(request.url))
+        assert request.extensions["timeout"]["read"] == 30
+        if str(request.url) == download_url:
+            assert "Authorization" not in request.headers
+            return httpx2.Response(200, content=b"private asset")
+        assert request.headers["Authorization"] == "Bearer token"
+        if request.url.path.endswith(f"/releases/tags/{TAG}"):
+            assert request.headers["Accept"] == ("application/vnd.github+json")
+            return httpx2.Response(
+                200,
+                json={
                     "assets": [
                         {
                             "browser_download_url": browser_url,
                             "url": api_url,
                         }
                     ]
-                }
+                },
             )
-        assert url == api_url
-        return FakeResponse({}, content=b"private asset")
+        assert str(request.url) == api_url
+        assert request.headers["Accept"] == "application/octet-stream"
+        return httpx2.Response(302, headers={"Location": download_url})
 
-    session = requests.Session()
-    monkeypatch.setattr(session, "get", get)
-    client = publication.GitHubReleaseClient("token", session)
-    assert client.release_by_tag(REPOSITORY, TAG) is not None
-    assert client.get_bytes(browser_url) == b"private asset"
-    assert session.headers["Accept"] == "application/vnd.github+json"
-    assert session.headers["Authorization"] == "Bearer token"
-    assert calls[1] == (
+    with httpx2.Client(
+        transport=httpx2.MockTransport(respond), follow_redirects=True
+    ) as session:
+        client = publication.GitHubReleaseClient("token", session)
+        assert client.release_by_tag(REPOSITORY, TAG) is not None
+        assert client.get_bytes(browser_url) == b"private asset"
+    assert calls == [
+        f"https://api.github.com/repos/{REPOSITORY}/releases/tags/{TAG}",
         api_url,
-        {"Accept": "application/octet-stream"},
-        30,
-    )
+        download_url,
+    ]
 
 
 def test_snapshot_validation_rejects_release_asset_mismatch() -> None:

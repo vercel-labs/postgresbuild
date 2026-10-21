@@ -481,7 +481,7 @@ def test_discovery_cli_suppresses_all_markers_in_a_batched_pr(
         mock.patch.object(
             sys, "argv", ["maintenance", "discover", "--output", str(report)]
         ),
-        mock.patch.object(maintenance, "Github") as github,
+        mock.patch.object(maintenance, "GitHubRepository") as github,
         mock.patch.object(
             maintenance,
             "discover",
@@ -493,13 +493,9 @@ def test_discovery_cli_suppresses_all_markers_in_a_batched_pr(
         mock.patch.object(urllib.request, "install_opener"),
     ):
         client = github.return_value.__enter__.return_value
-        client.get_repo.return_value.get_pulls.return_value = [
-            mock.Mock(body=body)
-        ]
+        client.get_pulls.return_value = [{"body": body}]
         maintenance.main()
-    github.assert_called_once_with(
-        auth=None, per_page=100, timeout=60, lazy=True
-    )
+    github.assert_called_once_with("vercel-labs/postgresbuild", "")
     discover.assert_called_once_with(covered={c.digest for c in changes})
     assert json.loads(report.read_text())["main_sha"] == "main-sha"
 
