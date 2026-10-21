@@ -76,7 +76,7 @@ default-groups = ["dev"]
 exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "bde50faa742d74c19790df9a55257316c4ee323a" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "8b2b930fb49e97a7a986e31d405e2842217ed33d" }
 
 [tool.ggbuild]
 root-recipe = "postgresbuild.postgresql:PostgreSQL"
