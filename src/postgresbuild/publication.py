@@ -10,13 +10,14 @@ import re
 import threading
 import time
 import urllib.parse
+from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
+import httpx2
 import jwt
 import jwt.algorithms
-import requests
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -125,7 +126,6 @@ def verify_github_oidc(
     *,
     fetch: HttpGetter | None = None,
 ) -> dict[str, Any]:
-    session = fetch or requests.Session()
     header = jwt.get_unverified_header(token)
     if header.get("alg") != "RS256" or not isinstance(header.get("kid"), str):
         raise ValueError("GitHub OIDC header is not RS256 with a key ID")
@@ -145,9 +145,14 @@ def verify_github_oidc(
             None,
         )
 
-    key = select(_jwks(session))
-    if key is None:
-        key = select(_jwks(session, force=True))
+    with (
+        nullcontext(fetch)
+        if fetch is not None
+        else httpx2.Client(follow_redirects=True)
+    ) as session:
+        key = select(_jwks(session))
+        if key is None:
+            key = select(_jwks(session, force=True))
     if key is None:
         raise ValueError("GitHub OIDC token uses an unknown key")
     claims = jwt.decode(
@@ -180,9 +185,9 @@ def verify_github_oidc(
 
 class GitHubReleaseClient:
     def __init__(
-        self, token: str = "", session: requests.Session | None = None
+        self, token: str = "", session: httpx2.Client | None = None
     ) -> None:
-        self.session = session or requests.Session()
+        self.session = session or httpx2.Client(follow_redirects=True)
         self.session.headers["Accept"] = "application/vnd.github+json"
         self._asset_api_urls: dict[str, str] = {}
         if token:

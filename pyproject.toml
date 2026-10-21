@@ -16,9 +16,9 @@ classifiers = [
 dependencies = [
     "fastapi>=0.130,<1",
     "ggbuild==0.1.0",
-    "pygithub>=2.8,<3",
+    "httpx2>=2.16,<3",
     "pyjwt[crypto]>=2.10,<3",
-    "vercel>=0.8",
+    "vercel>=0.12,<1",
 ]
 
 [dependency-groups]
@@ -33,10 +33,9 @@ check = [
     "poethepoet>=0.48.0",
     "ruff==0.16.0",
     "ty==0.0.73",
-    "types-requests",
     "tox>=4",
     "tox-uv-bare",
-    "uv==0.11.24",
+    "uv==0.13.4",
     "zizmor==1.26.1",
     { include-group = "test" },
 ]
@@ -77,7 +76,7 @@ default-groups = ["dev"]
 exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "a8fced0f3a0b6ebcab8a5f14fac6662ae615aa6e" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "bde50faa742d74c19790df9a55257316c4ee323a" }
 
 [tool.ggbuild]
 root-recipe = "postgresbuild.postgresql:PostgreSQL"

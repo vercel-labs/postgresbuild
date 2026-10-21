@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
 import os
 import re
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from github import Auth, Github, GithubException
+import httpx2
 
+from postgresbuild.github import GitHubRepository
 from postgresbuild.maintenance import (
     MARKER,
     Candidate,
@@ -25,42 +27,40 @@ from postgresbuild.maintenance import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from github.PullRequest import PullRequest
-    from github.Repository import Repository
-    from github.WorkflowRun import WorkflowRun
-
 STATUS = "Dependency maintenance"
 WORKFLOWS = {".github/workflows/ci.yml", ".github/workflows/postgresbuild.yml"}
 # Verified against the installed App and its published Factory PRs.
 FACTORY_BOT_ID = "314297673"
 
 
-def authenticated_factory(pr: PullRequest, repository: str) -> bool:
+def authenticated_factory(pr: dict[str, Any], repository: str) -> bool:
     return bool(
-        str(pr.user.id) == FACTORY_BOT_ID
-        and pr.user.type == "Bot"
-        and pr.head.repo is not None
-        and pr.head.repo.full_name == repository
-        and pr.head.ref.startswith("factory/")
-        and pr.base.ref == "main"
-        and not pr.draft
-        and any(label.name == "dependencies" for label in pr.labels)
+        str(pr["user"]["id"]) == FACTORY_BOT_ID
+        and pr["user"]["type"] == "Bot"
+        and pr["head"]["repo"] is not None
+        and pr["head"]["repo"]["full_name"] == repository
+        and pr["head"]["ref"].startswith("factory/")
+        and pr["base"]["ref"] == "main"
+        and not pr["draft"]
+        and any(label["name"] == "dependencies" for label in pr["labels"])
     )
 
 
-def workflow_state(runs: Iterable[WorkflowRun], head: str) -> tuple[str, str]:
-    latest: dict[str, WorkflowRun] = {}
+def workflow_state(
+    runs: Iterable[dict[str, Any]], head: str
+) -> tuple[str, str]:
+    latest: dict[str, dict[str, Any]] = {}
     for run in runs:
-        path = run.path.split("@", 1)[0]
+        path = run["path"].split("@", 1)[0]
         if (
             path in WORKFLOWS
-            and run.head_sha == head
-            and run.event == "pull_request"
+            and run["head_sha"] == head
+            and run["event"] == "pull_request"
         ):
             previous = latest.get(path)
-            if previous is None or (run.id, run.run_attempt) > (
-                previous.id,
-                previous.run_attempt,
+            if previous is None or (run["id"], run["run_attempt"]) > (
+                previous["id"],
+                previous["run_attempt"],
             ):
                 latest[path] = run
     if latest.keys() != WORKFLOWS:
@@ -68,9 +68,9 @@ def workflow_state(runs: Iterable[WorkflowRun], head: str) -> tuple[str, str]:
             "pending",
             "Waiting for CI and the full PostgreSQL build/test workflow",
         )
-    if any(run.status != "completed" for run in latest.values()):
+    if any(run["status"] != "completed" for run in latest.values()):
         return "pending", "Required workflows are still running"
-    if any(run.conclusion != "success" for run in latest.values()):
+    if any(run["conclusion"] != "success" for run in latest.values()):
         return "failure", "A required workflow did not succeed"
     return "success", "CI and all PostgreSQL builds/tests passed for this head"
 
@@ -151,56 +151,57 @@ def verify_generated(files: dict[str, tuple[str, str]]) -> None:
     )
 
 
-def read_content(repository: Repository, path: str, ref: str) -> str:
+def read_content(repository: GitHubRepository, path: str, ref: str) -> str:
     content = repository.get_contents(path, ref=ref)
-    if isinstance(content, list) or content.encoding != "base64":
+    if not isinstance(content, dict) or content.get("encoding") != "base64":
         raise ValueError(f"cannot read {path} at {ref}")
-    return content.decoded_content.decode()
+    return base64.b64decode(content["content"]).decode()
 
 
-def qualify(repository: Repository, pr: PullRequest) -> None:
-    sha = pr.head.sha
+def qualify(repository: GitHubRepository, pr: dict[str, Any]) -> None:
+    sha = pr["head"]["sha"]
     comparison = repository.compare("main", sha)
-    if comparison.behind_by != 0 or pr.mergeable is not True:
+    if comparison["behind_by"] != 0 or pr["mergeable"] is not True:
         raise ValueError("branch must be updated with current main")
-    commits = list(pr.get_commits())
+    commits = list(repository.get_commits(pr["number"]))
     if not commits or any(
-        c.author is None
-        or str(c.author.id) != FACTORY_BOT_ID
-        or not c.commit.verification.verified
+        c["author"] is None
+        or str(c["author"]["id"]) != FACTORY_BOT_ID
+        or not c["commit"]["verification"]["verified"]
         for c in commits
     ):
         raise ValueError("all commits must be signed and authored by Factory")
-    changed = list(pr.get_files())
-    if any(f.status in {"renamed", "removed"} for f in changed):
+    changed = list(repository.get_files(pr["number"]))
+    if any(f["status"] in {"renamed", "removed"} for f in changed):
         raise ValueError("renames and removals require human review")
     files = {
-        f.filename: (
+        f["filename"]: (
             ""
-            if f.status == "added"
-            else read_content(repository, f.filename, pr.base.sha),
-            read_content(repository, f.filename, sha),
+            if f["status"] == "added"
+            else read_content(repository, f["filename"], pr["base"]["sha"]),
+            read_content(repository, f["filename"], sha),
         )
         for f in changed
     }
-    verify_changes(files, pr.body or "")
+    verify_changes(files, pr.get("body") or "")
     verify_generated(files)
 
 
 def set_status(
-    repository: Repository, sha: str, state: str, description: str
+    repository: GitHubRepository, sha: str, state: str, description: str
 ) -> None:
-    commit = repository.get_commit(sha)
     existing = next(
-        (s for s in commit.get_statuses() if s.context == STATUS), None
+        (s for s in repository.get_statuses(sha) if s["context"] == STATUS),
+        None,
     )
     if (
         existing
-        and existing.state == state
-        and existing.description == description[:140]
+        and existing["state"] == state
+        and existing["description"] == description[:140]
     ):
         return
-    commit.create_status(
+    repository.create_status(
+        sha,
         state,
         context=STATUS,
         description=description[:140],
@@ -208,10 +209,10 @@ def set_status(
     )
 
 
-def check(repository: Repository) -> None:
+def check(repository: GitHubRepository) -> None:
     for summary in repository.get_pulls(state="open", base="main"):
-        pr = repository.get_pull(summary.number)
-        sha = pr.head.sha
+        pr = repository.get_pull(summary["number"])
+        sha = pr["head"]["sha"]
         runs = repository.get_workflow_runs(head_sha=sha, event="pull_request")
         state, description = workflow_state(runs, sha)
         try:
@@ -222,13 +223,13 @@ def check(repository: Repository) -> None:
         except (
             OSError,
             ValueError,
-            GithubException,
+            httpx2.HTTPError,
             subprocess.CalledProcessError,
         ) as exc:
             state, description = "failure", str(exc)
         # Re-read after policy checks. Status is bound to this head.
-        fresh = repository.get_pull(pr.number)
-        if fresh.head.sha != sha or fresh.state != "open":
+        fresh = repository.get_pull(pr["number"])
+        if fresh["head"]["sha"] != sha or fresh["state"] != "open":
             continue
         set_status(repository, sha, state, description)
 
@@ -237,13 +238,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("check",))
     parser.parse_args()
-    with Github(
-        auth=Auth.Token(os.environ["GH_TOKEN"]),
-        per_page=100,
-        timeout=60,
-        lazy=True,
-    ) as client:
-        check(client.get_repo(os.environ["GITHUB_REPOSITORY"]))
+    with GitHubRepository(
+        os.environ["GITHUB_REPOSITORY"], os.environ["GH_TOKEN"]
+    ) as repository:
+        check(repository)
 
 
 if __name__ == "__main__":

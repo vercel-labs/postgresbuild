@@ -7,9 +7,9 @@ import os
 import urllib.parse
 import uuid
 
-import requests
-from vercel.blob import get
+import httpx2
 from vercel.blob.errors import BlobNotFoundError
+from vercel.blob.sync import get_blob
 
 
 class VercelBlobStore:
@@ -38,17 +38,20 @@ class VercelBlobStore:
             "x-vercel-blob-store-id": self.store_id,
         }
 
-    def _get(self, url: str) -> tuple[bytes, str]:
+    def _get(self, url: str) -> bytes:
         separator = "&" if "?" in url else "?"
-        value = get(f"{url}{separator}v={uuid.uuid4().hex}", token=self.token)
-        return value.content, value.etag
+        value = get_blob(
+            f"{url}{separator}v={uuid.uuid4().hex}", access="public"
+        )
+        return value.body
 
     def _strong_etag(self, url: str) -> str:
-        response = requests.get(
+        response = httpx2.get(
             "https://vercel.com/api/blob",
             params={"url": url},
             headers=self._api_headers(),
             timeout=30,
+            follow_redirects=True,
         )
         response.raise_for_status()
         metadata = response.json()
@@ -60,7 +63,7 @@ class VercelBlobStore:
     def get(self, path: str) -> tuple[bytes, str] | None:
         url = self._url(path)
         try:
-            content, _ = self._get(url)
+            content = self._get(url)
         except BlobNotFoundError:
             return None
         return content, self._strong_etag(url)
@@ -72,7 +75,7 @@ class VercelBlobStore:
         *,
         etag: str | None,
         overwrite: bool,
-    ) -> requests.Response:
+    ) -> httpx2.Response:
         # The Python SDK does not yet expose Blob's OIDC store-id or if-match
         # arguments. Match its wire protocol for these two options only.
         headers = {
@@ -86,12 +89,13 @@ class VercelBlobStore:
         }
         if etag is not None:
             headers["x-if-match"] = etag
-        return requests.put(
+        return httpx2.put(
             "https://vercel.com/api/blob",
             params={"pathname": path},
             headers=headers,
-            data=content,
+            content=content,
             timeout=30,
+            follow_redirects=True,
         )
 
     def put_immutable(self, path: str, content: bytes) -> None:
@@ -103,7 +107,7 @@ class VercelBlobStore:
         try:
             response = self._put(path, content, etag=None, overwrite=False)
             response.raise_for_status()
-        except requests.HTTPError:
+        except httpx2.HTTPStatusError:
             existing = self.get(path)
             if existing is None or existing[0] != content:
                 raise
@@ -131,7 +135,7 @@ class VercelBlobStore:
         result: list[bytes] = []
         cursor = None
         while True:
-            response = requests.get(
+            response = httpx2.get(
                 "https://vercel.com/api/blob",
                 params={
                     "prefix": "snapshots/",
@@ -139,6 +143,7 @@ class VercelBlobStore:
                 },
                 headers=self._api_headers(),
                 timeout=30,
+                follow_redirects=True,
             )
             response.raise_for_status()
             page = response.json()
@@ -153,7 +158,7 @@ class VercelBlobStore:
                     and item["pathname"].endswith(".json")
                     and isinstance(item.get("url"), str)
                 ):
-                    content, _ = self._get(item["url"])
+                    content = self._get(item["url"])
                     # Parse here so a corrupt fragment fails before any write.
                     json.loads(content)
                     result.append(content)
