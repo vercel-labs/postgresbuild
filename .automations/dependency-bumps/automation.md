@@ -23,7 +23,7 @@ or patch library updates and PostgreSQL point releases across supported majors
 in one PR. Version-based candidate digests and open PR inspection deduplicate
 the resulting changes across scans. There is no release-note classification or
 preliminary GitHub build gate before proposing the update. Follow the skill
-through managed PR publication and its normal CI; leave merging to elprans.
+through managed PR publication and its normal CI; leave merging to maintainers.
 Create at most one PR per run and reuse its run-owned branch for fixes. Preserve
 candidate markers and inspect open PRs to suppress duplicates across runs.
 Report the checked versions, blocked updates, commands, CI state, and PR URL in
