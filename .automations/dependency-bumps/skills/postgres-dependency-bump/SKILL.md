@@ -9,6 +9,13 @@ has no periodic discovery or build jobs. Use managed host tools for publication
 and `automation_action` for declared GitHub operations; do not obtain credentials
 or configure a GitHub App or Slack bot in the sandbox.
 
+Invoke host tools and `automation_action` strictly one at a time, awaiting each
+result before starting the next call. The service serializes callbacks for a
+run; parallel calls can fail with HTTP 500 and "Work is already owned; retry
+after its callback finishes". For read-only HTTP 429 or 5xx failures, retry the
+same read up to three times with increasing short delays before reporting it
+blocked. Failed reads never establish that no duplicate exists.
+
 1. Verify current `main` with
    `git ls-remote https://github.com/vercel-labs/postgresbuild.git refs/heads/main`.
    Use `fetch_repository` with that exact SHA when it is missing locally, then
