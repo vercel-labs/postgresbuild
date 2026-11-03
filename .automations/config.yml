@@ -1,2 +1,4 @@
 version: 1
 owners: [github:elprans]
+extensions:
+  github: {}

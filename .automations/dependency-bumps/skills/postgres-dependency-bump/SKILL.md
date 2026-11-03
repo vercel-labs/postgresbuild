@@ -3,9 +3,11 @@ name: postgres-dependency-bump
 description: Discover upstream releases, batch compatible PostgreSQL and bundled-library updates, and follow the proposed PR through CI.
 ---
 
-The Factory schedule requests a daily discovery task. Coding tasks use this
-procedure in postgresbuild; do not modify Factory or ggbuild. GitHub Actions
-has no periodic discovery or build jobs.
+The automation performs daily discovery directly in its managed sandbox. Use
+this procedure in postgresbuild; do not modify Factory or ggbuild. GitHub Actions
+has no periodic discovery or build jobs. Use managed host tools for publication
+and `automation_action` for declared GitHub operations; do not obtain credentials
+or configure a GitHub App or Slack bot in the sandbox.
 
 1. Start from current `main`. Run `uv sync --frozen`, then
    `uv run python -m postgresbuild.maintenance discover`. This reads upstream
@@ -38,15 +40,21 @@ has no periodic discovery or build jobs.
    Do not edit generated YAML by hand. Use `uv run ggbuild ci render-workflow`.
 4. Run `uv run poe qa`, `uv run zizmor --offline .github/workflows`, and
    `uv run ggbuild ci check-workflow`. Explain any blocked validation.
-5. Publish one speculative Factory PR with label `dependencies`, a concise title
-   describing the batch, a table of each package's old/new versions, upstream
-   release links, and one exact marker
-   `<!-- postgresbuild-candidate:<digest> -->` per candidate in its body. All
-   commits must be signed and authored by the managed Factory bot. Mark the
-   PR ready after verification so the dependency checks can evaluate it.
+5. Commit the verified changes with messages describing the package/version
+   changes, then publish one speculative PR through `open_pull_request`, with
+   a concise title describing the batch, a table of each package's old/new
+   versions, upstream release links, and one exact marker
+   `<!-- postgresbuild-candidate:<digest> -->` per candidate in its body. Use
+   managed GitHub action `github.add_label` to add `dependencies`. Publication
+   uses the service's configured identity and signed Git transport. Commit
+   scoped fixes and use `push_checkpoint` on the same run-owned PR; mark it
+   ready after verification. Honor host publication limits; report a rejected
+   publication as blocked rather than omitting required generated files.
 6. Follow CI and the entire PostgreSQL build/test workflow for the current head.
-   Fix scoped failures and rerun the relevant checks. Refresh against main if
-   another PR merged first, revalidate, regenerate, and wait for fresh checks.
+   Read current PR state with `github.read_pull_request` and CI runs, jobs, and
+   logs with the declared `github.read_actions` operations. Fix scoped failures
+   and rerun the relevant checks. Refresh against main if another PR merged
+   first, revalidate, regenerate, and wait for fresh checks.
    Never bypass checks or signed commits. Report an update that cannot pass as
    blocked. Leave the passing PR open for elprans to review and merge. Never
    merge it or enable auto-merge. Review relies on GitHub's existing PR and
