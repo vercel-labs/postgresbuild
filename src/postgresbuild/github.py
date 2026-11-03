@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self, cast
+from typing import TYPE_CHECKING, Any, Self
 from urllib.parse import quote
 
 import httpx2
@@ -53,13 +53,12 @@ class GitHubRepository:
         return response
 
     def _pages(
-        self, path: str, *, key: str | None = None, **params: str | int
+        self, path: str, **params: str | int
     ) -> Iterator[dict[str, Any]]:
         page = 1
         while True:
             response = self._get(path, **params, per_page=100, page=page)
-            value = response.json()
-            items = value[key] if key is not None else value
+            items = response.json()
             if not isinstance(items, list) or any(
                 not isinstance(item, dict) for item in items
             ):
@@ -76,36 +75,3 @@ class GitHubRepository:
         if base is not None:
             params["base"] = base
         return self._pages("pulls", **params)
-
-    def get_pull(self, number: int) -> dict[str, Any]:
-        return cast("dict[str, Any]", self._get(f"pulls/{number}").json())
-
-    def get_workflow_runs(
-        self, *, head_sha: str, event: str
-    ) -> Iterator[dict[str, Any]]:
-        return self._pages(
-            "actions/runs", key="workflow_runs", head_sha=head_sha, event=event
-        )
-
-    def compare(self, base: str, head: str) -> dict[str, Any]:
-        path = f"compare/{quote(base, safe='')}...{quote(head, safe='')}"
-        return cast("dict[str, Any]", self._get(path).json())
-
-    def get_commits(self, number: int) -> Iterator[dict[str, Any]]:
-        return self._pages(f"pulls/{number}/commits")
-
-    def get_files(self, number: int) -> Iterator[dict[str, Any]]:
-        return self._pages(f"pulls/{number}/files")
-
-    def get_contents(self, path: str, *, ref: str) -> Any:
-        return self._get(f"contents/{quote(path, safe='/')}", ref=ref).json()
-
-    def get_statuses(self, sha: str) -> Iterator[dict[str, Any]]:
-        return self._pages(f"commits/{quote(sha, safe='')}/statuses")
-
-    def create_status(self, sha: str, state: str, **fields: str) -> None:
-        response = self.client.post(
-            f"{self._url}/statuses/{quote(sha, safe='')}",
-            json={"state": state, **fields},
-        )
-        response.raise_for_status()
