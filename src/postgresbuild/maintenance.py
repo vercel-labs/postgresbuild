@@ -261,8 +261,8 @@ def rewrite_fixtures(text: str, replacements: dict[str, str]) -> str:
     return "".join(output)
 
 
-def staged_workflow(files: dict[str, str], *, check: bool) -> str:
-    """Generate/check in a disposable project without credentials."""
+def check_staged_workflow(files: dict[str, str]) -> None:
+    """Require staged recipes to fit the committed workflow before writing."""
     with tempfile.TemporaryDirectory(prefix="postgresbuild-policy-") as name:
         root = Path(name)
         shutil.copytree(ROOT / "src", root / "src")
@@ -282,18 +282,22 @@ def staged_workflow(files: dict[str, str], *, check: bool) -> str:
         executable = shutil.which("ggbuild")
         if executable is None:
             raise ValueError("ggbuild is not on PATH; run with uv run")
-        subprocess.run(
-            [
-                executable,
-                "ci",
-                "check-workflow" if check else "render-workflow",
-            ],
-            cwd=root,
-            env=environment,
-            check=True,
-            capture_output=True,
-        )
-        return (root / ".github/workflows/postgresbuild.yml").read_text()
+        try:
+            subprocess.run(
+                [executable, "ci", "check-workflow"],
+                cwd=root,
+                env=environment,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            detail = exc.stderr or exc.stdout
+            raise ValueError(
+                "staged workflow validation failed; changes requiring "
+                "regeneration need a separate reviewed workflow update\n"
+                + detail
+            ) from exc
 
 
 def apply(candidate: Candidate) -> None:
@@ -370,9 +374,8 @@ def apply_batch(candidates: Sequence[Candidate]) -> None:
         changed = rewrite_fixtures(original, replacements)
         if changed != original:
             texts[path] = changed
-    texts[ROOT / ".github/workflows/postgresbuild.yml"] = staged_workflow(
+    check_staged_workflow(
         {str(path.relative_to(ROOT)): text for path, text in texts.items()},
-        check=False,
     )
     updater.write_transaction(texts)
 

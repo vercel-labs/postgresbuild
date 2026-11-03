@@ -50,21 +50,25 @@ blocked. Failed reads never establish that no duplicate exists.
    revalidates every candidate before staging any update, checks declarations and
    compatibility bounds, downloads/hashes archives with the pinned ggbuild,
    rerolls patches before writing, synchronizes exact runtime/build pins, and
-   regenerates ggbuild's workflow once for the whole batch. A stale candidate
+   checks that the staged recipes fit the committed workflow. A stale candidate
    requires rediscovery. Stop and report unresolved patch conflicts, new majors
    without a reviewed baseline, or incompatible requirements. A failed batch
    must leave files unchanged; a smaller valid batch may be proposed separately.
+   A changed job topology requires a separate human-reviewed workflow update;
+   report it blocked without regenerating or editing workflow YAML.
    If every candidate is already covered, finish without a new PR. Immediately
    before publishing, repeat the PR inventory and refresh the managed reads;
    defer any newly covered package. A failed duplicate check must never be
    treated as an empty PR list.
 3. Review the complete diff. Include declarations, archive hashes, corresponding
-   exact pins, necessary version fixtures, and generated workflow output in the
-   same PR. Preserve range constraints and PostgreSQL's supported stable and
-   upcoming alpha/beta/RC tracks. Do not change Python/tool/Actions dependencies,
+   exact pins, and necessary version fixtures in the same PR. Runtime matrices
+   resolve the new versions and cache identities from those recipes. Preserve
+   range constraints and PostgreSQL's supported stable and upcoming alpha/beta/RC
+   tracks. Do not change Python/tool/Actions dependencies,
    ggbuild's pin, build logic, automation policy, or publication/index APIs.
-   Do not edit generated YAML by hand. Use
-   `uv run --frozen ggbuild ci render-workflow`.
+   Workflow YAML must remain unchanged. Do not run `ggbuild ci render-workflow`
+   during routine maintenance. Run `ggbuild ci check-workflow` and report any
+   required regeneration as blocked.
 4. Run `uv run --frozen poe qa`,
    `uv run --frozen zizmor --offline .github/workflows`, and
    `uv run --frozen ggbuild ci check-workflow`. Explain any blocked validation.
@@ -77,12 +81,12 @@ blocked. Failed reads never establish that no duplicate exists.
    uses the service's configured identity and signed Git transport. Commit
    scoped fixes and use `push_checkpoint` on the same run-owned PR; mark it
    ready after verification. Honor host publication limits; report a rejected
-   publication as blocked rather than omitting required generated files.
+   publication as blocked. Never omit required recipe or pin changes to publish.
 6. Follow CI and the entire PostgreSQL build/test workflow for the current head.
    Read current PR state with `github.read_pull_request` and CI runs, jobs, and
    logs with the declared `github.read_actions` operations. Fix scoped failures
    and rerun the relevant checks. Refresh against main if another PR merged
-   first, revalidate, regenerate, and wait for fresh checks.
+   first, revalidate, check the workflow, and wait for fresh checks.
    Never bypass checks or signed commits. Report an update that cannot pass as
    blocked. Leave the passing PR open for elprans to review and merge. Never
    merge it or enable auto-merge. Review relies on GitHub's existing PR and
