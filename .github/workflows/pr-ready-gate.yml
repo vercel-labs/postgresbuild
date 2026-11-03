@@ -1,0 +1,50 @@
+name: PR readiness gate
+
+# These events need default-branch authority to dispatch. Execution is pinned to
+# github.workflow_sha; PR code/artifacts are never consumed by this workflow.
+on: # zizmor: ignore[dangerous-triggers]
+  workflow_run:
+    workflows: [CI, PostgreSQL builds]
+    types: [completed]
+  pull_request_target:
+    types: [ready_for_review, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request to recheck
+        required: true
+        type: string
+      head_sha:
+        description: Exact current PR head commit
+        required: true
+        type: string
+
+permissions: {}
+
+# Coalesce events for the same commit and serialize the dispatch/deduplication.
+concurrency:
+  group: pr-ready-${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.head_sha || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: >-
+      github.event_name != 'workflow_run' || github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      checks: read
+      contents: read
+      pull-requests: read
+    steps:
+      # Only execute the trusted workflow revision, never PR code or artifacts.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          script: |
+            const { gate } = require('./.github/scripts/pr-ready.cjs');
+            await gate({ github, context, core });

@@ -10,6 +10,17 @@ permissions:
   contents: read
 
 jobs:
+  gather:
+    name: CI
+    if: always()
+    needs: [checks, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI results
+        env:
+          JOB_RESULTS: ${{ toJSON(needs.*.result) }}
+        run: jq -e 'all(.[]; . == "success")' <<< "$JOB_RESULTS"
+
   checks:
     runs-on: ubuntu-latest
     steps:
@@ -29,6 +40,12 @@ jobs:
       - run: uv run --frozen --no-default-groups --group=check ty check
       - run: uv run --frozen --no-default-groups --group=check zizmor --offline .github/workflows
       - run: uv run --frozen --no-default-groups --group=check ggbuild ci check-workflow
+      - run: node --test .github/scripts/pr-ready.test.cjs
+      - name: Test readiness with the action's Octokit client
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          script: |
+            await require('./.github/scripts/pr-ready-octokit.cjs')(github.constructor);
 
   tests:
     runs-on: ubuntu-latest

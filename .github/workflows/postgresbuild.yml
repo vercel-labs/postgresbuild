@@ -36,7 +36,7 @@ concurrency:
 
 env:
   GGBUILD_ENABLE_SCCACHE: ${{ (github.event_name == 'workflow_dispatch' && inputs.enable_sccache) || (github.event_name == 'pull_request' && true) || (github.event_name == 'push' && false) }}
-  GGBUILD_REF: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '2c669089ced557cf72c9e9f3f0de69be97ee4f0b' }}
+  GGBUILD_REF: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '5b82f5fd8948cc2bd5dd5ff7d1d9337e2f64e695' }}
   GGBUILD_REF_OVERRIDE: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '' }}
   UV_NO_SYNC: ${{ github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref != '' }}
 
@@ -752,10 +752,22 @@ jobs:
     steps: *ggbuild_node_steps
 
 
+  gather:
+    name: All builds
+    if: >-
+      always() && !(github.repository == 'vercel-labs/postgresbuild' && github.event_name == 'workflow_dispatch' && inputs.operation == 'ingest-existing' && github.ref == 'refs/heads/main')
+    needs: [planning, nodes_aarch64_apple_darwin_0, nodes_aarch64_unknown_linux_gnu_0, nodes_aarch64_unknown_linux_musl_0, nodes_x86_64_unknown_linux_gnu_0, nodes_x86_64_unknown_linux_musl_0, nodes_aarch64_apple_darwin_1, nodes_aarch64_unknown_linux_gnu_1, nodes_aarch64_unknown_linux_musl_1, nodes_x86_64_unknown_linux_gnu_1, nodes_x86_64_unknown_linux_musl_1, nodes_aarch64_apple_darwin_2, nodes_aarch64_unknown_linux_gnu_2, nodes_aarch64_unknown_linux_musl_2, nodes_x86_64_unknown_linux_gnu_2, nodes_x86_64_unknown_linux_musl_2, nodes_aarch64_apple_darwin_3, nodes_aarch64_unknown_linux_gnu_3, nodes_aarch64_unknown_linux_musl_3, nodes_x86_64_unknown_linux_gnu_3, nodes_x86_64_unknown_linux_musl_3, nodes_aarch64_apple_darwin_4, nodes_aarch64_unknown_linux_gnu_4, nodes_aarch64_unknown_linux_musl_4, nodes_x86_64_unknown_linux_gnu_4, nodes_x86_64_unknown_linux_musl_4]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check build results
+        env:
+          JOB_RESULTS: ${{ toJSON(needs.*.result) }}
+        run: jq -e 'all(.[]; . == "success")' <<< "$JOB_RESULTS"
+
   publish:
     name: Publish immutable snapshot
     if: success() && github.repository == 'vercel-labs/postgresbuild' && (github.event_name != 'workflow_dispatch' || inputs.operation == 'build-and-publish') && (github.event_name != 'workflow_dispatch' || inputs.ggbuild_ref == '') && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
-    needs: [planning, nodes_aarch64_apple_darwin_0, nodes_aarch64_unknown_linux_gnu_0, nodes_aarch64_unknown_linux_musl_0, nodes_x86_64_unknown_linux_gnu_0, nodes_x86_64_unknown_linux_musl_0, nodes_aarch64_apple_darwin_1, nodes_aarch64_unknown_linux_gnu_1, nodes_aarch64_unknown_linux_musl_1, nodes_x86_64_unknown_linux_gnu_1, nodes_x86_64_unknown_linux_musl_1, nodes_aarch64_apple_darwin_2, nodes_aarch64_unknown_linux_gnu_2, nodes_aarch64_unknown_linux_musl_2, nodes_x86_64_unknown_linux_gnu_2, nodes_x86_64_unknown_linux_musl_2, nodes_aarch64_apple_darwin_3, nodes_aarch64_unknown_linux_gnu_3, nodes_aarch64_unknown_linux_musl_3, nodes_x86_64_unknown_linux_gnu_3, nodes_x86_64_unknown_linux_musl_3, nodes_aarch64_apple_darwin_4, nodes_aarch64_unknown_linux_gnu_4, nodes_aarch64_unknown_linux_musl_4, nodes_x86_64_unknown_linux_gnu_4, nodes_x86_64_unknown_linux_musl_4]
+    needs: [planning, gather]
     runs-on: ubuntu-latest
     environment: release
     permissions:
