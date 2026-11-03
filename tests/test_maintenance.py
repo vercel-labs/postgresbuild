@@ -234,8 +234,11 @@ def test_patch_conflict_does_not_commit_any_files() -> None:
     write.assert_not_called()
 
 
-def test_selective_apply_stages_pins_and_generated_output(
+@pytest.mark.parametrize("workflow_ok", [False, True])
+def test_selective_apply_checks_workflow_and_stages_pins(
     tmp_path: Path,
+    *,
+    workflow_ok: bool,
 ) -> None:
     source = tmp_path / "src/postgresbuild/postgresql/__init__.py"
     source.parent.mkdir(parents=True)
@@ -263,19 +266,74 @@ def test_selective_apply_stages_pins_and_generated_output(
         ) as declarations,
         mock.patch.object(maintenance.updater, "_collect_patch_updates"),
         mock.patch.object(
-            maintenance, "staged_workflow", return_value="generated"
-        ),
+            maintenance,
+            "check_staged_workflow",
+            side_effect=None
+            if workflow_ok
+            else ValueError("workflow topology"),
+        ) as workflow_check,
         mock.patch.object(maintenance.updater, "write_transaction") as write,
     ):
+        if not workflow_ok:
+            with pytest.raises(ValueError, match="workflow topology"):
+                maintenance.apply(candidate())
+            write.assert_not_called()
+            assert CURRENT_SSL in source.read_text()
+            return
         maintenance.apply(candidate())
+    workflow_check.assert_called_once()
     assert declarations.call_count == 1
     assert declarations.call_args.args[0] is OpenSSL
     staged = write.call_args.args[0]
     assert staged[source] == 'f"{OpenSSL.ident} (==' + NEXT_SSL + ')"\n'
-    assert (
-        staged[tmp_path / ".github/workflows/postgresbuild.yml"] == "generated"
-    )
+    assert not any(".github" in path.parts for path in staged)
     assert NEXT_SSL in staged[tmp_path / "tests/test_project.py"]
+
+
+@pytest.mark.parametrize("updates", ["library", "postgresql", "batch"])
+def test_staged_version_bumps_keep_committed_workflow(updates: str) -> None:
+    files = {}
+    postgres = "src/postgresbuild/postgresql/__init__.py"
+    root = (maintenance.ROOT / postgres).read_text()
+    if updates in {"library", "batch"}:
+        zstd = maintenance.recipes()["zstd"][-1].source_version
+        version = Version(zstd)
+        updated = f"{version.major}.{version.minor}.{version.micro + 1}"
+        relative = "src/postgresbuild/zstd/__init__.py"
+        files[relative] = (
+            (maintenance.ROOT / relative)
+            .read_text()
+            .replace(
+                f'"{zstd}"',
+                f'"{updated}"',
+            )
+        )
+        root = root.replace(f"(=={zstd})", f"(=={updated})")
+    if updates in {"postgresql", "batch"}:
+        changes = batch_candidates()[1]
+        for previous, current in zip(
+            changes.previous,
+            changes.current,
+            strict=True,
+        ):
+            root = root.replace(f'"{previous}"', f'"{current}"')
+    files[postgres] = root
+    workflow = maintenance.ROOT / ".github/workflows/postgresbuild.yml"
+    before = workflow.read_bytes()
+    maintenance.check_staged_workflow(files)
+    assert workflow.read_bytes() == before
+
+
+def test_staged_target_change_requires_reviewed_regeneration() -> None:
+    project = (maintenance.ROOT / "pyproject.toml").read_text()
+    updated = project.replace(
+        '[[tool.ggbuild.target]]\ntriple = "aarch64-apple-darwin"\n',
+        "",
+    )
+    assert updated != project
+    with pytest.raises(ValueError, match="separate reviewed workflow update"):
+        maintenance.check_staged_workflow({"pyproject.toml": updated})
+    assert (maintenance.ROOT / "pyproject.toml").read_text() == project
 
 
 def batch_candidates() -> list[maintenance.Candidate]:
@@ -350,9 +408,7 @@ def test_batch_combines_libraries_and_postgresql_point_releases(
             side_effect=lambda recipe: sources[recipe],
         ),
         mock.patch.object(maintenance.updater, "_collect_patch_updates"),
-        mock.patch.object(
-            maintenance, "staged_workflow", return_value="generated"
-        ) as render,
+        mock.patch.object(maintenance, "check_staged_workflow") as render,
         mock.patch.object(maintenance.updater, "write_transaction") as write,
     ):
         maintenance.apply_batch(candidates)
@@ -371,9 +427,7 @@ def test_batch_combines_libraries_and_postgresql_point_releases(
             f'v{i} = "{change.current[0]}"'
             in staged[tmp_path / "tests/test_project.py"]
         )
-    assert (
-        staged[tmp_path / ".github/workflows/postgresbuild.yml"] == "generated"
-    )
+    assert not any(".github" in path.parts for path in staged)
 
 
 def test_entire_batch_is_revalidated_before_any_downloads() -> None:
@@ -418,7 +472,7 @@ def test_later_patch_conflict_leaves_entire_batch_unwritten() -> None:
             side_effect=[None, ValueError("patch conflict")],
         ),
         mock.patch.object(maintenance.updater, "write_transaction") as write,
-        mock.patch.object(maintenance, "staged_workflow") as render,
+        mock.patch.object(maintenance, "check_staged_workflow") as render,
     ):
         with pytest.raises(ValueError, match="patch conflict"):
             maintenance.apply_batch(changes)
