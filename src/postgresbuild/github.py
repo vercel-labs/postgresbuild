@@ -1,77 +1,104 @@
-"""GitHub REST operations used by the maintenance tooling."""
+"""Read public GitHub releases without the anonymous REST API quota."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Self
-from urllib.parse import quote
+import re
+from html.parser import HTMLParser
+from typing import TYPE_CHECKING
+from urllib.parse import unquote
 
 import httpx2
+from packaging.version import Version
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-    from types import TracebackType
+    from ggbuild.updater import UpdatePolicy
 
 
-class GitHubRepository:
-    def __init__(
-        self,
-        full_name: str,
-        token: str = "",
-        *,
-        client: httpx2.Client | None = None,
+class ReleasePage(HTMLParser):
+    def __init__(self, repository: str) -> None:
+        super().__init__()
+        self.prefix = f"/{repository}/releases/tag/"
+        self.tags: list[str] = []
+        self.has_next = False
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
-        self.full_name = full_name
-        self._url = (
-            f"https://api.github.com/repos/{quote(full_name, safe='/')}"
-        )
-        self.client = client or httpx2.Client(
-            timeout=60, follow_redirects=True
-        )
-        self.client.headers.update(
-            {
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28",
-            }
-        )
-        if token:
-            self.client.headers["Authorization"] = f"Bearer {token}"
+        if tag != "a":
+            return
+        attributes = dict(attrs)
+        href = attributes.get("href") or ""
+        if (
+            href.startswith(self.prefix)
+            and "Link--primary" in (attributes.get("class") or "").split()
+        ):
+            release_tag = unquote(href.removeprefix(self.prefix))
+            if release_tag not in self.tags:
+                self.tags.append(release_tag)
+        if "next" in (attributes.get("rel") or "").split():
+            self.has_next = True
 
-    def __enter__(self) -> Self:
-        return self
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        self.client.close()
+def latest_release(policy: UpdatePolicy) -> str:
+    repository = policy.get("repository")
+    template = policy.get("tag")
+    if not repository or not template:
+        raise ValueError("github-release policy needs repository and tag")
+    major = policy.get("major")
+    version_pattern = rf"{re.escape(major)}\..+" if major else ".+"
+    pattern = re.escape(template).replace(
+        re.escape("{version}"), rf"(?P<version>{version_pattern})"
+    )
+    url = f"https://github.com/{repository}/releases"
+    with httpx2.Client(timeout=120, follow_redirects=True) as client:
+        if not major:
+            # Preserve GitHub's designated stable release, which need not be
+            # the greatest version or newest tag.
+            response = client.head(f"{url}/latest")
+            response.raise_for_status()
+            # Repository renames redirect before the latest-tag redirect.
+            redirect = re.fullmatch(
+                r"/[^/]+/[^/]+/releases/tag/(.+)", response.url.path
+            )
+            if response.url.host != "github.com" or redirect is None:
+                raise ValueError(f"missing latest release redirect at {url}")
+            tag = unquote(redirect[1])
+            match = re.fullmatch(pattern, tag)
+            if match is None or Version(match["version"]).is_prerelease:
+                raise ValueError(f"unexpected latest release {tag!r} at {url}")
+            return str(Version(match["version"]))
 
-    def _get(self, path: str, **params: str | int) -> httpx2.Response:
-        response = self.client.get(f"{self._url}/{path}", params=params)
-        response.raise_for_status()
-        return response
+        # Match ggbuild's major-filtered policy: greatest stable version among
+        # the first 100 published releases, ten per web page.
+        tags: list[str] = []
+        for page in range(1, 11):
+            response = client.get(url, params={"page": page})
+            response.raise_for_status()
+            listing = re.fullmatch(
+                r"/([^/]+/[^/]+)/releases", response.url.path
+            )
+            if response.url.host != "github.com" or listing is None:
+                raise ValueError(
+                    f"unexpected release listing at {response.url}"
+                )
+            parsed = ReleasePage(listing[1])
+            parsed.feed(response.text)
+            if not parsed.tags or set(tags).intersection(parsed.tags):
+                raise ValueError(
+                    f"incomplete release listing at {response.url}"
+                )
+            tags.extend(parsed.tags)
+            if len(tags) >= 100 or not parsed.has_next:
+                break
+        else:
+            raise ValueError(f"incomplete release listing at {url}")
 
-    def _pages(
-        self, path: str, **params: str | int
-    ) -> Iterator[dict[str, Any]]:
-        page = 1
-        while True:
-            response = self._get(path, **params, per_page=100, page=page)
-            items = response.json()
-            if not isinstance(items, list) or any(
-                not isinstance(item, dict) for item in items
-            ):
-                raise ValueError(f"invalid GitHub list response: {path}")
-            yield from items
-            if "next" not in response.links:
-                return
-            page += 1
-
-    def get_pulls(
-        self, *, state: str, base: str | None = None
-    ) -> Iterator[dict[str, Any]]:
-        params = {"state": state}
-        if base is not None:
-            params["base"] = base
-        return self._pages("pulls", **params)
+    versions = {
+        Version(match["version"])
+        for tag in tags[:100]
+        if (match := re.fullmatch(pattern, tag)) is not None
+        and not Version(match["version"]).is_prerelease
+    }
+    if not versions:
+        raise ValueError(f"no major {major} releases found at {url}")
+    return str(max(versions))

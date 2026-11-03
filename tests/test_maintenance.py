@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import dataclasses
 import json
-import os
 import sys
-import urllib.request
 from typing import TYPE_CHECKING
 from unittest import mock
 
+import httpx2
 import pytest
 from packaging.version import Version
 
@@ -61,7 +60,7 @@ def test_upstream_presence_and_duplicate_suppression(*, covered: bool) -> None:
             maintenance, "recipes", return_value={"openssl": [instance]}
         ),
         mock.patch.object(
-            OpenSSL, "discover_releases", return_value=(NEXT_SSL,)
+            maintenance, "latest_release", return_value=NEXT_SSL
         ),
         mock.patch.object(
             maintenance.updater,
@@ -82,16 +81,19 @@ def test_upstream_presence_and_duplicate_suppression(*, covered: bool) -> None:
         assert NEXT_SSL in report["candidates"][0]["evidence"][0]["text"]
 
 
-def test_discovery_failure_is_not_a_successful_empty_check() -> None:
+@pytest.mark.parametrize("error_type", [OSError, httpx2.ConnectError])
+def test_discovery_failure_is_not_a_successful_empty_check(
+    error_type: type[Exception],
+) -> None:
     instance = OpenSSL.registered_release(CURRENT_SSL)
     with (
         mock.patch.object(
             maintenance, "recipes", return_value={"openssl": [instance]}
         ),
         mock.patch.object(
-            OpenSSL,
-            "discover_releases",
-            side_effect=OSError("upstream unavailable"),
+            maintenance,
+            "latest_release",
+            side_effect=error_type("upstream unavailable"),
         ),
     ):
         report = maintenance.discover(covered=set())
@@ -101,6 +103,24 @@ def test_discovery_failure_is_not_a_successful_empty_check() -> None:
     ]
 
 
+@pytest.mark.parametrize("ident", ["postgresql", "openldap"])
+def test_other_recipes_keep_their_own_discovery(ident: str) -> None:
+    instances = maintenance.recipes()[ident]
+    desired = tuple(item.source_version for item in instances)
+    with (
+        mock.patch.object(
+            type(instances[-1]), "discover_releases", return_value=desired
+        ) as discover,
+        mock.patch.object(
+            maintenance,
+            "latest_release",
+            side_effect=AssertionError("recipe does not use GitHub releases"),
+        ),
+    ):
+        assert maintenance.desired_releases(instances) == desired
+    discover.assert_called_once_with()
+
+
 def test_no_change_skips_downloads() -> None:
     instance = OpenSSL.registered_release(CURRENT_SSL)
     with (
@@ -108,7 +128,7 @@ def test_no_change_skips_downloads() -> None:
             maintenance, "recipes", return_value={"openssl": [instance]}
         ),
         mock.patch.object(
-            OpenSSL, "discover_releases", return_value=(CURRENT_SSL,)
+            maintenance, "latest_release", return_value=CURRENT_SSL
         ),
         mock.patch.object(
             maintenance.updater,
@@ -146,19 +166,13 @@ def test_openssl_discovery_exposes_versions_blocked_by_its_consumer() -> None:
     grouped = maintenance.recipes()
     instances = grouped["openssl"]
     ldap = grouped["openldap"]
-    payload = json.dumps(
-        [
-            {"tag_name": "openssl-3.6.2"},
-            {"tag_name": "openssl-3.5.9"},
-        ]
-    ).encode()
     with (
         mock.patch.object(
             maintenance,
             "recipes",
             return_value={"openssl": instances, "openldap": ldap},
         ),
-        mock.patch.object(maintenance.updater, "fetch", return_value=payload),
+        mock.patch.object(maintenance, "latest_release", return_value="3.6.2"),
         mock.patch.object(
             type(ldap[-1]),
             "discover_releases",
@@ -187,7 +201,7 @@ f"{Other.ident} (==3.5.7)"
 def test_stale_candidate_does_not_download_or_write() -> None:
     with (
         mock.patch.object(
-            OpenSSL, "discover_releases", return_value=(LATER_SSL,)
+            maintenance, "latest_release", return_value=LATER_SSL
         ),
         mock.patch.object(
             maintenance.updater, "_candidate_releases"
@@ -201,7 +215,7 @@ def test_stale_candidate_does_not_download_or_write() -> None:
 def test_patch_conflict_does_not_commit_any_files() -> None:
     with (
         mock.patch.object(
-            OpenSSL, "discover_releases", return_value=(NEXT_SSL,)
+            maintenance, "latest_release", return_value=NEXT_SSL
         ),
         mock.patch.object(
             maintenance.updater,
@@ -237,7 +251,7 @@ def test_selective_apply_stages_pins_and_generated_output(
     with (
         mock.patch.object(maintenance, "ROOT", tmp_path),
         mock.patch.object(
-            OpenSSL, "discover_releases", return_value=(NEXT_SSL,)
+            maintenance, "latest_release", return_value=NEXT_SSL
         ),
         mock.patch.object(
             maintenance.updater,
@@ -455,7 +469,6 @@ def test_apply_cli_selects_one_atomic_batch(
             sys, "argv", ["maintenance", "apply", str(report), *selected]
         ),
         mock.patch.object(maintenance, "apply_batch") as apply,
-        mock.patch.object(urllib.request, "install_opener"),
     ):
         if selection in {"unknown", "duplicate"}:
             with pytest.raises(ValueError, match=r"candidate|digest"):
@@ -468,20 +481,12 @@ def test_apply_cli_selects_one_atomic_batch(
             )
 
 
-def test_discovery_cli_suppresses_all_markers_in_a_batched_pr(
-    tmp_path: Path,
-) -> None:
-    changes = batch_candidates()
-    body = "\n".join(
-        f"<!-- postgresbuild-candidate:{c.digest} -->" for c in changes
-    )
+def test_discovery_cli_only_reads_upstream_metadata(tmp_path: Path) -> None:
     report = tmp_path / "candidates.json"
     with (
-        mock.patch.dict(os.environ, {}, clear=True),
         mock.patch.object(
             sys, "argv", ["maintenance", "discover", "--output", str(report)]
         ),
-        mock.patch.object(maintenance, "GitHubRepository") as github,
         mock.patch.object(
             maintenance,
             "discover",
@@ -490,30 +495,15 @@ def test_discovery_cli_suppresses_all_markers_in_a_batched_pr(
         mock.patch.object(
             maintenance.subprocess, "check_output", return_value="main-sha\n"
         ),
-        mock.patch.object(urllib.request, "install_opener"),
+        mock.patch.object(
+            maintenance.httpx2.Client,
+            "get",
+            side_effect=AssertionError("no repository API reads"),
+        ),
     ):
-        client = github.return_value.__enter__.return_value
-        client.get_pulls.return_value = [{"body": body}]
         maintenance.main()
-    github.assert_called_once_with("vercel-labs/postgresbuild", "")
-    discover.assert_called_once_with(covered={c.digest for c in changes})
+    discover.assert_called_once_with(covered=set())
     assert json.loads(report.read_text())["main_sha"] == "main-sha"
-
-
-def test_upstream_auth_is_only_sent_to_github_api() -> None:
-    handler = maintenance.UpstreamAuthentication("example")
-    api = urllib.request.Request(
-        "https://api.github.com/repos/openssl/openssl/releases"
-    )
-    archive = urllib.request.Request(
-        "https://github.com/openssl/openssl/archive/tag.tar.gz"
-    )
-    postgres = urllib.request.Request(
-        "https://www.postgresql.org/versions.json"
-    )
-    assert handler.https_request(api).has_header("Authorization")
-    assert not handler.https_request(archive).has_header("Authorization")
-    assert not handler.https_request(postgres).has_header("Authorization")
 
 
 def test_fixture_rewrite_preserves_discovery_and_updates_metadata() -> None:

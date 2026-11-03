@@ -12,11 +12,11 @@ import re
 import shutil
 import subprocess
 import tempfile
-import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+import httpx2
 from cleo.io.null_io import NullIO
 from ggbuild import updater
 from ggbuild.packages import HttpsSource
@@ -25,7 +25,7 @@ from ggbuild.project import load_project
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from postgresbuild.github import GitHubRepository
+from postgresbuild.github import latest_release
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -33,7 +33,6 @@ if TYPE_CHECKING:
     from ggbuild.packages import BundledPackage
 
 ROOT = Path(__file__).resolve().parents[2]
-MARKER = re.compile(r"<!-- postgresbuild-candidate:([0-9a-f]{64}) -->")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -81,22 +80,12 @@ def recipes() -> dict[str, list[BundledPackage]]:
 
 def desired_releases(instances: list[BundledPackage]) -> tuple[str, ...]:
     recipe = cast("type[updater.UpdateablePackage]", type(instances[-1]))
+    policy = getattr(recipe, "update_policy", None)
+    if policy and policy["type"] == "github-release":
+        # Public release pages avoid the shared anonymous REST API quota.
+        # Use the same policy during discovery and apply-time revalidation.
+        return (latest_release(policy),)
     return tuple(sorted(set(recipe.discover_releases()), key=Version))
-
-
-class UpstreamAuthentication(urllib.request.BaseHandler):
-    def __init__(self, token: str) -> None:
-        self.token = token
-
-    def https_request(
-        self, request: urllib.request.Request
-    ) -> urllib.request.Request:
-        if request.host == "api.github.com" and self.token:
-            # Do not forward authorization to archive download redirects.
-            request.add_unredirected_header(
-                "Authorization", f"Bearer {self.token}"
-            )
-        return request
 
 
 def compatibility(
@@ -185,6 +174,7 @@ def discover(
             else:
                 candidates.append(candidate.as_dict())
         except (
+            httpx2.HTTPError,
             OSError,
             ValueError,
             KeyError,
@@ -435,23 +425,10 @@ def main() -> None:
     application.add_argument("report", type=Path)
     application.add_argument("digests", nargs="*")
     args = parser.parse_args()
-    urllib.request.install_opener(
-        urllib.request.build_opener(
-            UpstreamAuthentication(os.environ.get("GH_TOKEN", ""))
-        )
-    )
     if args.command == "discover":
-        token = os.environ.get("GH_TOKEN", "")
-        with GitHubRepository(
-            os.environ.get("GITHUB_REPOSITORY", "vercel-labs/postgresbuild"),
-            token,
-        ) as repository:
-            covered = {
-                digest
-                for pr in repository.get_pulls(state="open")
-                for digest in MARKER.findall(pr.get("body") or "")
-            }
-        report = discover(covered=covered)
+        # Managed PR inspection happens after version discovery, outside the
+        # sandbox's anonymous API quota. Discovery itself only reads upstreams.
+        report = discover(covered=set())
         report["main_sha"] = subprocess.check_output(
             ["git", "rev-parse", "HEAD"],  # ruff: ignore[start-process-with-partial-path]
             cwd=ROOT,
