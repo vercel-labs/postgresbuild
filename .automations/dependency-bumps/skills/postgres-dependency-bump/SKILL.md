@@ -88,7 +88,7 @@ blocked. Failed reads never establish that no duplicate exists.
    and rerun the relevant checks. Refresh against main if another PR merged
    first, revalidate, check the workflow, and wait for fresh checks.
    Never bypass checks or signed commits. Report an update that cannot pass as
-   blocked. Leave the passing PR open for elprans to review and merge. Never
+   blocked. Leave the passing PR open for maintainers to review and merge. Never
    merge it or enable auto-merge. Review relies on GitHub's existing PR and
    check notifications. A human merge starts the normal main build, immutable
    publication, and index ingestion with no separate deployment approval.
