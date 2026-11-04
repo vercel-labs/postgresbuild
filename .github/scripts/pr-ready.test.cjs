@@ -2,7 +2,7 @@
 
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const { gate, identity, notice, notificationName } = require('./pr-ready.cjs');
+const { gate, identity } = require('./pr-ready.cjs');
 
 const SHA = 'a'.repeat(40);
 const OTHER_SHA = 'b'.repeat(40);
@@ -13,7 +13,7 @@ function fixture(eventName = 'workflow_run') {
       number: 18, state: 'open', draft: false,
       head: { sha: SHA, ref: 'update', repo: { id: 100 } },
       base: { ref: 'main', repo: { full_name: 'vercel-labs/postgresbuild' } },
-      created_at: '2026-11-01T12:00:00Z',
+      labels: [{ name: 'dependencies' }],
       html_url: 'https://github.com/vercel-labs/postgresbuild/pull/18',
     },
     checks: Object.fromEntries(['CI', 'All builds'].map((name, i) => [
@@ -21,8 +21,9 @@ function fixture(eventName = 'workflow_run') {
         app: { slug: 'github-actions' }, status: 'completed', conclusion: 'success',
         html_url: `https://github.com/vercel-labs/postgresbuild/actions/runs/${i + 1}` }],
     ])),
-    notices: [], dispatches: [], messages: [], summary: [],
-    reads: 0, onHistory: () => {}, invisible: false, error: null,
+    run: { head_sha: SHA, status: 'completed', run_attempt: 1 },
+    additions: [], removals: [], messages: [],
+    reads: 0, onChecks: () => {}, error: null,
   };
   const endpoint = () => {};
   const github = {
@@ -35,15 +36,19 @@ function fixture(eventName = 'workflow_run') {
         listPullRequestsAssociatedWithCommit: endpoint,
       },
       checks: { listForRef: () => {} },
-      actions: {
-        listWorkflowRuns: () => {},
-        createWorkflowDispatch: async args => {
-          state.dispatches.push(args);
+      actions: { getWorkflowRun: async args => {
+        assert.equal(args.run_id, 100);
+        return { data: structuredClone(state.run) };
+      } },
+      issues: {
+        addLabels: async args => {
+          state.additions.push(args);
           if (state.error) throw state.error;
-          if (!state.invisible) state.notices.push({
-            display_title: notificationName(Number(args.inputs.pr_number), args.inputs.head_sha),
-            status: 'queued', html_url: 'https://github.com/vercel-labs/postgresbuild/actions/runs/100',
-          });
+          state.pr.labels.push(...args.labels.map(name => ({ name })));
+        },
+        removeLabel: async args => {
+          state.removals.push(args);
+          state.pr.labels = state.pr.labels.filter(label => label.name !== args.name);
         },
       },
     },
@@ -56,52 +61,37 @@ function fixture(eventName = 'workflow_run') {
     if (method === github.rest.checks.listForRef) {
       assert.equal(args.filter, 'latest');
       assert.equal(args.ref, SHA);
-      return state.checks[args.check_name];
+      const checks = structuredClone(state.checks[args.check_name]);
+      state.onChecks();
+      return checks;
     }
     throw new Error('Unexpected read');
-  };
-  github.paginate.iterator = async function* (method, args) {
-    assert.equal(method, github.rest.actions.listWorkflowRuns);
-    assert.equal(args.workflow_id, 'pr-ready.yml');
-    assert.equal(args.event, 'workflow_dispatch');
-    assert.equal(args.branch, 'main');
-    assert.equal(args.created, `>=${state.pr.created_at}`);
-    state.onHistory();
-    // The matching notification can be beyond the first page.
-    yield { data: [{ display_title: 'Unrelated PR' }] };
-    yield { data: state.notices };
-  };
-  const summary = {
-    addHeading: value => { state.summary.push(value); return summary; },
-    addLink: (text, url) => { state.summary.push({ text, url }); return summary; },
-    addRaw: value => { state.summary.push(value); return summary; },
-    addTable: value => { state.summary.push(value); return summary; },
-    write: async () => {},
   };
   const context = {
     repo: { owner: 'vercel-labs', repo: 'postgresbuild' }, eventName,
     payload: {
       repository: { default_branch: 'main' },
-      workflow_run: { event: 'pull_request', head_sha: SHA },
+      action: 'completed',
+      workflow_run: { id: 100, event: 'pull_request', head_sha: SHA },
     },
   };
-  const core = { info: value => state.messages.push(value), summary };
-  return { state, github, context, core, pause: async () => {} };
+  const core = { info: value => state.messages.push(value) };
+  return { state, github, context, core };
 }
 
 for (const [eventName, payload] of [
-  ['workflow_run', { workflow_run: { event: 'pull_request', head_sha: SHA } }],
+  ['workflow_run', { workflow_run: { id: 100, event: 'pull_request', head_sha: SHA } }],
   ['pull_request_target', { number: 18, pull_request: { head: { sha: SHA } } }],
   ['workflow_dispatch', { inputs: { pr_number: '18', head_sha: SHA } }],
 ]) {
-  test(`${eventName} dispatches only the default-branch notification`, async () => {
+  test(`${eventName} labels a ready PR`, async () => {
     const f = fixture(eventName);
     f.context.payload = { repository: f.context.payload.repository, ...payload };
     await gate(f);
     assert.equal(f.state.reads, 2);
-    assert.deepEqual(f.state.dispatches, [{
-      owner: 'vercel-labs', repo: 'postgresbuild', workflow_id: 'pr-ready.yml',
-      ref: 'main', inputs: { pr_number: '18', head_sha: SHA },
+    assert.deepEqual(f.state.additions, [{
+      owner: 'vercel-labs', repo: 'postgresbuild', issue_number: 18,
+      labels: ['ready-to-merge'],
     }]);
   });
 }
@@ -111,7 +101,7 @@ test('push workflow completions do not notify', async () => {
   f.context.payload.workflow_run.event = 'push';
   await gate(f);
   assert.equal(f.state.reads, 0);
-  assert.equal(f.state.dispatches.length, 0);
+  assert.equal(f.state.additions.length, 0);
 });
 
 for (const change of [
@@ -125,7 +115,7 @@ for (const change of [
     const f = fixture();
     change(f.state.pr);
     await gate(f);
-    assert.equal(f.state.dispatches.length, 0);
+    assert.equal(f.state.additions.length, 0);
   });
 }
 
@@ -139,7 +129,7 @@ for (const check of ['CI', 'All builds']) {
       const f = fixture();
       Object.assign(f.state.checks[check][0], { status, conclusion });
       await gate(f);
-      assert.equal(f.state.dispatches.length, 0);
+      assert.equal(f.state.additions.length, 0);
     });
   }
   for (const mismatch of ['missing', 'sha', 'name', 'app']) {
@@ -151,7 +141,7 @@ for (const check of ['CI', 'All builds']) {
       if (mismatch === 'name') run.name = 'other';
       if (mismatch === 'app') run.app = { slug: 'other' };
       await gate(f);
-      assert.equal(f.state.dispatches.length, 0);
+      assert.equal(f.state.additions.length, 0);
     });
   }
 }
@@ -160,7 +150,7 @@ test('an older passing check does not mask a newer failed run', async () => {
   const f = fixture();
   f.state.checks.CI.push({ ...f.state.checks.CI[0], id: 99, conclusion: 'failure' });
   await gate(f);
-  assert.equal(f.state.dispatches.length, 0);
+  assert.equal(f.state.additions.length, 0);
 });
 
 test('a successful rerun supersedes an older failed check', async () => {
@@ -168,61 +158,148 @@ test('a successful rerun supersedes an older failed check', async () => {
   f.state.checks.CI.push({ ...f.state.checks.CI[0], id: 0, conclusion: 'failure' });
   await gate(f);
   await gate(f);
-  assert.equal(f.state.dispatches.length, 1);
+  assert.equal(f.state.additions.length, 1);
 });
 
-test('a previous head notification does not suppress the new head', async () => {
+test('a present readiness label suppresses repeated callbacks', async () => {
   const f = fixture();
-  f.state.notices.push({ display_title: notificationName(18, OTHER_SHA) });
   await gate(f);
-  assert.equal(f.state.dispatches.length, 1);
+  await gate(f);
+  assert.equal(f.state.additions.length, 1);
+  assert.deepEqual(f.state.pr.labels.map(label => label.name), ['dependencies', 'ready-to-merge']);
 });
 
-test('a push during the history read prevents dispatch', async () => {
+test('a recovered head can notify after its label was removed', async () => {
   const f = fixture();
-  f.state.onHistory = () => { f.state.pr.head.sha = OTHER_SHA; };
+  f.state.pr.labels.push({ name: 'ready-to-merge' });
+  f.state.checks.CI[0].status = 'in_progress';
   await gate(f);
-  assert.equal(f.state.dispatches.length, 0);
+  assert.equal(f.state.removals.length, 1);
+  f.state.checks.CI[0].status = 'completed';
+  await gate(f);
+  assert.equal(f.state.additions.length, 1);
 });
 
-test('a rerun starting during the history read prevents dispatch', async () => {
+for (const action of ['requested', 'in_progress']) {
+  test(`${action} clears readiness even while old passing checks remain visible`, async () => {
+    const f = fixture();
+    await gate(f);
+    f.context.payload.action = action;
+    Object.assign(f.state.run, { status: action === 'requested' ? 'queued' : action, run_attempt: 2 });
+    await gate(f);
+    assert.equal(f.state.removals.length, 1);
+    assert.deepEqual(f.state.pr.labels, [{ name: 'dependencies' }]);
+
+    // The first notification may have skipped this rerun. Completing it must
+    // add the label again, generating a fresh notification event.
+    f.context.payload.action = 'completed';
+    f.state.run.status = 'completed';
+    await gate(f);
+    await gate(f);
+    assert.equal(f.state.additions.length, 2);
+  });
+}
+
+test('a delayed start event does not clear a completed run\'s readiness', async () => {
   const f = fixture();
-  f.state.onHistory = () => { f.state.checks.CI[0].status = 'in_progress'; };
   await gate(f);
-  assert.equal(f.state.dispatches.length, 0);
+  f.context.payload.action = 'in_progress';
+  await gate(f);
+  assert.equal(f.state.removals.length, 0);
+  assert.equal(f.state.additions.length, 1);
+});
+
+test('a delayed completion does not label a run that is rerunning', async () => {
+  const f = fixture();
+  f.state.run.status = 'in_progress';
+  f.state.run.run_attempt = 2;
+  await gate(f);
+  assert.equal(f.state.additions.length, 0);
+});
+
+test('an old head\'s start event does not clear the current readiness label', async () => {
+  const f = fixture();
+  f.state.pr.labels.push({ name: 'ready-to-merge' });
+  f.state.pr.head.sha = OTHER_SHA;
+  f.context.payload.action = 'in_progress';
+  f.state.run.status = 'in_progress';
+  await gate(f);
+  assert.equal(f.state.removals.length, 0);
+  assert.equal(f.state.additions.length, 0);
+});
+
+test('a run read failure prevents label writes', async () => {
+  const f = fixture();
+  f.context.payload.action = 'in_progress';
+  f.github.rest.actions.getWorkflowRun = async () => { throw new Error('rate limited'); };
+  await assert.rejects(gate(f), /rate limited/);
+  assert.equal(f.state.removals.length, 0);
+  assert.equal(f.state.additions.length, 0);
+});
+
+test('mismatched run evidence prevents label writes', async () => {
+  const f = fixture();
+  f.context.payload.action = 'in_progress';
+  f.state.run.head_sha = OTHER_SHA;
+  await assert.rejects(gate(f), /does not match event commit/);
+  assert.equal(f.state.removals.length, 0);
+  assert.equal(f.state.additions.length, 0);
+});
+
+for (const change of [
+  pr => { pr.state = 'closed'; },
+  pr => { pr.draft = true; },
+  pr => { pr.base.ref = 'other'; },
+]) {
+  test(`remove readiness when PR becomes ineligible: ${change}`, async () => {
+    const f = fixture();
+    f.state.pr.labels.push({ name: 'ready-to-merge' });
+    change(f.state.pr);
+    await gate(f);
+    assert.deepEqual(f.state.removals, [{
+      owner: 'vercel-labs', repo: 'postgresbuild', issue_number: 18, name: 'ready-to-merge',
+    }]);
+    assert.deepEqual(f.state.pr.labels, [{ name: 'dependencies' }]);
+  });
+}
+
+test("a stale completion does not remove the newer head's readiness label", async () => {
+  const f = fixture();
+  f.state.pr.labels.push({ name: 'ready-to-merge' });
+  f.state.pr.head.sha = OTHER_SHA;
+  await gate(f);
+  assert.equal(f.state.additions.length, 0);
+  assert.equal(f.state.removals.length, 0);
+});
+
+test('a push during check reads prevents labelling', async () => {
+  const f = fixture();
+  f.state.onChecks = () => { f.state.pr.head.sha = OTHER_SHA; };
+  await gate(f);
+  assert.equal(f.state.additions.length, 0);
+});
+
+test('a draft conversion during check reads removes readiness', async () => {
+  const f = fixture();
+  f.state.pr.labels.push({ name: 'ready-to-merge' });
+  f.state.onChecks = () => { f.state.pr.draft = true; };
+  await gate(f);
+  assert.equal(f.state.additions.length, 0);
+  assert.equal(f.state.removals.length, 1);
 });
 
 test('read failures fail closed', async () => {
   const f = fixture();
   f.github.paginate = async () => { throw new Error('rate limited'); };
   await assert.rejects(gate(f), /rate limited/);
-  assert.equal(f.state.dispatches.length, 0);
+  assert.equal(f.state.additions.length, 0);
 });
 
-test('an uncertain dispatch failure is not retried blindly', async () => {
+test('an uncertain label write is not retried blindly', async () => {
   const f = fixture();
   f.state.error = new Error('connection lost');
   await assert.rejects(gate(f), /connection lost/);
-  assert.equal(f.state.dispatches.length, 1);
-});
-
-test('hold the gate until the accepted dispatch becomes visible', async () => {
-  const f = fixture();
-  f.state.invisible = true;
-  let polls = 0;
-  f.pause = async () => {
-    if (++polls === 2) f.state.notices.push({ display_title: notificationName(18, SHA) });
-  };
-  await gate(f);
-  assert.equal(polls, 2);
-  assert.equal(f.state.dispatches.length, 1);
-});
-
-test('report an accepted but invisible dispatch without dispatching again', async () => {
-  const f = fixture();
-  f.state.invisible = true;
-  await assert.rejects(gate(f), /Dispatch accepted but not visible/);
-  assert.equal(f.state.dispatches.length, 1);
+  assert.equal(f.state.additions.length, 1);
 });
 
 for (const [number, sha] of [[0, SHA], ['1; echo bad', SHA], [18, 'main'], [18, SHA.toUpperCase()]]) {
@@ -230,21 +307,3 @@ for (const [number, sha] of [[0, SHA], ['1; echo bad', SHA], [18, 'main'], [18, 
     assert.throws(() => identity(number, sha), /positive PR number/);
   });
 }
-
-test('notification links the validated PR and checks for maintainers', async () => {
-  const f = fixture('workflow_dispatch');
-  f.context.payload.inputs = { pr_number: '18', head_sha: SHA };
-  await notice(f);
-  assert.ok(f.state.summary.some(item => item.url === f.state.pr.html_url));
-  assert.ok(f.state.summary.some(item => typeof item === 'string' && item.includes('Maintainers')));
-  assert.equal(f.state.dispatches.length, 0);
-});
-
-test('notification summary records readiness changes after dispatch', async () => {
-  const f = fixture('workflow_dispatch');
-  f.context.payload.inputs = { pr_number: '18', head_sha: SHA };
-  f.state.pr.head.sha = OTHER_SHA;
-  await notice(f);
-  assert.match(f.state.summary[0], /readiness changed/);
-  assert.equal(f.state.dispatches.length, 0);
-});

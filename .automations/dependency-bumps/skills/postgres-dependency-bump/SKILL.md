@@ -90,5 +90,6 @@ blocked. Failed reads never establish that no duplicate exists.
    Never bypass checks or signed commits. Report an update that cannot pass as
    blocked. Leave the passing PR open for maintainers to review and merge. Never
    merge it or enable auto-merge. Review relies on GitHub's existing PR and
-   check notifications. A human merge starts the normal main build, immutable
+   check notifications plus the `pr-ready` automation's Slack message after both
+   required gates pass. A human merge starts the normal main build, immutable
    publication, and index ingestion with no separate deployment approval.
