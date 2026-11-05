@@ -76,7 +76,7 @@ default-groups = ["dev"]
 exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "5b82f5fd8948cc2bd5dd5ff7d1d9337e2f64e695" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "872682ae7ebc7f8529e289c9df6436c1eea46d61" }
 
 [tool.ggbuild]
 root-recipe = "postgresbuild.postgresql:PostgreSQL"
@@ -119,6 +119,7 @@ pull-request = true
 [tool.ggbuild.publication]
 repository = "vercel-labs/postgresbuild"
 index-url = "https://postgresbuild.labs.vercel.dev/api/publication"
+post-ingest-action = "./.github/actions/release-published"
 
 # ========================
 #           TOX
