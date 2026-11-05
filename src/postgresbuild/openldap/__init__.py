@@ -67,6 +67,6 @@ class OpenLDAP(UpdateableBundledCAutoconfPackage):
 
 
 OpenLDAP(
-    "2.6.10",
-    sha256="c065f04aad42737aebd60b2fe4939704ac844266bc0aeaa1609f0cad987be516",
+    "2.6.16",
+    sha256="8d8452bc3f56aa7a392c62dd377733f83d1314eed6c52fe44028439a3bb4df18",
 )
