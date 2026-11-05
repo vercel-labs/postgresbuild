@@ -1,7 +1,7 @@
 name: PR readiness gate
 
-# These events need default-branch authority to label PRs. Execution is pinned to
-# github.workflow_sha; PR code/artifacts are never consumed by this workflow.
+# These events need default-branch authority to label PRs and update signal refs.
+# Execution is pinned to github.workflow_sha; PR code/artifacts are never consumed.
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI, PostgreSQL builds]
@@ -22,7 +22,7 @@ on: # zizmor: ignore[dangerous-triggers]
 
 permissions: {}
 
-# Coalesce events for the same commit and serialize label updates.
+# Coalesce events for the same commit and serialize readiness updates.
 concurrency:
   group: pr-ready-${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.head_sha || github.run_id }}
   cancel-in-progress: false
@@ -36,7 +36,7 @@ jobs:
     permissions:
       actions: read
       checks: read
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       # Only execute the trusted workflow revision, never PR code or artifacts.

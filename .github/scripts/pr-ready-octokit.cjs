@@ -14,14 +14,17 @@ module.exports = async function testOctokit(Octokit) {
       base: { ref: 'main', repo: { full_name: 'vercel-labs/postgresbuild' } },
       labels: [{ name: 'dependencies' }] };
     let additions = 0;
+    let signalSha = null;
+    const refWrites = [];
     const run = { head_sha: sha, status: 'completed' };
     const github = new Octokit({ auth: 'test-token', request: {
       fetch: async (input, options) => {
         const url = new URL(input);
         assert.equal(url.origin, 'https://api.github.com');
-        const json = (data, headers = {}) => {
+        const path = decodeURIComponent(url.pathname);
+        const json = (data, headers = {}, status = 200) => {
           const response = new Response(JSON.stringify(data), {
-            status: 200, headers: { 'content-type': 'application/json', ...headers },
+            status, headers: { 'content-type': 'application/json', ...headers },
           });
           Object.defineProperty(response, 'url', { value: String(input) });
           return response;
@@ -29,6 +32,34 @@ module.exports = async function testOctokit(Octokit) {
         if (url.pathname === `${root}/pulls/18`) return json(pr);
         if (url.pathname === `${root}/commits/${sha}/pulls`) return json([pr]);
         if (url.pathname === `${root}/actions/runs/100`) return json(run);
+        if (path === `${root}/git/ref/heads/automation/pr-ready/18`) {
+          assert.equal(options.method, 'GET');
+          return signalSha ? json({ object: { sha: signalSha } })
+            : json({ message: 'Not Found' }, {}, 404);
+        }
+        if (url.pathname === `${root}/git/refs`) {
+          assert.equal(options.method, 'POST');
+          assert.equal(signalSha, null);
+          assert.deepEqual(JSON.parse(options.body), {
+            ref: 'refs/heads/automation/pr-ready/18', sha,
+          });
+          signalSha = sha;
+          refWrites.push('create');
+          return json({ object: { sha } });
+        }
+        if (path === `${root}/git/refs/heads/automation/pr-ready/18`) {
+          assert.ok(signalSha);
+          if (options.method === 'DELETE') {
+            signalSha = null;
+            refWrites.push('delete');
+            return new Response(null, { status: 204 });
+          }
+          assert.equal(options.method, 'PATCH');
+          assert.deepEqual(JSON.parse(options.body), { sha, force: true });
+          signalSha = sha;
+          refWrites.push('update');
+          return json({ object: { sha } });
+        }
         if (url.pathname === `${root}/commits/${sha}/check-runs`) {
           assert.equal(url.searchParams.get('filter'), 'latest');
           const name = url.searchParams.get('check_name');
@@ -67,15 +98,25 @@ module.exports = async function testOctokit(Octokit) {
     assert.equal((await gate(args)).length, 1);
     assert.equal((await gate(args)).length, 0);
     assert.equal(additions, 1);
+    assert.deepEqual(refWrites, ['create']);
     if (eventName === 'workflow_run') {
       context.payload.action = 'in_progress';
       run.status = 'in_progress';
       assert.equal((await gate(args)).length, 0);
       assert.deepEqual(pr.labels, [{ name: 'dependencies' }]);
+      assert.equal(signalSha, null);
       context.payload.action = 'completed';
       run.status = 'completed';
       assert.equal((await gate(args)).length, 1);
       assert.equal(additions, 2);
+      assert.deepEqual(refWrites, ['create', 'delete', 'create']);
     }
+    signalSha = 'b'.repeat(40);
+    assert.equal((await gate(args)).length, 1);
+    assert.equal(refWrites.at(-1), 'update');
+    pr.draft = true;
+    assert.equal((await gate(args)).length, 0);
+    assert.equal(refWrites.at(-1), 'delete');
+    assert.equal(signalSha, null);
   }
 };
