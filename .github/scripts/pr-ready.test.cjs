@@ -23,6 +23,7 @@ function fixture(eventName = 'workflow_run') {
     ])),
     run: { head_sha: SHA, status: 'completed', run_attempt: 1 },
     additions: [], removals: [], messages: [],
+    ref: null, refWrites: [], refError: null,
     reads: 0, onChecks: () => {}, error: null,
   };
   const endpoint = () => {};
@@ -40,6 +41,31 @@ function fixture(eventName = 'workflow_run') {
         assert.equal(args.run_id, 100);
         return { data: structuredClone(state.run) };
       } },
+      git: {
+        getRef: async args => {
+          assert.equal(args.ref, 'heads/automation/pr-ready/18');
+          if (state.refError) throw state.refError;
+          if (!state.ref) throw Object.assign(new Error('Not Found'), { status: 404 });
+          return { data: { object: { sha: state.ref } } };
+        },
+        createRef: async args => {
+          assert.equal(args.ref, 'refs/heads/automation/pr-ready/18');
+          assert.equal(state.ref, null);
+          state.refWrites.push({ operation: 'create', ...args });
+          state.ref = args.sha;
+        },
+        updateRef: async args => {
+          assert.equal(args.ref, 'heads/automation/pr-ready/18');
+          assert.equal(args.force, true);
+          state.refWrites.push({ operation: 'update', ...args });
+          state.ref = args.sha;
+        },
+        deleteRef: async args => {
+          assert.equal(args.ref, 'heads/automation/pr-ready/18');
+          state.refWrites.push({ operation: 'delete', ...args });
+          state.ref = null;
+        },
+      },
       issues: {
         addLabels: async args => {
           state.additions.push(args);
@@ -84,7 +110,7 @@ for (const [eventName, payload] of [
   ['pull_request_target', { number: 18, pull_request: { head: { sha: SHA } } }],
   ['workflow_dispatch', { inputs: { pr_number: '18', head_sha: SHA } }],
 ]) {
-  test(`${eventName} labels a ready PR`, async () => {
+  test(`${eventName} labels and signals a ready PR`, async () => {
     const f = fixture(eventName);
     f.context.payload = { repository: f.context.payload.repository, ...payload };
     await gate(f);
@@ -92,6 +118,10 @@ for (const [eventName, payload] of [
     assert.deepEqual(f.state.additions, [{
       owner: 'vercel-labs', repo: 'postgresbuild', issue_number: 18,
       labels: ['ready-to-merge'],
+    }]);
+    assert.deepEqual(f.state.refWrites, [{
+      operation: 'create', owner: 'vercel-labs', repo: 'postgresbuild',
+      ref: 'refs/heads/automation/pr-ready/18', sha: SHA,
     }]);
   });
 }
@@ -116,6 +146,7 @@ for (const change of [
     change(f.state.pr);
     await gate(f);
     assert.equal(f.state.additions.length, 0);
+    assert.equal(f.state.refWrites.length, 0);
   });
 }
 
@@ -130,6 +161,7 @@ for (const check of ['CI', 'All builds']) {
       Object.assign(f.state.checks[check][0], { status, conclusion });
       await gate(f);
       assert.equal(f.state.additions.length, 0);
+      assert.equal(f.state.refWrites.length, 0);
     });
   }
   for (const mismatch of ['missing', 'sha', 'name', 'app']) {
@@ -161,12 +193,41 @@ test('a successful rerun supersedes an older failed check', async () => {
   assert.equal(f.state.additions.length, 1);
 });
 
-test('a present readiness label suppresses repeated callbacks', async () => {
+test('an unchanged signal ref suppresses repeated callbacks', async () => {
   const f = fixture();
   await gate(f);
   await gate(f);
   assert.equal(f.state.additions.length, 1);
+  assert.equal(f.state.refWrites.length, 1);
   assert.deepEqual(f.state.pr.labels.map(label => label.name), ['dependencies', 'ready-to-merge']);
+});
+
+test('an already-labelled PR still gets its first signal', async () => {
+  const f = fixture();
+  f.state.pr.labels.push({ name: 'ready-to-merge' });
+  assert.deepEqual(await gate(f), [{ number: 18, sha: SHA }]);
+  assert.equal(f.state.additions.length, 0);
+  assert.equal(f.state.ref, SHA);
+});
+
+test('a signal for a previous head is replaced without rewriting the PR', async () => {
+  const f = fixture();
+  f.state.ref = OTHER_SHA;
+  await gate(f);
+  assert.deepEqual(f.state.refWrites, [{
+    operation: 'update', owner: 'vercel-labs', repo: 'postgresbuild',
+    ref: 'heads/automation/pr-ready/18', sha: SHA, force: true,
+  }]);
+});
+
+test('a missing label does not prevent signal cleanup', async () => {
+  const f = fixture();
+  f.state.ref = SHA;
+  f.state.checks.CI[0].status = 'in_progress';
+  await gate(f);
+  assert.equal(f.state.removals.length, 0);
+  assert.equal(f.state.ref, null);
+  assert.equal(f.state.refWrites[0].operation, 'delete');
 });
 
 test('a recovered head can notify after its label was removed', async () => {
@@ -191,12 +252,13 @@ for (const action of ['requested', 'in_progress']) {
     assert.deepEqual(f.state.pr.labels, [{ name: 'dependencies' }]);
 
     // The first notification may have skipped this rerun. Completing it must
-    // add the label again, generating a fresh notification event.
+    // recreate the signal ref, generating a fresh notification event.
     f.context.payload.action = 'completed';
     f.state.run.status = 'completed';
     await gate(f);
     await gate(f);
     assert.equal(f.state.additions.length, 2);
+    assert.deepEqual(f.state.refWrites.map(write => write.operation), ['create', 'delete', 'create']);
   });
 }
 
@@ -254,12 +316,15 @@ for (const change of [
   test(`remove readiness when PR becomes ineligible: ${change}`, async () => {
     const f = fixture();
     f.state.pr.labels.push({ name: 'ready-to-merge' });
+    f.state.ref = SHA;
     change(f.state.pr);
     await gate(f);
     assert.deepEqual(f.state.removals, [{
       owner: 'vercel-labs', repo: 'postgresbuild', issue_number: 18, name: 'ready-to-merge',
     }]);
     assert.deepEqual(f.state.pr.labels, [{ name: 'dependencies' }]);
+    assert.equal(f.state.ref, null);
+    assert.equal(f.state.refWrites[0].operation, 'delete');
   });
 }
 
@@ -267,9 +332,12 @@ test("a stale completion does not remove the newer head's readiness label", asyn
   const f = fixture();
   f.state.pr.labels.push({ name: 'ready-to-merge' });
   f.state.pr.head.sha = OTHER_SHA;
+  f.state.ref = OTHER_SHA;
   await gate(f);
   assert.equal(f.state.additions.length, 0);
   assert.equal(f.state.removals.length, 0);
+  assert.equal(f.state.ref, OTHER_SHA);
+  assert.equal(f.state.refWrites.length, 0);
 });
 
 test('a push during check reads prevents labelling', async () => {
@@ -300,6 +368,36 @@ test('an uncertain label write is not retried blindly', async () => {
   f.state.error = new Error('connection lost');
   await assert.rejects(gate(f), /connection lost/);
   assert.equal(f.state.additions.length, 1);
+  assert.equal(f.state.refWrites.length, 0);
+});
+
+test('ref read failures do not lead to blind ref creation', async () => {
+  const f = fixture();
+  f.state.refError = Object.assign(new Error('Forbidden'), { status: 403 });
+  await assert.rejects(gate(f), /Forbidden/);
+  assert.equal(f.state.refWrites.length, 0);
+});
+
+test('a failed signal write can recover even after the label was added', async () => {
+  const f = fixture();
+  const create = f.github.rest.git.createRef;
+  f.github.rest.git.createRef = async () => { throw new Error('connection lost'); };
+  await assert.rejects(gate(f), /connection lost/);
+  f.github.rest.git.createRef = create;
+  assert.deepEqual(await gate(f), [{ number: 18, sha: SHA }]);
+  assert.equal(f.state.additions.length, 1);
+});
+
+test('an uncertain successful signal write is not duplicated on retry', async () => {
+  const f = fixture();
+  const create = f.github.rest.git.createRef;
+  f.github.rest.git.createRef = async args => {
+    await create(args);
+    throw new Error('connection lost');
+  };
+  await assert.rejects(gate(f), /connection lost/);
+  assert.deepEqual(await gate(f), []);
+  assert.equal(f.state.refWrites.length, 1);
 });
 
 for (const [number, sha] of [[0, SHA], ['1; echo bad', SHA], [18, 'main'], [18, SHA.toUpperCase()]]) {

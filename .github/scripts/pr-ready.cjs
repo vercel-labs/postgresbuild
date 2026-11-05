@@ -4,6 +4,7 @@
 // are installed from the PR. Only metadata is used; no PR code is executed.
 const REQUIRED_CHECKS = ['CI', 'All builds'];
 const READY_LABEL = 'ready-to-merge';
+const SIGNAL_PREFIX = 'heads/automation/pr-ready/';
 
 function identity(number, sha) {
   if (!/^[1-9][0-9]*$/.test(String(number)) ||
@@ -73,7 +74,7 @@ async function readiness(github, context, number, sha) {
     checks.push(latest);
   }
   // Checks take multiple reads; catch a push, draft conversion or closure that
-  // happened while reading them before changing the readiness label.
+  // happened while reading them before changing readiness.
   ({ data: pr } = await github.rest.pulls.get({
     ...context.repo, pull_number: number,
   }));
@@ -83,11 +84,33 @@ async function readiness(github, context, number, sha) {
   return { ready: true, pr, checks };
 }
 
+async function signal(github, context, number, sha, ready) {
+  const ref = `${SIGNAL_PREFIX}${number}`;
+  let existing;
+  try {
+    ({ data: existing } = await github.rest.git.getRef({ ...context.repo, ref }));
+  } catch (error) {
+    if (error.status !== 404) throw error;
+  }
+  if (!ready) {
+    if (existing) await github.rest.git.deleteRef({ ...context.repo, ref });
+    return false;
+  }
+  if (existing?.object.sha === sha) return false;
+  if (existing) {
+    // Only this dedicated signal ref may be rewritten; never a PR or main ref.
+    await github.rest.git.updateRef({ ...context.repo, ref, sha, force: true });
+  } else {
+    await github.rest.git.createRef({ ...context.repo, ref: `refs/${ref}`, sha });
+  }
+  return true;
+}
+
 async function gate({ github, context, core }) {
   const results = [];
   for (const { number, sha } of await candidates(github, context)) {
     const state = await readiness(github, context, number, sha);
-    // An old commit's completion must not remove a newer head's label.
+    // An old commit's completion must not remove a newer head's readiness.
     if (state.pr.head.sha !== sha) {
       core.info(`PR #${number}: ${state.reason}`);
       continue;
@@ -101,6 +124,10 @@ async function gate({ github, context, core }) {
       await github.rest.issues.addLabels({
         ...context.repo, issue_number: number, labels: [READY_LABEL],
       });
+    }
+    // Reconcile independently of the label, including after a partial failure
+    // or when migrating an already-labelled PR. An unchanged ref emits no push.
+    if (await signal(github, context, number, sha, state.ready)) {
       results.push({ number, sha });
     }
     core.info(`PR #${number}: ${state.ready ? `${READY_LABEL} (${sha})` : state.reason}`);
