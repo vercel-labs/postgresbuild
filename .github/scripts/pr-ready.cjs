@@ -1,9 +1,9 @@
 'use strict';
 
 // Octokit is supplied by actions/github-script; no credentials or dependencies
-// are installed from the PR. Only metadata is read, and no PR code is executed.
+// are installed from the PR. Only metadata is used; no PR code is executed.
 const REQUIRED_CHECKS = ['CI', 'All builds'];
-const NOTICE_WORKFLOW = 'pr-ready.yml';
+const READY_LABEL = 'ready-to-merge';
 
 function identity(number, sha) {
   if (!/^[1-9][0-9]*$/.test(String(number)) ||
@@ -11,10 +11,6 @@ function identity(number, sha) {
     throw new Error('Expected a positive PR number and full lowercase commit SHA');
   }
   return { number: Number(number), sha };
-}
-
-function notificationName(number, sha) {
-  return `PR #${number} checks passed (${sha})`;
 }
 
 async function candidates(github, context) {
@@ -46,11 +42,22 @@ function current(pr, context, sha) {
 }
 
 async function readiness(github, context, number, sha) {
-  const { data: pr } = await github.rest.pulls.get({
+  let { data: pr } = await github.rest.pulls.get({
     ...context.repo, pull_number: number,
   });
   if (!current(pr, context, sha)) {
-    return { ready: false, reason: 'PR is closed, draft, retargeted, or stale' };
+    return { ready: false, pr, reason: 'PR is closed, draft, retargeted, or stale' };
+  }
+  if (context.eventName === 'workflow_run') {
+    // A rerun can start before its new aggregate check replaces the old pass.
+    // Read current state: events can arrive after completion or during a rerun.
+    const { data: run } = await github.rest.actions.getWorkflowRun({
+      ...context.repo, run_id: context.payload.workflow_run.id,
+    });
+    if (run.head_sha !== sha) throw new Error('Workflow run does not match event commit');
+    if (run.status !== 'completed') {
+      return { ready: false, pr, reason: 'A required workflow is queued or running' };
+    }
   }
   const checks = [];
   for (const check_name of REQUIRED_CHECKS) {
@@ -61,89 +68,44 @@ async function readiness(github, context, number, sha) {
       check.head_sha === sha && check.app?.slug === 'github-actions')
       .sort((a, b) => b.id - a.id)[0];
     if (!latest || latest.status !== 'completed' || latest.conclusion !== 'success') {
-      return { ready: false, reason: `${check_name} is missing or not successful` };
+      return { ready: false, pr, reason: `${check_name} is missing or not successful` };
     }
     checks.push(latest);
+  }
+  // Checks take multiple reads; catch a push, draft conversion or closure that
+  // happened while reading them before changing the readiness label.
+  ({ data: pr } = await github.rest.pulls.get({
+    ...context.repo, pull_number: number,
+  }));
+  if (!current(pr, context, sha)) {
+    return { ready: false, pr, reason: 'PR is closed, draft, retargeted, or stale' };
   }
   return { ready: true, pr, checks };
 }
 
-async function notification(github, context, pr, sha) {
-  const title = notificationName(pr.number, sha);
-  for await (const page of github.paginate.iterator(
-    github.rest.actions.listWorkflowRuns,
-    {
-      ...context.repo, workflow_id: NOTICE_WORKFLOW, event: 'workflow_dispatch',
-      branch: context.payload.repository.default_branch,
-      created: `>=${pr.created_at}`, per_page: 100,
-    },
-  )) {
-    const found = page.data.find(run => run.display_title === title);
-    if (found) return found;
-  }
-  return null;
-}
-
-async function gate({ github, context, core, pause = ms =>
-  new Promise(resolve => setTimeout(resolve, ms)) }) {
+async function gate({ github, context, core }) {
   const results = [];
   for (const { number, sha } of await candidates(github, context)) {
     const state = await readiness(github, context, number, sha);
-    if (!state.ready) {
+    // An old commit's completion must not remove a newer head's label.
+    if (state.pr.head.sha !== sha) {
       core.info(`PR #${number}: ${state.reason}`);
       continue;
     }
-    if (await notification(github, context, state.pr, sha)) {
-      core.info(`PR #${number}: already notified for ${sha}`);
-      continue;
+    const labelled = state.pr.labels.some(label => label.name === READY_LABEL);
+    if (!state.ready && labelled) {
+      await github.rest.issues.removeLabel({
+        ...context.repo, issue_number: number, name: READY_LABEL,
+      });
+    } else if (state.ready && !labelled) {
+      await github.rest.issues.addLabels({
+        ...context.repo, issue_number: number, labels: [READY_LABEL],
+      });
+      results.push({ number, sha });
     }
-    // Revalidate after reading notification history to catch pushes/reruns that
-    // happened during those reads. Dispatch always executes the default branch.
-    const fresh = await readiness(github, context, number, sha);
-    if (!fresh.ready) {
-      core.info(`PR #${number}: ${fresh.reason}`);
-      continue;
-    }
-    await github.rest.actions.createWorkflowDispatch({
-      ...context.repo, workflow_id: NOTICE_WORKFLOW,
-      ref: context.payload.repository.default_branch,
-      inputs: { pr_number: String(number), head_sha: sha },
-    });
-    // Keep the per-commit gate occupied until GitHub exposes the accepted run,
-    // so the next queued callback can observe it instead of dispatching twice.
-    let found;
-    for (let attempt = 0; attempt < 5; attempt++) {
-      found = await notification(github, context, fresh.pr, sha);
-      if (found) break;
-      await pause(1000 * (attempt + 1));
-    }
-    if (!found) {
-      throw new Error('Dispatch accepted but not visible; inspect runs before retrying');
-    }
-    core.info(`PR #${number}: notification ${found.html_url}`);
-    results.push(found);
+    core.info(`PR #${number}: ${state.ready ? `${READY_LABEL} (${sha})` : state.reason}`);
   }
   return results;
 }
 
-async function notice({ github, context, core }) {
-  const { number, sha } = identity(
-    context.payload.inputs.pr_number, context.payload.inputs.head_sha,
-  );
-  const state = await readiness(github, context, number, sha);
-  if (!state.ready) {
-    await core.summary.addHeading(`PR #${number}: readiness changed`)
-      .addRaw(`${state.reason}. Recheck the PR before reviewing or merging.`)
-      .write();
-    return;
-  }
-  await core.summary.addHeading(`PR #${number} checks passed`)
-    .addLink(`Review PR #${number}`, state.pr.html_url)
-    .addRaw(`\n\nValidated commit: \`${sha}\`. Maintainers review and merge the PR.\n\n`)
-    .addTable([
-      [{ data: 'Check', header: true }, { data: 'Successful run', header: true }],
-      ...state.checks.map(check => [check.name, check.html_url]),
-    ]).write();
-}
-
-module.exports = { candidates, gate, identity, notice, notificationName, readiness };
+module.exports = { candidates, gate, identity, readiness };
