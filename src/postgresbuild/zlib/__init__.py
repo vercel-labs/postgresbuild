@@ -31,6 +31,6 @@ class Zlib(UpdateableBundledCMakePackage):
 
 
 Zlib(
-    "1.3.2",
-    sha256="bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16",
+    "1.4",
+    sha256="02dd159783677a749c04adbdd02b55b8a2bcc7e054f51b76b549199a916ad584",
 )
