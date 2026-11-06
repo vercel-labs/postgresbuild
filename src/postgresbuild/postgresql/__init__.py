@@ -75,12 +75,12 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             f"{Kerberos.ident} (==1.22.2)",
             f"{LibXML2.ident} (==2.15.4)",
             f"{LibXSLT.ident} (==1.1.45)",
-            f"{LZ4.ident} (==1.10.0)",
+            f"{LZ4.ident} (==1.11.0)",
             f"{OpenLDAP.ident} (==2.6.16)",
             f"{OpenSSL.ident} (==3.5.7)",
             f"{Readline.ident} (==8.3)",
             f"{UUID.ident} (==2.42.4)",
-            f"{Zlib.ident} (==1.3.2)",
+            f"{Zlib.ident} (==1.4)",
             f"{Zstandard.ident} (==1.5.7)",
         ]
     }
@@ -94,12 +94,12 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             f"{Kerberos.aliases[0]} (==1.22.2)",
             f"{LibXML2.aliases[0]} (==2.15.4)",
             f"{LibXSLT.aliases[0]} (==1.1.45)",
-            f"{LZ4.aliases[0]} (==1.10.0)",
+            f"{LZ4.aliases[0]} (==1.11.0)",
             f"{OpenLDAP.aliases[0]} (==2.6.16)",
             f"{OpenSSL.aliases[0]} (==3.5.7)",
             f"{Readline.aliases[0]} (==8.3)",
             f"{UUID.aliases[0]} (==2.42.4)",
-            f"{Zlib.aliases[0]} (==1.3.2)",
+            f"{Zlib.aliases[0]} (==1.4)",
             f"{Zstandard.aliases[0]} (==1.5.7)",
         ]
     }
