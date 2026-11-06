@@ -36,7 +36,7 @@ concurrency:
 
 env:
   GGBUILD_ENABLE_SCCACHE: ${{ (github.event_name == 'workflow_dispatch' && inputs.enable_sccache) || (github.event_name == 'pull_request' && true) || (github.event_name == 'push' && false) }}
-  GGBUILD_REF: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '5b82f5fd8948cc2bd5dd5ff7d1d9337e2f64e695' }}
+  GGBUILD_REF: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '872682ae7ebc7f8529e289c9df6436c1eea46d61' }}
   GGBUILD_REF_OVERRIDE: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '' }}
   UV_NO_SYNC: ${{ github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref != '' }}
 
@@ -804,6 +804,7 @@ jobs:
 
       - name: Ingest published snapshot index
         if: steps.publish.outputs.published == 'true'
+        id: ingest
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         env:
           PUBLICATION_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -836,6 +837,12 @@ jobs:
               throw new Error('index ingestion was ignored');
             }
 
+      - name: Post-ingestion action
+        if: steps.ingest.outcome == 'success'
+        uses: ./.github/actions/release-published
+        with:
+          tag: ${{ steps.publish.outputs.tag }}
+
 
   ingest_existing:
     name: Ingest existing immutable release
@@ -847,7 +854,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - name: Validate release tag
@@ -858,8 +865,12 @@ jobs:
             echo "ingest-existing requires a twelve-digit tag" >&2
             exit 1
           fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Ingest published snapshot index
+        id: ingest
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         env:
           PUBLICATION_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -891,3 +902,9 @@ jobs:
             if (result.ignored === true) {
               throw new Error('index ingestion was ignored');
             }
+
+      - name: Post-ingestion action
+        if: steps.ingest.outcome == 'success'
+        uses: ./.github/actions/release-published
+        with:
+          tag: ${{ inputs.tag }}

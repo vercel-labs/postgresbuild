@@ -1,0 +1,16 @@
+name: Signal published snapshot
+description: Signal the Slack notifier after successful snapshot index ingestion
+inputs:
+  tag:
+    description: Immutable snapshot tag that was ingested
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+      env:
+        PUBLICATION_TAG: ${{ inputs.tag }}
+      with:
+        script: |
+          const { signal } = require('./.github/scripts/release-published.cjs');
+          await signal({ github, context, core, tag: process.env.PUBLICATION_TAG });
