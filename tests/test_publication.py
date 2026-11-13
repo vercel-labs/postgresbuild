@@ -80,22 +80,19 @@ def _file(
     target: str = "target",
     tag: str = TAG,
 ) -> dict[str, object]:
+    public = role in {"primary-archive", "dbgsym", "dev"}
     result: dict[str, object] = {
-        "encoding": "zstd"
-        if role in {"primary-archive", "dbgsym"}
-        else "identity",
+        "encoding": "zstd" if public else "identity",
         "logical_name": name,
         "media_type": (
-            "application/x-tar"
-            if role in {"primary-archive", "dbgsym"}
-            else "application/octet-stream"
+            "application/x-tar" if public else "application/octet-stream"
         ),
         "role": role,
         "sha256": hashlib.sha256(content).hexdigest(),
         "size": len(content),
     }
-    if role in {"primary-archive", "dbgsym"}:
-        suffix = "-dbgsym" if role == "dbgsym" else ""
+    if public:
+        suffix = "" if role == "primary-archive" else f"-{role}"
         release_name = f"postgresql-{version}+{tag}-{target}{suffix}.tar.zst"
         result.update(
             {
@@ -110,7 +107,11 @@ def _file(
 
 
 def _record(
-    version: str = "17.1", target: str = "target", tag: str = TAG
+    version: str = "17.1",
+    target: str = "target",
+    tag: str = TAG,
+    *,
+    dev: bool = False,
 ) -> dict[str, object]:
     files = [
         _file(
@@ -132,6 +133,17 @@ def _record(
         _file("archive.metadata.json", "metadata"),
         _file("archive.test-result.json", "test-result"),
     ]
+    if dev:
+        files.append(
+            _file(
+                "archive.dev.tar.zst",
+                "dev",
+                b"development",
+                version=version,
+                target=target,
+                tag=tag,
+            )
+        )
     return {
         "coordinate": {
             "package": "postgresql",
@@ -148,8 +160,10 @@ def _record(
     }
 
 
-def _snapshot(tag: str = TAG, version: str = "17.1") -> dict[str, object]:
-    record = _record(version, tag=tag)
+def _snapshot(
+    tag: str = TAG, version: str = "17.1", *, dev: bool = False
+) -> dict[str, object]:
+    record = _record(version, tag=tag, dev=dev)
     files = cast("list[dict[str, Any]]", record["files"])
     checksum = "".join(
         f"{item['sha256']}  {item['release_name']}\n"
@@ -591,6 +605,75 @@ def test_fetch_publishes_verified_primary_artifact_only() -> None:
     ]
 
 
+def test_fetch_publishes_verified_dev_overlay_beside_primary() -> None:
+    snapshot = _snapshot(dev=True)
+    assets = list(_assets(snapshot).values())
+    calls: list[tuple[str, str, bytes]] = []
+    contents = {"-dbgsym.tar.zst": b"symbols", "-dev.tar.zst": b"development"}
+
+    class GitHub:
+        def release_by_tag(self, repository: str, tag: str) -> dict[str, Any]:
+            return {
+                "assets": assets,
+                "draft": False,
+                "name": tag,
+                "prerelease": False,
+                "published_at": "2026-01-01T00:00:00Z",
+                "tag_name": tag,
+            }
+
+        def get_bytes(self, url: str) -> bytes:
+            if url == _url(SNAPSHOT_NAME):
+                return canonical_json(snapshot)
+            if url == _url(CHECKSUM_NAME):
+                return _checksum_bytes(snapshot)
+            for suffix, content in contents.items():
+                if url.endswith(suffix):
+                    return content
+            return b"archive"
+
+    fetch_valid_snapshot(
+        REPOSITORY,
+        TAG,
+        GitHub(),
+        POLICY,
+        lambda tag, name, content: calls.append((tag, name, content)),
+    )
+    assert calls == [
+        (TAG, f"postgresql-17.1+{TAG}-target-dev.tar.zst", b"development"),
+        (TAG, f"postgresql-17.1+{TAG}-target.tar.zst", b"archive"),
+    ]
+
+
+def test_snapshot_validation_rejects_noncanonical_or_duplicate_dev() -> None:
+    snapshot = _snapshot(dev=True)
+    successful = cast("list[dict[str, Any]]", snapshot["successful"])
+    files = cast("list[dict[str, Any]]", successful[0]["files"])
+    dev = next(item for item in files if item["role"] == "dev")
+    dev["release_name"] = dev["release_name"].replace("-dev", "-devel")
+    with pytest.raises(ValueError, match="not canonical"):
+        validate_snapshot(
+            snapshot,
+            policy=POLICY,
+            tag=TAG,
+            release_assets=_assets(snapshot),
+        )
+
+    snapshot = _snapshot(dev=True)
+    successful = cast("list[dict[str, Any]]", snapshot["successful"])
+    files = cast("list[dict[str, Any]]", successful[0]["files"])
+    duplicate = dict(next(item for item in files if item["role"] == "dev"))
+    duplicate["logical_name"] = "archive.zz.dev.tar.zst"
+    files.append(duplicate)
+    with pytest.raises(ValueError, match="not canonical"):
+        validate_snapshot(
+            snapshot,
+            policy=POLICY,
+            tag=TAG,
+            release_assets=_assets(snapshot),
+        )
+
+
 class MemoryBlob:
     def __init__(self, *, race_once: bool = False) -> None:
         self.values: dict[str, tuple[bytes, str]] = {}
@@ -818,6 +901,38 @@ def test_versions_ndjson_groups_orders_and_advertises_primary_only(
     assert response.status_code == 200
     assert response.content == versions_ndjson(index)
     assert response.headers["content-type"].startswith("application/x-ndjson")
+
+
+def test_versions_ndjson_advertises_dev_overlay_after_install_only() -> None:
+    fragment = {
+        "format": "postgresbuild-snapshot-fragment-v1",
+        "published_at": "2026-01-02T00:00:00Z",
+        "repository": REPOSITORY,
+        "source_commit": "a" * 40,
+        "successful": [
+            _record("18.6", "b-target", TAG, dev=True),
+            _record("18.6", "a-target", TAG),
+        ],
+        "tag": TAG,
+    }
+    records = [
+        json.loads(line)
+        for line in versions_ndjson(project_index([fragment])).splitlines()
+    ]
+    artifacts = records[0]["artifacts"]
+    assert [(item["platform"], item["variant"]) for item in artifacts] == [
+        ("a-target", "install_only"),
+        ("b-target", "install_only"),
+        ("b-target", "dev"),
+    ]
+    dev = artifacts[2]
+    assert dev["overlay"] == "install_only"
+    assert dev["sha256"] == hashlib.sha256(b"development").hexdigest()
+    assert dev["urls"][0] == (
+        f"https://postgresbuild.labs.vercel.dev/artifacts/{TAG}/"
+        f"postgresql-18.6%2B{TAG}-b-target-dev.tar.zst"
+    )
+    assert all("overlay" not in item for item in artifacts[:2])
 
 
 def test_versions_ndjson_orders_prereleases_and_serves_beta(

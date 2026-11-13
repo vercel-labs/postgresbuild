@@ -50,8 +50,9 @@ manifest, and payload is checked against the exact v3 node key before use.
 
 Every PostgreSQL artifact is followed by a recipe-driven test node. The node
 extracts the shipped payload and its build-time test-data side tarball, then
-runs standalone prebuilt regression, isolation, and ECPG drivers against the
-shipped `bin`, `lib`, `share`, and `pg_config`. The sidecar contains only the
+runs standalone prebuilt isolation, contrib and PL regression, and ECPG drivers
+against the shipped `bin`, `lib`, `share`, and `pg_config`. The core regression
+suite runs from the `dev` overlay described below, against the same server. The sidecar contains only the
 enabled suites' inputs, expected output, schedules, executables, and runtime
 manifest; it does not require Make, compilers, or PostgreSQL source/build
 trees. CI uploads the artifact only after this test succeeds. Direct native
@@ -72,6 +73,45 @@ or testing, and PostgreSQL keeps clusters, sockets, logs, sources, and temporary
 state inside the node work directory. Builds with `build-dbgsym = true` also
 publish a separate `dbgsym` tarball while keeping the primary payload
 stripped.
+
+## Development overlay
+
+Each build also publishes a `dev` archive,
+`postgresql-<version>+<tag>-<target>-dev.tar.zst`. It never replaces files from
+the `install_only` archive. Extract it onto the same platform's install_only
+tree, stripping its top-level directory:
+
+```console
+tar -xf postgresql-18.6+<tag>-<target>.tar.zst
+tar -xf postgresql-18.6+<tag>-<target>-dev.tar.zst \
+    -C postgresql-18.6+<tag>-<target> --strip-components=1
+```
+
+The overlay adds:
+
+- client and server headers (`pg_config --includedir`,
+  `pg_config --includedir-server`)
+- PGXS (`pg_config --pgxs`), with build-machine compiler, include, and library
+  paths removed
+- the static `libpgcommon`, `libpgport`, `libpgfeutils`, and `libpq` archives,
+  plus `libpq.pc`
+- `pg_regress`, the regress module (`regress` plus the platform's module
+  suffix), and the core `src/test/regress` suite: sql, expected, input/output, data,
+  schedules, and resultmap
+
+The regression files are together in
+`$(dirname "$(pg_config --pgxs)")/../test/regress`, so the core suite runs
+against an installed server without a PostgreSQL source checkout:
+
+```console
+regress=$(dirname "$(pg_config --pgxs)")/../test/regress
+cd "$regress" && ./pg_regress --inputdir=. --dlpath=. \
+    --bindir="$(pg_config --bindir)" --outputdir="$PWD/results" \
+    --schedule=parallel_schedule
+```
+
+PostgreSQL 14 also needs `--make-testtablespace-dir`, and writes converted
+input and output templates into `--inputdir`.
 
 Snapshot publication uses a protected GitHub `release` environment. Configure
 that environment with required reviewers, and configure the deployed index
@@ -95,6 +135,11 @@ archives, `SHA256SUMS`, and `ggbuild-snapshot-v1.json`. The validated public
 inventory is available at `/index.json` and `/versions.ndjson`. If release
 publication succeeds but index ingestion fails, dispatch `ingest-existing`
 with the immutable release tag; that operation skips planning and all builds.
+
+Each `/versions.ndjson` entry lists an `install_only` artifact per platform,
+followed by that platform's `dev` artifact with `"overlay": "install_only"`
+when the snapshot has one. Snapshots published before the dev variant list
+install_only artifacts only.
 
 The `/versions.ndjson` version field uses SemVer: PostgreSQL `18.4` is
 `18.4.0+<timestamp>` and `19beta4` is `19.0.0-beta.4+<timestamp>` (likewise

@@ -10,13 +10,6 @@ resolution-markers = [
 exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P2D"
 
-[options.exclude-newer-package]
-certifi = "2026-10-21T23:59:59Z"
-ggt = "2026-08-21T23:59:59Z"
-httpcore2 = "2026-10-21T23:59:59Z"
-httpx2 = "2026-10-21T23:59:59Z"
-uv = "2026-10-21T23:59:59Z"
-
 [[package]]
 name = "annotated-doc"
 version = "0.0.5"
@@ -462,7 +455,7 @@ wheels = [
 [[package]]
 name = "ggbuild"
 version = "0.1.0"
-source = { git = "https://github.com/vercel-labs/ggbuild.git?rev=5b82f5fd8948cc2bd5dd5ff7d1d9337e2f64e695#5b82f5fd8948cc2bd5dd5ff7d1d9337e2f64e695" }
+source = { git = "https://github.com/vercel-labs/ggbuild.git?rev=3a46336643d89b537b6ff9032817c35e2ed21b7e#3a46336643d89b537b6ff9032817c35e2ed21b7e" }
 dependencies = [
     { name = "build" },
     { name = "defusedxml" },
@@ -1055,7 +1048,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.130,<1" },
-    { name = "ggbuild", git = "https://github.com/vercel-labs/ggbuild.git?rev=5b82f5fd8948cc2bd5dd5ff7d1d9337e2f64e695" },
+    { name = "ggbuild", git = "https://github.com/vercel-labs/ggbuild.git?rev=3a46336643d89b537b6ff9032817c35e2ed21b7e" },
     { name = "httpx2", specifier = ">=2.16,<3" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10,<3" },
     { name = "vercel", specifier = ">=0.12,<1" },

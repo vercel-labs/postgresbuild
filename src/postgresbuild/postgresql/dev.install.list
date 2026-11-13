@@ -1,0 +1,12 @@
+{includedir}/libpq-events.h
+{includedir}/libpq-fe.h
+{includedir}/libpq/**
+{includedir}/pg_config*.h
+{includedir}/postgres_ext.h
+{includedir}/postgresql/**
+{libdir}/libpgcommon*.a
+{libdir}/libpgfeutils.a
+{libdir}/libpgport*.a
+{libdir}/libpq.a
+{libdir}/pkgconfig/libpq.pc
+{libdir}/postgresql/pgxs/**

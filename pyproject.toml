@@ -73,10 +73,10 @@ fallback-version = "0.0.0"
 
 [tool.uv]
 default-groups = ["dev"]
-exclude-newer-package = { ggt = "2026-08-21T23:59:59Z" }
+index = [{ name = "pypi", url = "https://pypi.org/simple", default = true }]
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "5b82f5fd8948cc2bd5dd5ff7d1d9337e2f64e695" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "3a46336643d89b537b6ff9032817c35e2ed21b7e" }
 
 [tool.ggbuild]
 root-recipe = "postgresbuild.postgresql:PostgreSQL"

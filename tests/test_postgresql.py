@@ -213,6 +213,7 @@ def test_artifact_test_avoids_sysv_ipc_for_patched_versions(
     test = mock.Mock(spec=packages.Test)
     test.get_build_install_dir.return_value = tmp_path / "postgresql"
     test.get_test_install_dir.return_value = tmp_path / "tests"
+    test.get_dev_install_dir.return_value = tmp_path / "dev"
     test.get_temp_dir.return_value = tmp_path / "work"
 
     script = package.get_test_script(test)
@@ -250,6 +251,7 @@ def test_artifact_test_keeps_sysv_default_for_unpatched_versions(
     test = mock.Mock(spec=packages.Test)
     test.get_build_install_dir.return_value = tmp_path / "postgresql"
     test.get_test_install_dir.return_value = tmp_path / "tests"
+    test.get_dev_install_dir.return_value = tmp_path / "dev"
     test.get_temp_dir.return_value = tmp_path / "work"
 
     script = package.get_test_script(test)
@@ -370,6 +372,16 @@ with pathlib.Path(os.environ["TRACE"]).open("a", encoding="utf-8") as output:
     output.write(json.dumps([name, *sys.argv[1:]]) + "\\n")
 if name == "initdb":
     pathlib.Path(sys.argv[sys.argv.index("-D") + 1]).mkdir(parents=True)
+if name == "pg_config":
+    root = pathlib.Path(sys.argv[0]).parents[1]
+    print({{
+        "--includedir-server": root / "include/postgresql/server",
+        "--pgxs": root / "lib/postgresql/pgxs/src/makefiles/pgxs.mk",
+    }}[sys.argv[1]])
+if name == "pg_regress":
+    trace = pathlib.Path(os.environ["TRACE"])
+    with trace.open("a", encoding="utf-8") as output:
+        output.write(json.dumps(["cwd", os.getcwd()]) + "\\n")
 """
     for name in ("initdb", "pg_ctl", "postgres", "pg_config"):
         path = bin_dir / name
@@ -382,10 +394,22 @@ if name == "initdb":
     runner = test_install / "run-tests.sh"
     runner.write_text(executable, encoding="utf-8")
     runner.chmod(0o755)
+    dev = tmp_path / "dev"
+    regress = dev / "lib/postgresql/pgxs/src/test/regress"
+    for path in (
+        dev / "bin/pg_config",
+        dev / "include/postgresql/server/postgres.h",
+        dev / "lib/postgresql/pgxs/src/makefiles/pgxs.mk",
+        regress / "pg_regress",
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(executable, encoding="utf-8")
+        path.chmod(0o755)
 
     test = mock.Mock(spec=packages.Test)
     test.get_build_install_dir.return_value = installation
     test.get_test_install_dir.return_value = test_install
+    test.get_dev_install_dir.return_value = dev
     test.get_temp_dir.return_value = tmp_path / "work"
     shell_tmp = tmp_path / "shell-tmp"
 
@@ -402,6 +426,11 @@ if name == "initdb":
 
     calls = [json.loads(line) for line in trace.read_text().splitlines()]
     work = test.get_temp_dir.return_value
+    assert calls[:2] == [
+        ["pg_config", "--includedir-server"],
+        ["pg_config", "--pgxs"],
+    ]
+    calls = calls[2:]
     assert calls[0] == [
         "initdb",
         "-D",
@@ -432,6 +461,16 @@ if name == "initdb":
             "run-tests.sh",
         ],
         [
+            "pg_regress",
+            f"--inputdir={regress}",
+            f"--outputdir={work}/results/src/test/regress",
+            f"--bindir={installation}/bin",
+            f"--dlpath={regress}",
+            "--max-concurrent-tests=20",
+            f"--schedule={regress}/parallel_schedule",
+        ],
+        ["cwd", str(regress)],
+        [
             "pg_ctl",
             "-D",
             str(work / "cluster"),
@@ -442,3 +481,46 @@ if name == "initdb":
         ],
     ]
     assert not any(shell_tmp.glob("pg-*"))
+
+
+def test_dev_install_script_stages_regress_and_sanitizes_own_files() -> None:
+    package = object.__new__(PostgreSQL)
+    build = mock.Mock()
+    build.get_source_dir.return_value = pathlib.Path("../source")
+    build.get_build_install_dir.return_value = pathlib.Path("../work/sysroot")
+    build.get_dev_install_dir.return_value = pathlib.Path("../dev-install")
+    build.get_install_path.side_effect = lambda _package, aspect: (
+        pathlib.Path("/opt/postgresql") / aspect
+    )
+    build.sh_get_command.side_effect = lambda name, **_kwargs: f"/tools/{name}"
+
+    script = package.get_dev_install_script(build)
+
+    assert script.startswith(
+        "GGBUILD_MAKE=/tools/make /tools/package-tests --layout dev "
+        "--source ../source --build . --destination ../dev-install/opt/"
+        "postgresql/lib/postgresql/pgxs/src/test/regress "
+        "--install-root ../work/sysroot "
+    )
+    assert "--sanitize opt/postgresql/include/postgresql " in script
+    assert "--sanitize opt/postgresql/lib/pkgconfig/libpq.pc " in script
+    assert "--sanitize opt/postgresql/lib/postgresql/pgxs " in script
+    assert "--sanitize 'opt/postgresql/include/pg_config*.h' " in script
+    # Dependencies share the CI sysroot; their files stay untouched.
+    assert "--sanitize opt/postgresql/include " not in script
+    assert "lib/pkgconfig " not in script
+    assert script.endswith("--forbid ../work")
+
+
+def test_dev_install_list_selects_only_postgresql_development_files() -> None:
+    package = object.__new__(PostgreSQL)
+    lines = package._read_install_entries(mock.Mock(), "dev.install")
+    entries = [line.strip() for line in lines]
+
+    assert "{includedir}/postgresql/**" in entries
+    assert "{libdir}/postgresql/pgxs/**" in entries
+    assert "{libdir}/pkgconfig/libpq.pc" in entries
+    assert not any(
+        entry in {"{includedir}/**", "{libdir}/**", "{libdir}/pkgconfig/**"}
+        for entry in entries
+    )

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Package configured PostgreSQL non-TAP tests for standalone execution."""
+"""Package configured PostgreSQL non-TAP tests for standalone execution.
+
+The default test layout builds the private artifact test sidecar. The dev
+layout stages the core regression suite and its C test functions for the
+public dev overlay, next to the PGXS copy of pg_regress, and removes
+build-machine paths from the installed development files.
+"""
 
 from __future__ import annotations
 
@@ -11,6 +17,10 @@ import shlex
 import shutil
 import stat
 import subprocess
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def make_value(build: pathlib.Path, directory: str, variable: str) -> str:
@@ -61,6 +71,8 @@ def copy_suite_libraries(
     build: pathlib.Path,
     destination: pathlib.Path,
     directory: str,
+    *,
+    subdirectory: str = "lib",
 ) -> list[pathlib.Path]:
     suffix = make_value(build, directory, "DLSUFFIX")
     if not suffix or "/" in suffix or "\\" in suffix:
@@ -77,7 +89,7 @@ def copy_suite_libraries(
             f"no PostgreSQL test libraries found in {build / directory}"
         )
     for library in libraries:
-        copy_file(library, destination / "lib" / library.name)
+        copy_file(library, destination / subdirectory / library.name)
     return libraries
 
 
@@ -141,7 +153,8 @@ def validate_payload_paths(
     forbidden_roots: tuple[pathlib.Path, ...],
 ) -> None:
     forbidden = tuple(str(root.resolve()).encode() for root in forbidden_roots)
-    for path in destination.rglob("*"):
+    paths = destination.rglob("*") if destination.is_dir() else [destination]
+    for path in paths:
         if not path.is_file():
             continue
         content = path.read_bytes()
@@ -150,8 +163,8 @@ def validate_payload_paths(
         for root in forbidden:
             if root in content:
                 raise ValueError(
-                    "test payload contains build-machine path: "
-                    f"{path.relative_to(destination)}"
+                    "payload contains build-machine path: "
+                    f"{path.relative_to(destination.parent)}"
                 )
 
 
@@ -172,7 +185,8 @@ def postgresql_major(build: pathlib.Path, directory: str) -> int:
 
 
 def suite_directories(build: pathlib.Path) -> list[str]:
-    directories = ["src/test/regress", "src/test/isolation"]
+    # The core regression suite ships in the public dev overlay instead.
+    directories = ["src/test/isolation"]
 
     def add_configured(directory: str) -> None:
         for name in configured_subdirectories(build, directory):
@@ -286,6 +300,23 @@ def suite_options(
     return result
 
 
+def copy_suite_files(
+    suite_source: pathlib.Path,
+    suite_build: pathlib.Path,
+    suite_root: pathlib.Path,
+) -> None:
+    # PostgreSQL 14 still generates some sql/expected files from templates in
+    # input/ and output/ at test runtime (for example, tablespace.source).
+    for name in ("sql", "expected", "data", "specs", "input", "output"):
+        copy_tree(suite_source / name, suite_root / name)
+        copy_tree(suite_build / name, suite_root / name)
+    for pattern in ("*.conf", "*_schedule", "resultmap"):
+        for root in (suite_source, suite_build):
+            for path in root.glob(pattern):
+                if path.is_file():
+                    copy_file(path, suite_root / path.name)
+
+
 def install_suite(
     source: pathlib.Path,
     build: pathlib.Path,
@@ -297,50 +328,22 @@ def install_suite(
         return
     regress = make_value(build, directory, "REGRESS")
     isolation = make_value(build, directory, "ISOLATION")
-    is_core_regress = directory == "src/test/regress"
     is_core_isolation = directory == "src/test/isolation"
-    if not any((regress, isolation, is_core_regress, is_core_isolation)):
+    if not any((regress, isolation, is_core_isolation)):
         return
 
     suite_source = source_dir(source, build, directory)
     relative_suite = suite_path(directory)
     suite_manifest_path = relative_suite.as_posix()
     suite_root = destination / "suites" / pathlib.Path(*relative_suite.parts)
-    # PostgreSQL 14 still generates some sql/expected files from templates in
-    # input/ and output/ at test runtime (for example, tablespace.source).
-    for name in ("sql", "expected", "data", "specs", "input", "output"):
-        copy_tree(suite_source / name, suite_root / name)
-        copy_tree(build / directory / name, suite_root / name)
-    for pattern in ("*.conf", "*_schedule", "resultmap"):
-        for root in (suite_source, build / directory):
-            for path in root.glob(pattern):
-                if path.is_file():
-                    copy_file(path, suite_root / path.name)
+    copy_suite_files(suite_source, build / directory, suite_root)
 
     common = [
         f"--inputdir=$test_root/suites/{suite_manifest_path}",
         f"--outputdir=$work/{suite_manifest_path}",
         "--bindir=$pgroot/bin",
     ]
-    if is_core_regress:
-        major = postgresql_major(build, directory)
-        if major < 15:
-            common[1] = f"--outputdir=$test_root/suites/{suite_manifest_path}"
-        arguments = [
-            *common,
-            "--dlpath=$test_root/lib",
-            "--max-concurrent-tests=20",
-            (
-                "--schedule=$test_root/suites/"
-                f"{suite_manifest_path}/parallel_schedule"
-            ),
-        ]
-        if major < 15:
-            arguments.append("--make-testtablespace-dir")
-        lines.append(
-            "run pg_regress " + " ".join(map(manifest_word, arguments))
-        )
-    elif is_core_isolation:
+    if is_core_isolation:
         arguments = [
             *common,
             (
@@ -423,6 +426,89 @@ def install_ecpg(
     lines.append(
         "run pg_regress_ecpg " + " ".join(map(manifest_word, arguments))
     )
+
+
+def package_dev_regress(
+    source: pathlib.Path,
+    build: pathlib.Path,
+    destination: pathlib.Path,
+) -> None:
+    """Stage the core regression suite beside the PGXS pg_regress."""
+    directory = "src/test/regress"
+    destination.mkdir(parents=True, exist_ok=True)
+    copy_suite_files(
+        source_dir(source, build, directory), build / directory, destination
+    )
+    copy_suite_libraries(build, destination, directory, subdirectory=".")
+    if not (destination / "parallel_schedule").is_file():
+        raise RuntimeError("core regression schedule was not staged")
+    validate_payload_paths(destination, (source, build))
+
+
+def _build_path_pattern(roots: Sequence[pathlib.Path]) -> re.Pattern[str]:
+    alternatives = "|".join(
+        re.escape(str(root))
+        for root in sorted(
+            {path for root in roots for path in (root, root.resolve())},
+            key=lambda path: len(str(path)),
+            reverse=True,
+        )
+    )
+    # A flag such as -I/root/include or -Wl,-rpath-link,/root/lib, or a bare
+    # path, up to the next whitespace or quote. Colon-separated search paths
+    # are consumed whole.
+    return re.compile(
+        r"(?:-I|-L|-isystem|-Wl,-rpath-link,|-Wl,-rpath,)?"
+        rf"(?:{alternatives})(?=[/\s'\":]|$)[^\s'\"]*"
+    )
+
+
+def sanitize_dev_file(
+    path: pathlib.Path, roots: Sequence[pathlib.Path]
+) -> bool:
+    """Remove build-machine paths from one text file; return if changed."""
+    content = path.read_bytes()
+    if b"\0" in content:
+        return False
+    text = content.decode("utf-8")
+    pattern = _build_path_pattern(roots)
+    lines = []
+    for line in text.splitlines(keepends=True):
+        if pattern.search(line) is None:
+            lines.append(line)
+            continue
+        newline = line[len(line.rstrip("\r\n")) :]
+        cleaned = re.sub(r"[ \t]{2,}", " ", pattern.sub("", line.rstrip()))
+        name, separator, value = cleaned.partition("=")
+        if separator and name.strip() == "CC" and not value.strip():
+            cleaned = f"{name.rstrip()} = cc"
+        lines.append(cleaned.rstrip() + newline)
+    sanitized = "".join(lines)
+    if sanitized == text:
+        return False
+    path.write_text(sanitized, encoding="utf-8")
+    return True
+
+
+def sanitize_dev_files(
+    install_root: pathlib.Path,
+    patterns: Sequence[str],
+    roots: Sequence[pathlib.Path],
+) -> None:
+    """Make installed headers, PGXS, and pkg-config files relocatable."""
+    for root in roots:
+        if len(root.resolve().parts) < 3:
+            raise ValueError(f"build-machine root is too broad: {root}")
+    for pattern in patterns:
+        matches = sorted(install_root.glob(pattern))
+        if not matches:
+            raise RuntimeError(f"dev files are missing: {pattern}")
+        for match in matches:
+            files = sorted(match.rglob("*")) if match.is_dir() else [match]
+            for path in files:
+                if path.is_file() and not path.is_symlink():
+                    sanitize_dev_file(path, roots)
+                    validate_payload_paths(path, tuple(roots))
 
 
 def write_runner(destination: pathlib.Path, lines: list[str]) -> None:
@@ -513,11 +599,41 @@ def main() -> None:
     parser.add_argument("--source", required=True, type=pathlib.Path)
     parser.add_argument("--build", required=True, type=pathlib.Path)
     parser.add_argument("--destination", required=True, type=pathlib.Path)
+    parser.add_argument("--layout", choices=("test", "dev"), default="test")
+    parser.add_argument(
+        "--install-root",
+        type=pathlib.Path,
+        help="dev layout: installation root holding development files",
+    )
+    parser.add_argument(
+        "--sanitize",
+        action="append",
+        default=[],
+        help="dev layout: install-root glob to strip build paths from",
+    )
+    parser.add_argument(
+        "--forbid",
+        action="append",
+        default=[],
+        type=pathlib.Path,
+        help="dev layout: additional build-machine root to strip",
+    )
     args = parser.parse_args()
-    package(
-        args.source.resolve(),
-        args.build.resolve(),
-        args.destination.resolve(),
+    source = args.source.resolve()
+    build = args.build.resolve()
+    destination = args.destination.resolve()
+    if args.layout == "test":
+        package(source, build, destination)
+        return
+    if args.install_root is None:
+        parser.error("--layout dev requires --install-root")
+    package_dev_regress(source, build, destination)
+    sanitize_dev_files(
+        args.install_root.resolve(),
+        args.sanitize,
+        # Build tools such as the sccache compiler wrapper live beside this
+        # helper and may appear in the recorded compiler command.
+        [source, build, pathlib.Path(__file__).resolve().parent, *args.forbid],
     )
 
 
