@@ -455,7 +455,7 @@ wheels = [
 [[package]]
 name = "ggbuild"
 version = "0.1.0"
-source = { git = "https://github.com/vercel-labs/ggbuild.git?rev=213a374380a6ff120b9631200035e3ce14876e69#213a374380a6ff120b9631200035e3ce14876e69" }
+source = { git = "https://github.com/vercel-labs/ggbuild.git?rev=3a46336643d89b537b6ff9032817c35e2ed21b7e#3a46336643d89b537b6ff9032817c35e2ed21b7e" }
 dependencies = [
     { name = "build" },
     { name = "defusedxml" },
@@ -1048,7 +1048,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.130,<1" },
-    { name = "ggbuild", git = "https://github.com/vercel-labs/ggbuild.git?rev=213a374380a6ff120b9631200035e3ce14876e69" },
+    { name = "ggbuild", git = "https://github.com/vercel-labs/ggbuild.git?rev=3a46336643d89b537b6ff9032817c35e2ed21b7e" },
     { name = "httpx2", specifier = ">=2.16,<3" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10,<3" },
     { name = "vercel", specifier = ">=0.12,<1" },

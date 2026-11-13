@@ -76,7 +76,7 @@ default-groups = ["dev"]
 index = [{ name = "pypi", url = "https://pypi.org/simple", default = true }]
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "213a374380a6ff120b9631200035e3ce14876e69" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "3a46336643d89b537b6ff9032817c35e2ed21b7e" }
 
 [tool.ggbuild]
 root-recipe = "postgresbuild.postgresql:PostgreSQL"

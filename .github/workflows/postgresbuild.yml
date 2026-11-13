@@ -36,7 +36,7 @@ concurrency:
 
 env:
   GGBUILD_ENABLE_SCCACHE: ${{ (github.event_name == 'workflow_dispatch' && inputs.enable_sccache) || (github.event_name == 'pull_request' && true) || (github.event_name == 'push' && false) }}
-  GGBUILD_REF: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '213a374380a6ff120b9631200035e3ce14876e69' }}
+  GGBUILD_REF: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '3a46336643d89b537b6ff9032817c35e2ed21b7e' }}
   GGBUILD_REF_OVERRIDE: ${{ (github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref) || '' }}
   UV_NO_SYNC: ${{ github.event_name == 'workflow_dispatch' && inputs.ggbuild_ref != '' }}
 
