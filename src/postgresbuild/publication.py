@@ -239,11 +239,14 @@ class ArtifactPublisher(Protocol):
 _FILE_ROLES = {
     "primary-archive",
     "dbgsym",
+    "dev",
     "test-data",
     "metadata",
     "test-result",
 }
-_PUBLIC_ROLES = {"primary-archive", "dbgsym"}
+_PUBLIC_ROLES = {"primary-archive", "dbgsym", "dev"}
+# Archives copied to Blob and advertised in the consumer feed, by variant.
+_FEED_VARIANTS = {"primary-archive": "install_only", "dev": "dev"}
 
 
 def _coordinate(value: object) -> tuple[str, str, str]:
@@ -278,7 +281,8 @@ def _release_url(repository: str, tag: str, name: str) -> str:
 def _public_name(coordinate: tuple[str, str, str], role: str, tag: str) -> str:
     package, version, target = coordinate
     stem = f"{package}-{version}+{tag}-{target}"
-    return f"{stem}{'-dbgsym' if role == 'dbgsym' else ''}.tar.zst"
+    suffix = "" if role == "primary-archive" else f"-{role}"
+    return f"{stem}{suffix}.tar.zst"
 
 
 def _validate_record(
@@ -337,6 +341,9 @@ def _validate_record(
         raise ValueError("snapshot coordinate needs one primary archive")
     if roles.count("dbgsym") != 1:
         raise ValueError("snapshot coordinate needs one dbgsym archive")
+    # Snapshots published before the dev variant have none.
+    if roles.count("dev") > 1:
+        raise ValueError("snapshot coordinate has more than one dev archive")
     if roles.count("metadata") != 1 or roles.count("test-result") != 1:
         raise ValueError("snapshot coordinate metadata is incomplete")
     if logical_order != sorted(logical_order):
@@ -552,7 +559,7 @@ def fetch_valid_snapshot(
                 "release distribution does not match snapshot: "
                 f"{item['release_name']}"
             )
-        if publish_artifact is not None and item["role"] == "primary-archive":
+        if publish_artifact is not None and item["role"] in _FEED_VARIANTS:
             publish_artifact(tag, item["release_name"], content)
     published_at = release.get("published_at")
     if not isinstance(published_at, str):
@@ -742,37 +749,46 @@ def versions_ndjson(index: Mapping[str, Any]) -> bytes:
             coordinate = record["coordinate"]
             if coordinate["package"] != "postgresql":
                 continue
-            primary = next(
-                item
-                for item in record["files"]
-                if item["role"] == "primary-archive"
-            )
-            by_version.setdefault(coordinate["source_version"], []).append(
-                {
+            for item in record["files"]:
+                variant = _FEED_VARIANTS.get(item["role"])
+                if variant is None:
+                    continue
+                artifact = {
                     "archive_format": "tar.zst",
                     "platform": coordinate["target"],
-                    "sha256": primary["sha256"],
+                    "sha256": item["sha256"],
                     "urls": [
                         _consumer_artifact_url(
                             "artifacts",
                             snapshot["tag"],
-                            primary["release_name"],
+                            item["release_name"],
                         ),
                         _consumer_artifact_url(
                             "artifact-fallback",
                             snapshot["tag"],
-                            primary["release_name"],
+                            item["release_name"],
                         ),
                     ],
-                    "variant": "install_only",
+                    "variant": variant,
                 }
-            )
+                if variant == "dev":
+                    # Extract onto the install_only archive of the same
+                    # platform, stripping the top-level directory.
+                    artifact["overlay"] = "install_only"
+                by_version.setdefault(coordinate["source_version"], []).append(
+                    artifact
+                )
 
+        variant_order = list(_FEED_VARIANTS.values())
         for version in sorted(
             by_version, key=_postgres_version_key, reverse=True
         ):
             artifacts = sorted(
-                by_version[version], key=operator.itemgetter("platform")
+                by_version[version],
+                key=lambda item: (
+                    item["platform"],
+                    variant_order.index(item["variant"]),
+                ),
             )
             lines.append(
                 json.dumps(

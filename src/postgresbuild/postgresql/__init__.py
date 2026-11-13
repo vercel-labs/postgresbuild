@@ -113,6 +113,12 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
         }
     ]
 
+    # The PGXS tree already holds pg_regress; the dev overlay adds the
+    # suite and regress library beside it.
+    _dev_regress_subdir = pathlib.PurePosixPath(
+        "postgresql/pgxs/src/test/regress"
+    )
+
     def get_test_env(
         self,
         test: packages.Test,
@@ -127,6 +133,8 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
     def get_test_script(self, test: packages.Test) -> str:
         root = test.get_build_install_dir(self)
         test_root = test.get_test_install_dir(self)
+        dev = test.get_dev_install_dir(self)
+        regress = dev / "lib" / self._dev_regress_subdir
         work = test.get_temp_dir(self)
         data = work / "cluster"
         log = work / "postgres.log"
@@ -145,6 +153,24 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
                 )
             )
         initdb_args = " ".join(initdb_options)
+        # Before PostgreSQL 15, pg_regress converts input/ and output/
+        # templates into the input directory.
+        regress_output = (
+            "$regress" if major < 15 else "$work/results/src/test/regress"
+        )
+        regress_options = [
+            "--inputdir=$regress",
+            f"--outputdir={regress_output}",
+            "--bindir=$root/bin",
+            "--dlpath=$regress",
+            "--max-concurrent-tests=20",
+            "--schedule=$regress/parallel_schedule",
+        ]
+        if major < 15:
+            regress_options.append("--make-testtablespace-dir")
+        regress_args = " \\\n                ".join(
+            f'"{option}"' for option in regress_options
+        )
 
         def quote(path: pathlib.Path) -> str:
             return shlex.quote(str(path))
@@ -153,6 +179,8 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             f"""\
             root={quote(root)}
             test_root={quote(test_root)}
+            dev={quote(dev)}
+            regress={quote(regress)}
             work={quote(work)}
             data={quote(data)}
             log={quote(log)}
@@ -166,6 +194,9 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             test -x "$root/bin/pg_config"
             test -d "$root/lib"
             test -d "$root/share"
+            test -f "$("$dev/bin/pg_config" --includedir-server)/postgres.h"
+            test -f "$("$dev/bin/pg_config" --pgxs)"
+            test -x "$regress/pg_regress"
             mkdir -p "$socket"
 
             "$root/bin/initdb" -D "$data" {initdb_args}
@@ -181,6 +212,10 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
                 GGBUILD_POSTGRES_ROOT="$root" \\
                 GGBUILD_TEST_WORK="$work/results" \\
                 "$test_root/run-tests.sh"
+
+            mkdir -p "$work/results/src/test/regress"
+            (cd "$regress" && "$regress/pg_regress" \\
+                {regress_args})
 
             cleanup
             trap - EXIT HUP INT TERM
@@ -262,6 +297,43 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             f"GGBUILD_MAKE={make} {helper} "
             f"--source {shlex.quote(str(source))} "
             f"--build . --destination {shlex.quote(str(destination))}"
+        )
+
+    def get_dev_install_script(self, build: targets.Build) -> str:
+        """Stage the core regression suite and sanitize development files."""
+        source = build.get_source_dir(self, relative_to="pkgbuild")
+        install = build.get_build_install_dir(self, relative_to="pkgbuild")
+        dev_install = build.get_dev_install_dir(self, relative_to="pkgbuild")
+        include = build.get_install_path(self, "include").relative_to("/")
+        lib = build.get_install_path(self, "lib").relative_to("/")
+        helper = build.sh_get_command("package-tests", relative_to="pkgbuild")
+        make = build.sh_get_command("make", relative_to="pkgbuild")
+
+        def quote(path: pathlib.Path) -> str:
+            return shlex.quote(str(path))
+
+        # The install root is the shared node sysroot in CI, so only touch
+        # PostgreSQL's own development files. Its parent holds the
+        # dependency installations whose paths the build recorded.
+        sanitize = " ".join(
+            f"--sanitize {shlex.quote(str(path))}"
+            for path in (
+                include / "libpq-events.h",
+                include / "libpq-fe.h",
+                include / "pg_config*.h",
+                include / "postgres_ext.h",
+                include / "postgresql",
+                lib / "pkgconfig" / "libpq.pc",
+                lib / "postgresql" / "pgxs",
+            )
+        )
+        regress = dev_install / lib / self._dev_regress_subdir
+        return (
+            f"GGBUILD_MAKE={make} {helper} --layout dev "
+            f"--source {quote(source)} --build . "
+            f"--destination {quote(regress)} "
+            f"--install-root {quote(install)} {sanitize} "
+            f"--forbid {quote(install.parent)}"
         )
 
     def get_make_install_target(self, build: targets.Build) -> str:

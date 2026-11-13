@@ -48,7 +48,6 @@ def test_suite_directories_follow_nested_configured_subdirectories(
         directories = helper.suite_directories(tmp_path)
 
     assert directories == [
-        "src/test/regress",
         "src/test/isolation",
         "src/pl/plpgsql",
         "src/pl/plpgsql/src",
@@ -98,14 +97,7 @@ def test_copy_regression_catalogs_stages_versioned_nls_catalog(
     ).read_bytes() == b"catalog"
 
 
-def test_install_suite_preserves_upstream_hierarchy(
-    tmp_path: pathlib.Path,
-) -> None:
-    helper = load_helper()
-    source = tmp_path / "source"
-    build = tmp_path / "build"
-    destination = tmp_path / "sidecar"
-    suite_source = source / "src/test/regress"
+def _write_regress_source(suite_source: pathlib.Path) -> None:
     (suite_source / "sql").mkdir(parents=True)
     (suite_source / "sql/select.sql").write_text(
         "select 1;\n", encoding="utf-8"
@@ -121,12 +113,24 @@ def test_install_suite_preserves_upstream_hierarchy(
     (suite_source / "parallel_schedule").write_text(
         "test: select\n", encoding="utf-8"
     )
-    (build / "src/test/regress").mkdir(parents=True)
+    (suite_source / "resultmap").write_text("", encoding="utf-8")
+
+
+def test_install_suite_preserves_upstream_hierarchy(
+    tmp_path: pathlib.Path,
+) -> None:
+    helper = load_helper()
+    source = tmp_path / "source"
+    build = tmp_path / "build"
+    destination = tmp_path / "sidecar"
+    suite_source = source / "contrib/hstore"
+    _write_regress_source(suite_source)
+    (build / "contrib/hstore").mkdir(parents=True)
     values = {
         "NO_INSTALLCHECK": "",
-        "REGRESS": "",
+        "REGRESS": "hstore",
+        "REGRESS_OPTS": "",
         "ISOLATION": "",
-        "MAJORVERSION": "18",
     }
 
     with (
@@ -142,65 +146,156 @@ def test_install_suite_preserves_upstream_hierarchy(
             source,
             build,
             destination,
+            "contrib/hstore",
+            lines,
+        )
+
+    suite = destination / "suites/contrib/hstore"
+    assert (suite / "sql/select.sql").is_file()
+    assert (suite / "input/tablespace.source").is_file()
+    assert (suite / "output/tablespace.source").is_file()
+    assert not (destination / "suites/contrib__hstore").exists()
+    assert lines == [
+        (
+            'run pg_regress "--inputdir=$test_root/suites/contrib/hstore" '
+            '"--outputdir=$work/contrib/hstore" "--bindir=$pgroot/bin" hstore'
+        )
+    ]
+
+
+def test_install_suite_leaves_core_regression_to_the_dev_overlay(
+    tmp_path: pathlib.Path,
+) -> None:
+    helper = load_helper()
+    values = {"NO_INSTALLCHECK": "", "REGRESS": "", "ISOLATION": ""}
+
+    with mock.patch.object(
+        helper,
+        "make_value",
+        side_effect=lambda _build, _directory, variable: values[variable],
+    ):
+        lines: list[str] = []
+        helper.install_suite(
+            tmp_path / "source",
+            tmp_path / "build",
+            tmp_path / "sidecar",
             "src/test/regress",
             lines,
         )
 
-    assert (destination / "suites/src/test/regress/sql/select.sql").is_file()
-    assert (
-        destination / "suites/src/test/regress/input/tablespace.source"
-    ).is_file()
-    assert (
-        destination / "suites/src/test/regress/output/tablespace.source"
-    ).is_file()
-    assert not (destination / "suites/src__test__regress").exists()
-    assert "$test_root/suites/src/test/regress" in lines[0]
-    assert "$work/src/test/regress" in lines[0]
-    assert "--dlpath=$test_root/lib" in lines[0]
+    assert lines == []
+    assert not (tmp_path / "sidecar").exists()
 
 
-def test_install_suite_supports_generated_postgresql_14_inputs(
+def test_package_dev_regress_stages_suite_and_library_together(
     tmp_path: pathlib.Path,
 ) -> None:
     helper = load_helper()
     source = tmp_path / "source"
     build = tmp_path / "build"
-    destination = tmp_path / "sidecar"
+    destination = tmp_path / "dev/lib/postgresql/pgxs/src/test/regress"
     suite_source = source / "src/test/regress"
-    (suite_source / "input").mkdir(parents=True)
-    (suite_source / "input/tablespace.source").write_text(
-        "select '@testtablespace@';\n", encoding="utf-8"
-    )
-    (suite_source / "output").mkdir()
-    (suite_source / "output/tablespace.source").write_text(
-        " @testtablespace@\n", encoding="utf-8"
-    )
-    (suite_source / "parallel_schedule").write_text(
-        "test: tablespace\n", encoding="utf-8"
-    )
-    (build / "src/test/regress").mkdir(parents=True)
-    values = {
-        "NO_INSTALLCHECK": "",
-        "REGRESS": "",
-        "ISOLATION": "",
-        "MAJORVERSION": "14",
-    }
+    _write_regress_source(suite_source)
+    suite_build = build / "src/test/regress"
+    (suite_build / "expected").mkdir(parents=True)
+    (suite_build / "expected/generated.out").write_text("", encoding="utf-8")
+    (suite_build / "regress.so").write_bytes(b"\0library")
+    (suite_build / "refint.so").write_bytes(b"\0library")
 
     with (
-        mock.patch.object(
-            helper,
-            "make_value",
-            side_effect=lambda _build, _directory, variable: values[variable],
-        ),
+        mock.patch.object(helper, "make_value", return_value=".so"),
         mock.patch.object(helper, "source_dir", return_value=suite_source),
     ):
-        lines: list[str] = []
-        helper.install_suite(
-            source, build, destination, "src/test/regress", lines
-        )
+        helper.package_dev_regress(source, build, destination)
 
-    assert "--make-testtablespace-dir" in lines[0]
-    assert "--outputdir=$test_root/suites/src/test/regress" in lines[0]
+    assert sorted(
+        path.relative_to(destination).as_posix()
+        for path in destination.rglob("*")
+        if path.is_file()
+    ) == [
+        "expected/generated.out",
+        "input/tablespace.source",
+        "output/tablespace.source",
+        "parallel_schedule",
+        "refint.so",
+        "regress.so",
+        "resultmap",
+        "sql/select.sql",
+    ]
+
+
+def test_sanitize_dev_files_strips_build_machine_paths(
+    tmp_path: pathlib.Path,
+) -> None:
+    helper = load_helper()
+    sysroot = tmp_path / "work/sysroot"
+    tools = tmp_path / "work/tools"
+    install = sysroot
+    pgxs = install / "opt/postgresql/lib/postgresql/pgxs/src"
+    pgxs.mkdir(parents=True)
+    makefile = pgxs / "Makefile.global"
+    makefile.write_text(
+        f"abs_top_builddir = {tmp_path}/work/build\n"
+        f"CC = {tools}/sccache-wrapper.sh\n"
+        f"CPPFLAGS = -I{sysroot}/opt/postgresql/include -D_GNU_SOURCE "
+        f"-I{sysroot}/opt/postgresql/include/libxml2\n"
+        f"LDFLAGS = -Wl,-rpath,/opt/postgresql/lib -L{sysroot}/opt/lib "
+        f"-Wl,-rpath-link,{sysroot}/opt/lib -Wl,--as-needed\n"
+        f"configure_args = '--prefix=/opt/postgresql' "
+        f"'CPPFLAGS=-I{sysroot}/include' "
+        f"'PKG_CONFIG_PATH={sysroot}/a:{sysroot}/b:'\n"
+        "LIBS = -lpgcommon -lpgport -lz\n",
+        encoding="utf-8",
+    )
+    pkgconfig = install / "opt/postgresql/lib/pkgconfig"
+    pkgconfig.mkdir(parents=True)
+    (pkgconfig / "libpq.pc").write_text(
+        f"Libs.private: -L{sysroot}/opt/postgresql/lib -lssl\n",
+        encoding="utf-8",
+    )
+    (pkgconfig / "openssl.pc").write_text(
+        f"Libs: -L{sysroot}/opt/postgresql/lib\n", encoding="utf-8"
+    )
+    binary = pgxs / "test/regress/pg_regress"
+    binary.parent.mkdir(parents=True)
+    binary.write_bytes(b"\0" + str(sysroot).encode())
+
+    helper.sanitize_dev_files(
+        install,
+        [
+            "opt/postgresql/lib/postgresql/pgxs",
+            "opt/postgresql/lib/pkgconfig/libpq.pc",
+        ],
+        [tmp_path / "work/build", tools, sysroot],
+    )
+
+    assert makefile.read_text(encoding="utf-8") == (
+        "abs_top_builddir =\n"
+        "CC = cc\n"
+        "CPPFLAGS = -D_GNU_SOURCE\n"
+        "LDFLAGS = -Wl,-rpath,/opt/postgresql/lib -Wl,--as-needed\n"
+        "configure_args = '--prefix=/opt/postgresql' 'CPPFLAGS=' "
+        "'PKG_CONFIG_PATH='\n"
+        "LIBS = -lpgcommon -lpgport -lz\n"
+    )
+    assert (pkgconfig / "libpq.pc").read_text(encoding="utf-8") == (
+        "Libs.private: -lssl\n"
+    )
+    assert str(sysroot) in (pkgconfig / "openssl.pc").read_text(
+        encoding="utf-8"
+    )
+
+
+def test_sanitize_dev_files_requires_every_pattern_and_narrow_roots(
+    tmp_path: pathlib.Path,
+) -> None:
+    helper = load_helper()
+    with pytest.raises(RuntimeError, match="dev files are missing"):
+        helper.sanitize_dev_files(
+            tmp_path, ["missing/**"], [tmp_path / "build"]
+        )
+    with pytest.raises(ValueError, match="too broad"):
+        helper.sanitize_dev_files(tmp_path, [], [pathlib.Path("/")])
 
 
 def test_copy_suite_libraries_uses_configured_suffix(
