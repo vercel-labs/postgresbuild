@@ -19,7 +19,8 @@ uv run ggbuild ci plan
 ```
 
 Run one configured target locally (the source reference is optional; omitting
-it selects the latest registered release of every supported major):
+it selects the latest registered release of every supported major, plus the
+pinned releases):
 
 ```console
 uv run ggbuild build --target aarch64-unknown-linux-gnu --source-ref 19rc1
@@ -162,6 +163,11 @@ every supported major and the latest alpha, beta, or release candidate for
 upcoming majors from the official source index. Stable releases replace their
 prereleases once supported. The same update rerolls patches when a release
 changes. PostgreSQL 19rc1 is selected as the latest release of major 19.
+
+To keep building an older point release alongside the latest of its major, list
+it in `tool.ggbuild.pinned-releases` in `pyproject.toml` (for example
+`pinned-releases = ["18.4"]`). Updates keep pinned releases registered and leave
+their patches as they are; remove the pin to retire the release.
 
 ## Development
 

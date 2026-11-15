@@ -25,8 +25,9 @@ class ProjectLayoutTests(unittest.TestCase):
         self.assertTrue(releases)
         self.assertEqual(
             selected,
-            ("14.24", "15.19", "16.15", "17.11", "18.6", "19rc1"),
+            ("14.24", "15.19", "16.15", "17.11", "18.4", "18.6", "19rc1"),
         )
+        self.assertEqual(config.pinned_releases, ("18.4",))
         for release in releases:
             self.assertIs(
                 PostgreSQL.registered_release(release.source_version), release

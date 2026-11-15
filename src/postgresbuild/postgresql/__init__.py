@@ -413,6 +413,11 @@ PostgreSQL(
 )
 
 PostgreSQL(
+    "18.4",
+    sha256="81a81ec695fb0c7901407defaa1d2f7973617154cf27ba74e3a7ab8e64436094",
+)
+
+PostgreSQL(
     "18.6",
     sha256="555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
 )
