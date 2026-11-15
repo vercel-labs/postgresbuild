@@ -121,6 +121,15 @@ def test_other_recipes_keep_their_own_discovery(ident: str) -> None:
     discover.assert_called_once_with()
 
 
+def test_pinned_postgresql_releases_survive_discovery() -> None:
+    instances = maintenance.recipes()["postgresql"]
+    with mock.patch.object(
+        type(instances[-1]), "discover_releases", return_value=("18.7",)
+    ):
+        assert maintenance.desired_releases(instances) == ("18.4", "18.7")
+    assert maintenance.pinned_releases(maintenance.recipes()["openssl"]) == ()
+
+
 def test_no_change_skips_downloads() -> None:
     instance = OpenSSL.registered_release(CURRENT_SSL)
     with (
@@ -341,9 +350,10 @@ def batch_candidates() -> list[maintenance.Candidate]:
     previous = tuple(
         sorted((p.source_version for p in grouped["postgresql"]), key=Version)
     )
+    pins = maintenance.pinned_releases(grouped["postgresql"])
     current = tuple(
         version
-        if Version(version).is_prerelease
+        if Version(version).is_prerelease or version in pins
         else f"{Version(version).major}.{Version(version).minor + 1}"
         for version in previous
     )

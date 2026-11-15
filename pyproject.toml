@@ -76,11 +76,13 @@ default-groups = ["dev"]
 index = [{ name = "pypi", url = "https://pypi.org/simple", default = true }]
 
 [tool.uv.sources]
-ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "3a46336643d89b537b6ff9032817c35e2ed21b7e" }
+ggbuild = { git = "https://github.com/vercel-labs/ggbuild.git", rev = "b67acdf0622894af84d29c17bf20e9753313a3be" }
 
 [tool.ggbuild]
 root-recipe = "postgresbuild.postgresql:PostgreSQL"
 release-selection = "latest-per-major"
+# Point releases built alongside the latest of each major.
+pinned-releases = ["18.4"]
 portable = true
 bundle-prefix = "postgresql"
 

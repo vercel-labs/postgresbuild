@@ -78,14 +78,25 @@ def recipes() -> dict[str, list[BundledPackage]]:
     return result
 
 
+def pinned_releases(instances: list[BundledPackage]) -> tuple[str, ...]:
+    config = load_project()
+    if type(instances[-1]) is not load_recipe(config.root_recipe):
+        return ()
+    return config.pinned_releases
+
+
 def desired_releases(instances: list[BundledPackage]) -> tuple[str, ...]:
     recipe = cast("type[updater.UpdateablePackage]", type(instances[-1]))
     policy = getattr(recipe, "update_policy", None)
     if policy and policy["type"] == "github-release":
         # Public release pages avoid the shared anonymous REST API quota.
         # Use the same policy during discovery and apply-time revalidation.
-        return (latest_release(policy),)
-    return tuple(sorted(set(recipe.discover_releases()), key=Version))
+        discovered = {latest_release(policy)}
+    else:
+        discovered = set(recipe.discover_releases())
+    # Pinned point releases stay registered beside discovered releases.
+    pins = set(pinned_releases(instances))
+    return tuple(sorted(discovered | pins, key=Version))
 
 
 def compatibility(
@@ -334,7 +345,13 @@ def apply_batch(candidates: Sequence[Candidate]) -> None:
             recipe, instances, candidate.current, NullIO()
         )
         updater.rewrite_declarations(recipe, hashes, texts)
-        updater._collect_patch_updates(additions, instances, NullIO(), texts)
+        pins = set(pinned_releases(instances))
+        updater._collect_patch_updates(
+            [item for item in additions if item.source_version not in pins],
+            instances,
+            NullIO(),
+            texts,
+        )
         changes = fixture_substitutions(
             candidate,
             {p.source_version: p.sha256 for p in instances if p.sha256},
