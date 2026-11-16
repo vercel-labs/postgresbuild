@@ -5,6 +5,8 @@ name: PR readiness gate
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI, PostgreSQL builds]
+    # Filter before creating a run; a job-level condition still creates skipped runs.
+    branches-ignore: [main]
     # Reruns emit in_progress, but not requested.
     types: [requested, in_progress, completed]
   pull_request_target:
