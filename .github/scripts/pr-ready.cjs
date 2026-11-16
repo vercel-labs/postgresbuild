@@ -2,7 +2,10 @@
 
 // Octokit is supplied by actions/github-script; no credentials or dependencies
 // are installed from the PR. Only metadata is used; no PR code is executed.
-const REQUIRED_CHECKS = ['CI', 'All builds'];
+const REQUIRED_WORKFLOWS = [
+  { workflow: 'ci.yml', check: 'CI' },
+  { workflow: 'postgresbuild.yml', check: 'All builds' },
+];
 const READY_LABEL = 'ready-to-merge';
 const SIGNAL_PREFIX = 'heads/automation/pr-ready/';
 
@@ -22,10 +25,10 @@ async function candidates(github, context) {
   if (context.eventName === 'pull_request_target') {
     return [identity(event.number, event.pull_request.head.sha)];
   }
-  if (event.workflow_run && event.workflow_run.event !== 'pull_request') {
+  if (event.action !== 'completed' || event.workflow_run?.event !== 'pull_request') {
     return [];
   }
-  const sha = event.workflow_run?.head_sha;
+  const sha = event.workflow_run.head_sha;
   if (!/^[0-9a-f]{40}$/.test(sha)) {
     throw new Error('Event does not identify a commit');
   }
@@ -42,75 +45,111 @@ function current(pr, context, sha) {
     pr.base.repo.full_name === `${context.repo.owner}/${context.repo.repo}`;
 }
 
+async function latestRun(github, context, workflow, sha) {
+  const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+    ...context.repo, workflow_id: workflow, event: 'pull_request', head_sha: sha,
+    per_page: 100,
+  });
+  const latest = runs.filter(run => run.event === 'pull_request' && run.head_sha === sha)
+    .sort((a, b) => b.id - a.id)[0];
+  if (latest && (!Number.isSafeInteger(latest.id) || latest.id <= 0 ||
+      !Number.isSafeInteger(latest.run_attempt) || latest.run_attempt <= 0)) {
+    throw new Error('Workflow run has an invalid ID or attempt');
+  }
+  return latest;
+}
+
 async function readiness(github, context, number, sha) {
   let { data: pr } = await github.rest.pulls.get({
     ...context.repo, pull_number: number,
   });
+  const ineligible = 'PR is closed, draft, retargeted, or stale';
   if (!current(pr, context, sha)) {
-    return { ready: false, pr, reason: 'PR is closed, draft, retargeted, or stale' };
+    return { ready: false, pr, reason: ineligible };
   }
-  if (context.eventName === 'workflow_run') {
-    // A rerun can start before its new aggregate check replaces the old pass.
-    // Read current state: events can arrive after completion or during a rerun.
-    const { data: run } = await github.rest.actions.getWorkflowRun({
-      ...context.repo, run_id: context.payload.workflow_run.id,
-    });
-    if (run.head_sha !== sha) throw new Error('Workflow run does not match event commit');
-    if (run.status !== 'completed') {
-      return { ready: false, pr, reason: 'A required workflow is queued or running' };
+  const runs = [];
+  let reason;
+  for (const { workflow, check } of REQUIRED_WORKFLOWS) {
+    // Check BOTH workflows: the other one may be rerunning while its previous
+    // passing aggregate is still visible. Never filter the runs by conclusion.
+    const run = await latestRun(github, context, workflow, sha);
+    if (!run || run.status !== 'completed') {
+      reason = `${workflow} is missing, queued, or running`;
+      break;
     }
-  }
-  const checks = [];
-  for (const check_name of REQUIRED_CHECKS) {
-    const matching = await github.paginate(github.rest.checks.listForRef, {
-      ...context.repo, ref: sha, check_name, filter: 'latest', per_page: 100,
+    const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRunAttempt, {
+      ...context.repo, run_id: run.id, attempt_number: run.run_attempt, per_page: 100,
     });
-    const latest = matching.filter(check => check.name === check_name &&
-      check.head_sha === sha && check.app?.slug === 'github-actions')
+    const gate = jobs.filter(job => job.name === check)
       .sort((a, b) => b.id - a.id)[0];
-    if (!latest || latest.status !== 'completed' || latest.conclusion !== 'success') {
-      return { ready: false, pr, reason: `${check_name} is missing or not successful` };
+    if (!gate || gate.run_id !== run.id || gate.run_attempt !== run.run_attempt ||
+        gate.head_sha !== sha || gate.status !== 'completed' || gate.conclusion !== 'success') {
+      reason = `${check} is missing or not successful in the current attempt`;
+      break;
     }
-    checks.push(latest);
+    runs.push({ workflow, id: run.id, attempt: run.run_attempt });
   }
-  // Checks take multiple reads; catch a push, draft conversion or closure that
-  // happened while reading them before changing readiness.
+  // Catch a rerun/new run admitted during the job reads, including a new run ID
+  // for the same commit. The notifier independently repeats these checks.
+  if (!reason) {
+    for (const run of runs) {
+      const latest = await latestRun(github, context, run.workflow, sha);
+      if (!latest || latest.id !== run.id || latest.run_attempt !== run.attempt ||
+          latest.status !== 'completed') {
+        reason = 'Required workflow changed while reading readiness';
+        break;
+      }
+    }
+  }
+  // Refresh on failure too: an old completion must not clear a newer head's
+  // label or signal if a push happened during the workflow/job reads.
   ({ data: pr } = await github.rest.pulls.get({
     ...context.repo, pull_number: number,
   }));
-  if (!current(pr, context, sha)) {
-    return { ready: false, pr, reason: 'PR is closed, draft, retargeted, or stale' };
-  }
-  return { ready: true, pr, checks };
+  if (!current(pr, context, sha)) reason = ineligible;
+  return { ready: !reason, pr, reason, runs };
 }
 
-async function signal(github, context, number, sha, ready) {
-  const ref = `${SIGNAL_PREFIX}${number}`;
-  let existing;
-  try {
-    ({ data: existing } = await github.rest.git.getRef({ ...context.repo, ref }));
-  } catch (error) {
-    if (error.status !== 404) throw error;
+async function signal(github, context, number, sha, state) {
+  const prefix = `${SIGNAL_PREFIX}${number}`;
+  const matching = await github.paginate(github.rest.git.listMatchingRefs, {
+    ...context.repo, ref: prefix, per_page: 100,
+  });
+  // Match only this PR's dedicated signal refs. Keep support for cleaning up
+  // the legacy ref, and never touch another PR's refs (e.g. 18 versus 180).
+  const pattern = new RegExp(`^refs/${prefix}(?:-[1-9][0-9]*\\.[1-9][0-9]*-[1-9][0-9]*\\.[1-9][0-9]*)?$`);
+  const existing = matching.filter(ref => pattern.test(ref.ref));
+  let changed = false;
+  let target;
+  if (state.ready) {
+    // Completed attempts get distinct wakeups even without a rerun-start event.
+    // Replays or another workflow's delayed completion reuse the same pair.
+    target = `refs/${prefix}-${state.runs.map(run => `${run.id}.${run.attempt}`).join('-')}`;
+    const same = existing.find(ref => ref.ref === target);
+    if (!same) {
+      await github.rest.git.createRef({ ...context.repo, ref: target, sha });
+      changed = true;
+    } else if (same.object.sha !== sha) {
+      await github.rest.git.updateRef({
+        ...context.repo, ref: target.slice(5), sha, force: true,
+      });
+      changed = true;
+    }
   }
-  if (!ready) {
-    if (existing) await github.rest.git.deleteRef({ ...context.repo, ref });
-    return false;
+  // Publish before cleanup so a partial failure/retry never duplicates a
+  // successful wakeup. At most one signal is retained after reconciliation.
+  for (const ref of existing) {
+    if (ref.ref !== target) {
+      await github.rest.git.deleteRef({ ...context.repo, ref: ref.ref.slice(5) });
+    }
   }
-  if (existing?.object.sha === sha) return false;
-  if (existing) {
-    // Only this dedicated signal ref may be rewritten; never a PR or main ref.
-    await github.rest.git.updateRef({ ...context.repo, ref, sha, force: true });
-  } else {
-    await github.rest.git.createRef({ ...context.repo, ref: `refs/${ref}`, sha });
-  }
-  return true;
+  return changed;
 }
 
 async function gate({ github, context, core }) {
   const results = [];
   for (const { number, sha } of await candidates(github, context)) {
     const state = await readiness(github, context, number, sha);
-    // An old commit's completion must not remove a newer head's readiness.
     if (state.pr.head.sha !== sha) {
       core.info(`PR #${number}: ${state.reason}`);
       continue;
@@ -125,9 +164,7 @@ async function gate({ github, context, core }) {
         ...context.repo, issue_number: number, labels: [READY_LABEL],
       });
     }
-    // Reconcile independently of the label, including after a partial failure
-    // or when migrating an already-labelled PR. An unchanged ref emits no push.
-    if (await signal(github, context, number, sha, state.ready)) {
+    if (await signal(github, context, number, sha, state)) {
       results.push({ number, sha });
     }
     core.info(`PR #${number}: ${state.ready ? `${READY_LABEL} (${sha})` : state.reason}`);
