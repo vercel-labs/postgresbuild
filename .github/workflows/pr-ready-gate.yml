@@ -5,8 +5,9 @@ name: PR readiness gate
 on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [CI, PostgreSQL builds]
-    # Reruns emit in_progress, but not requested.
-    types: [requested, in_progress, completed]
+    # Matrix jobs emit repeated in_progress events. Reconcile on completion,
+    # including PRs whose source branch is named main (for example, in a fork).
+    types: [completed]
   pull_request_target:
     types: [synchronize, ready_for_review, converted_to_draft, reopened, closed, edited]
   workflow_dispatch:
@@ -22,7 +23,7 @@ on: # zizmor: ignore[dangerous-triggers]
 
 permissions: {}
 
-# Coalesce events for the same commit and serialize readiness updates.
+# Serialize readiness updates for the same commit.
 concurrency:
   group: pr-ready-${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha || inputs.head_sha || github.run_id }}
   cancel-in-progress: false
@@ -35,7 +36,6 @@ jobs:
     timeout-minutes: 5
     permissions:
       actions: read
-      checks: read
       contents: write
       pull-requests: write
     steps:
