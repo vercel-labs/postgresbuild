@@ -25,7 +25,7 @@ class ProjectLayoutTests(unittest.TestCase):
         self.assertTrue(releases)
         self.assertEqual(
             selected,
-            ("14.24", "15.19", "16.15", "17.11", "18.4", "18.6", "19rc1"),
+            ("14.25", "15.20", "16.16", "17.12", "18.4", "18.7", "19rc2"),
         )
         self.assertEqual(config.pinned_releases, ("18.4",))
         for release in releases:
@@ -71,7 +71,7 @@ class ProjectLayoutTests(unittest.TestCase):
     def test_kerberos_prefers_verified_mirror_before_canonical_source(
         self,
     ) -> None:
-        release = Kerberos.registered_release("1.22.2")
+        release = Kerberos.registered_release("1.22.3")
         self.assertIsNotNone(release)
         assert release is not None
         source = release.get_sources()[0]
@@ -81,8 +81,8 @@ class ProjectLayoutTests(unittest.TestCase):
         self.assertEqual(
             source.urls,
             (
-                "https://distfiles.macports.org/kerberos5/krb5-1.22.2.tar.gz",
-                "https://kerberos.org/dist/krb5/1.22/krb5-1.22.2.tar.gz",
+                "https://distfiles.macports.org/kerberos5/krb5-1.22.3.tar.gz",
+                "https://kerberos.org/dist/krb5/1.22/krb5-1.22.3.tar.gz",
             ),
         )
 
