@@ -72,10 +72,10 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
         ">=14,<20": [
             f"{Gettext.ident} (==0.26)",
             f"{ICU.ident} (==78.3)",
-            f"{Kerberos.ident} (==1.22.2)",
+            f"{Kerberos.ident} (==1.22.3)",
             f"{LibXML2.ident} (==2.15.4)",
             f"{LibXSLT.ident} (==1.1.45)",
-            f"{LZ4.ident} (==1.11.0)",
+            f"{LZ4.ident} (==1.11.1)",
             f"{OpenLDAP.ident} (==2.6.16)",
             f"{OpenSSL.ident} (==3.5.7)",
             f"{Readline.ident} (==8.3)",
@@ -91,10 +91,10 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             "perl",
             f"{Gettext.aliases[0]} (==0.26)",
             f"{ICU.aliases[0]} (==78.3)",
-            f"{Kerberos.aliases[0]} (==1.22.2)",
+            f"{Kerberos.aliases[0]} (==1.22.3)",
             f"{LibXML2.aliases[0]} (==2.15.4)",
             f"{LibXSLT.aliases[0]} (==1.1.45)",
-            f"{LZ4.aliases[0]} (==1.11.0)",
+            f"{LZ4.aliases[0]} (==1.11.1)",
             f"{OpenLDAP.aliases[0]} (==2.6.16)",
             f"{OpenSSL.aliases[0]} (==3.5.7)",
             f"{Readline.aliases[0]} (==8.3)",
@@ -393,23 +393,23 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
 
 
 PostgreSQL(
-    "14.24",
-    sha256="a7fa7ed3d558172355f51406097a7bd4f6b473be80f311ef7cda96bf383d8897",
+    "14.25",
+    sha256="09af980eb3a5d0a8ad7a34b95031b1988bbcd430c87700a62d6234c0ed97ae4c",
 )
 
 PostgreSQL(
-    "15.19",
-    sha256="e1a64a87a46b825b88c082e4518161a47aab53c45694964f8ba1df28f7859f89",
+    "15.20",
+    sha256="30e65cbbb771a39b553ed2df7e65622e65647aed55dbc19bd0fe853ff0a08442",
 )
 
 PostgreSQL(
-    "16.15",
-    sha256="c1575341fa7bd40f5274ea465b34390f4dc64cdd0770af327005caaeb9f6b7ed",
+    "16.16",
+    sha256="9d5cd8633043b75740d5d59749c6b7365e6aeb53c47098b1a5e80bb18f87881a",
 )
 
 PostgreSQL(
-    "17.11",
-    sha256="dd27f2b3c59e73ed14aa3324901242bf69a032a6347805f274e6260322d42979",
+    "17.12",
+    sha256="9cf136a703d8ee2f83465c43be4e9e8e7930c82b0bfba13be7e2537be769ac55",
 )
 
 PostgreSQL(
@@ -418,11 +418,11 @@ PostgreSQL(
 )
 
 PostgreSQL(
-    "18.6",
-    sha256="555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
+    "18.7",
+    sha256="441dfae4280cae3e0425e5f876f80559fb0731c140f1aae22b3e5a54d0411bfd",
 )
 
 PostgreSQL(
-    "19rc1",
-    sha256="af105fc8e960fc836a09fc2cd7f582b49fd17675d9d36631abe3a565bfd7d701",
+    "19rc2",
+    sha256="23a7bb862e4bac395c047305ed0084117b01e71255ce858b907cdcd78ce40351",
 )

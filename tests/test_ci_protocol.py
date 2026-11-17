@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     import pathlib
 
 TARGET = "aarch64-unknown-linux-gnu"
-VERSION = "17.11"
+VERSION = "17.12"
 
 
 def small_plan() -> dict[str, Any]:

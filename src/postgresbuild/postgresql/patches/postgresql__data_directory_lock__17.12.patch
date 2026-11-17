@@ -1,4 +1,4 @@
-From 2c0d003f759998606af75b4d75a4eeadcbb641d3 Mon Sep 17 00:00:00 2001
+From 7f74db21e089e5f8019259d160b1858c0a1b4ac4 Mon Sep 17 00:00:00 2001
 From: Elvis Pranskevichus <el@prans.net>
 Date: Tue, 8 Sep 2026 09:16:22 -0700
 Subject: [PATCH] Add file-based data directory interlock
@@ -28,11 +28,9 @@ Subject: [PATCH] Add file-based data directory interlock
  src/test/recovery/t/017_shm.pl                |  37 +-
  src/test/recovery/t/057_file_shmem.pl         | 349 +++++++++
  23 files changed, 1331 insertions(+), 50 deletions(-)
- create mode 100644 src/backend/port/file_shmem.c
- create mode 100644 src/test/recovery/t/057_file_shmem.pl
 
 diff --git a/configure b/configure
-index f4cc535..c732376 100755
+index fb512ef..e0134dd 100755
 --- a/configure
 +++ b/configure
 @@ -15362,7 +15362,7 @@ fi
@@ -66,7 +64,7 @@ index f4cc535..c732376 100755
  if test "x$ac_cv_func_explicit_bzero" = xyes; then :
    $as_echo "#define HAVE_EXPLICIT_BZERO 1" >>confdefs.h
 diff --git a/configure.ac b/configure.ac
-index 41af881..5f41e6d 100644
+index a560563..8ddc04f 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -1753,6 +1753,7 @@ AC_CHECK_FUNCS(m4_normalize([
@@ -88,7 +86,7 @@ index 41af881..5f41e6d 100644
  	explicit_bzero
  	getopt
 diff --git a/doc/src/sgml/config.sgml b/doc/src/sgml/config.sgml
-index efaebe5..b9d5268 100644
+index d1ba2d2..30bd951 100644
 --- a/doc/src/sgml/config.sgml
 +++ b/doc/src/sgml/config.sgml
 @@ -2195,6 +2195,69 @@ include_dir 'conf.d'
@@ -162,7 +160,7 @@ index efaebe5..b9d5268 100644
        <term><varname>shared_memory_type</varname> (<type>enum</type>)
        <indexterm>
 diff --git a/doc/src/sgml/runtime.sgml b/doc/src/sgml/runtime.sgml
-index 25ee5be..1a4fcbe 100644
+index 0af7c81..cbd41b0 100644
 --- a/doc/src/sgml/runtime.sgml
 +++ b/doc/src/sgml/runtime.sgml
 @@ -540,10 +540,11 @@ su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgs
@@ -182,7 +180,7 @@ index 25ee5be..1a4fcbe 100644
  
     <sect2 id="server-start-failures">
 diff --git a/meson.build b/meson.build
-index c87f98e..47a8455 100644
+index 0398a74..1e5a5b1 100644
 --- a/meson.build
 +++ b/meson.build
 @@ -2485,6 +2485,7 @@ endforeach
@@ -1053,10 +1051,10 @@ index 0d06f0b..caf39e8 100644
  }
  
 diff --git a/src/backend/utils/misc/guc_tables.c b/src/backend/utils/misc/guc_tables.c
-index cf468ba..6ab53b7 100644
+index 3fba428..0383977 100644
 --- a/src/backend/utils/misc/guc_tables.c
 +++ b/src/backend/utils/misc/guc_tables.c
-@@ -458,6 +458,14 @@ static const struct config_enum_entry shared_memory_options[] = {
+@@ -466,6 +466,14 @@ static const struct config_enum_entry shared_memory_options[] = {
  	{NULL, 0, false}
  };
  
@@ -1071,7 +1069,7 @@ index cf468ba..6ab53b7 100644
  static const struct config_enum_entry default_toast_compression_options[] = {
  	{"pglz", TOAST_PGLZ_COMPRESSION, false},
  #ifdef  USE_LZ4
-@@ -5003,6 +5011,16 @@ struct config_enum ConfigureNamesEnum[] =
+@@ -5022,6 +5030,16 @@ struct config_enum ConfigureNamesEnum[] =
  		NULL, NULL, NULL
  	},
  
@@ -1273,10 +1271,10 @@ index 3065ff5..e94aab6 100644
  extern void PGSharedMemoryDetach(void);
  extern void GetHugePageSize(Size *hugepagesize, int *mmap_flags);
 diff --git a/src/test/perl/PostgreSQL/Test/Cluster.pm b/src/test/perl/PostgreSQL/Test/Cluster.pm
-index 4c2428a..9f0dd71 100644
+index e4b66b7..6fd10d8 100644
 --- a/src/test/perl/PostgreSQL/Test/Cluster.pm
 +++ b/src/test/perl/PostgreSQL/Test/Cluster.pm
-@@ -1142,6 +1142,34 @@ sub start
+@@ -1145,6 +1145,34 @@ sub start
  
  =pod
  
@@ -1350,17 +1348,17 @@ index 022b44b..c7fc367 100644
  
  Portably create a symlink for a directory. On Windows this creates a junction
 diff --git a/src/test/recovery/meson.build b/src/test/recovery/meson.build
-index 823e70d..dea82e1 100644
+index d0f6b84..31bd948 100644
 --- a/src/test/recovery/meson.build
 +++ b/src/test/recovery/meson.build
-@@ -59,6 +59,7 @@ tests += {
-       't/053_standby_login_event_trigger.pl',
+@@ -60,6 +60,7 @@ tests += {
        't/054_unlogged_sequence_promotion.pl',
        't/055_cascade_reconnect.pl',
+       't/056_standby_snapshot_export.pl',
 +      't/057_file_shmem.pl',
+       't/060_multixact_crashed_updater.pl',
      ],
    },
- }
 diff --git a/src/test/recovery/t/017_shm.pl b/src/test/recovery/t/017_shm.pl
 index 50ee5cd..02c241d 100644
 --- a/src/test/recovery/t/017_shm.pl
@@ -1784,5 +1782,5 @@ index 0000000..72bf312
 +
 +done_testing();
 -- 
-2.56.0
+2.56.1
 

@@ -42,6 +42,6 @@ class LZ4(UpdateableBundledCMakePackage):
 
 
 LZ4(
-    "1.11.0",
-    sha256="247e5fa64da5f7b75ee3dd3bed484076396c9ebe8254d9ccf693eb62800c5e26",
+    "1.11.1",
+    sha256="683fed08a844ad012196381e40badf80c0bbe4962959761416d41c9e67d77ec7",
 )

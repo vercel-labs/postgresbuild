@@ -23,7 +23,7 @@ it selects the latest registered release of every supported major, plus the
 pinned releases):
 
 ```console
-uv run ggbuild build --target aarch64-unknown-linux-gnu --source-ref 19rc1
+uv run ggbuild build --target aarch64-unknown-linux-gnu --source-ref 19rc2
 ```
 
 Or inspect the complete local schedule without executing it:
@@ -83,9 +83,9 @@ the `install_only` archive. Extract it onto the same platform's install_only
 tree, stripping its top-level directory:
 
 ```console
-tar -xf postgresql-18.6+<tag>-<target>.tar.zst
-tar -xf postgresql-18.6+<tag>-<target>-dev.tar.zst \
-    -C postgresql-18.6+<tag>-<target> --strip-components=1
+tar -xf postgresql-18.7+<tag>-<target>.tar.zst
+tar -xf postgresql-18.7+<tag>-<target>-dev.tar.zst \
+    -C postgresql-18.7+<tag>-<target> --strip-components=1
 ```
 
 The overlay adds:
@@ -162,7 +162,7 @@ PostgreSQL overrides release discovery to track the latest point release of
 every supported major and the latest alpha, beta, or release candidate for
 upcoming majors from the official source index. Stable releases replace their
 prereleases once supported. The same update rerolls patches when a release
-changes. PostgreSQL 19rc1 is selected as the latest release of major 19.
+changes. PostgreSQL 19rc2 is selected as the latest release of major 19.
 
 To keep building an older point release alongside the latest of its major, list
 it in `tool.ggbuild.pinned-releases` in `pyproject.toml` (for example

@@ -62,6 +62,6 @@ class Kerberos(UpdateableBundledCAutoconfPackage):
 
 
 Kerberos(
-    "1.22.2",
-    sha256="3243ffbc8ea4d4ac22ddc7dd2a1dc54c57874c40648b60ff97009763554eaf13",
+    "1.22.3",
+    sha256="fe90af8441ad9fa9b064b8e53077cefb782a96f8a68276b031dc54af1789ff0b",
 )
