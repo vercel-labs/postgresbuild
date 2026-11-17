@@ -1,0 +1,21 @@
+From: Elvis Pranskevichus <elvis@vercel.com>
+Subject: [PATCH] Link libgssrpc directly to libkrb5support
+
+svc_auth_gssapi.c calls k5_secure_getenv, which is provided by
+libkrb5support on platforms without secure_getenv.  Link the support
+library explicitly so libgssrpc can be built on macOS, and declare the
+corresponding build dependency.
+
+--- a/src/lib/rpc/Makefile.in
++++ b/src/lib/rpc/Makefile.in
+@@ -14,8 +14,8 @@ SHLIB_EXPDEPS= \
+ 	$(TOPLIBD)/libgssapi_krb5$(SHLIBEXT) \
+ 	$(TOPLIBD)/libkrb5$(SHLIBEXT) \
+ 	$(TOPLIBD)/libk5crypto$(SHLIBEXT) \
+-	$(COM_ERR_DEPLIB)
+-SHLIB_EXPLIBS=-lgssapi_krb5 -lkrb5 -lk5crypto $(COM_ERR_LIB) $(LIBS)
++	$(COM_ERR_DEPLIB) $(SUPPORT_DEPLIB)
++SHLIB_EXPLIBS=-lgssapi_krb5 -lkrb5 -lk5crypto $(COM_ERR_LIB) $(SUPPORT_LIB) $(LIBS)
+ RELDIR=rpc
+ 
+ SRCS = $(srcdir)/auth_none.c \
