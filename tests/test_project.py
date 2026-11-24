@@ -25,7 +25,7 @@ class ProjectLayoutTests(unittest.TestCase):
         self.assertTrue(releases)
         self.assertEqual(
             selected,
-            ("14.25", "15.20", "16.16", "17.12", "18.4", "18.7", "19rc2"),
+            ("15.20", "16.16", "17.12", "18.4", "18.7", "19.0"),
         )
         self.assertEqual(config.pinned_releases, ("18.4",))
         for release in releases:
