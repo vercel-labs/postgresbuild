@@ -152,7 +152,7 @@ def test_postgresql_enables_glibc_integrations() -> None:
         assert option in arguments
 
 
-@pytest.mark.parametrize("version", ["16.16", "17.12", "18.7", "19rc2"])
+@pytest.mark.parametrize("version", ["16.16", "17.12", "18.7", "19.0"])
 def test_macos_build_avoids_sysv_semaphores(version: str) -> None:
     package = PostgreSQL.registered_release(version)
     assert package is not None
@@ -203,7 +203,7 @@ def test_artifact_test_environment_is_postgresql_specific(
     assert "LD_LIBRARY_PATH" not in environment
 
 
-@pytest.mark.parametrize("version", ["16.16", "17.12", "18.7", "19rc2"])
+@pytest.mark.parametrize("version", ["16.16", "17.12", "18.7", "19.0"])
 def test_artifact_test_avoids_sysv_ipc_for_patched_versions(
     version: str,
     tmp_path: pathlib.Path,
@@ -226,8 +226,8 @@ def test_artifact_test_avoids_sysv_ipc_for_patched_versions(
         assert option in script
 
 
-def test_rc_release_uses_19_dependencies_and_patch_series() -> None:
-    package = PostgreSQL.registered_release("19rc2")
+def test_stable_release_uses_19_dependencies_and_patch_series() -> None:
+    package = PostgreSQL.registered_release("19.0")
     assert package is not None
 
     assert len(package.get_requirements()) == 12
@@ -240,7 +240,7 @@ def test_rc_release_uses_19_dependencies_and_patch_series() -> None:
         "truncate_log",
     }
     patches = {patch.name: patch for patch in select_patch_variants(package)}
-    assert patches["data_directory_lock"].path.stem.endswith("19rc2")
+    assert patches["data_directory_lock"].path.stem.endswith("19.0")
 
 
 def test_artifact_test_keeps_sysv_default_for_unpatched_versions(
@@ -350,7 +350,7 @@ def test_production_inventory_rejects_sdk_and_outside_prefix() -> None:
     assert "usr/bin/postgres" in str(error.value)
 
 
-@pytest.mark.parametrize("version", ["18.7", "19rc2"])
+@pytest.mark.parametrize("version", ["18.7", "19.0"])
 def test_artifact_test_script_runs_shipped_server_and_staged_harness(
     version: str,
     tmp_path: pathlib.Path,

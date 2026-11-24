@@ -81,7 +81,7 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             f"{Readline.ident} (==8.3)",
             f"{UUID.ident} (==2.42.4)",
             f"{Zlib.ident} (==1.4)",
-            f"{Zstandard.ident} (==1.5.7)",
+            f"{Zstandard.ident} (==1.6.0)",
         ]
     }
     artifact_build_requirements: ClassVar[packages.RequirementsSpec] = {
@@ -100,7 +100,7 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
             f"{Readline.aliases[0]} (==8.3)",
             f"{UUID.aliases[0]} (==2.42.4)",
             f"{Zlib.aliases[0]} (==1.4)",
-            f"{Zstandard.aliases[0]} (==1.5.7)",
+            f"{Zstandard.aliases[0]} (==1.6.0)",
         ]
     }
 
@@ -393,11 +393,6 @@ class PostgreSQL(UpdateableBundledCAutoconfPackage):
 
 
 PostgreSQL(
-    "14.25",
-    sha256="09af980eb3a5d0a8ad7a34b95031b1988bbcd430c87700a62d6234c0ed97ae4c",
-)
-
-PostgreSQL(
     "15.20",
     sha256="30e65cbbb771a39b553ed2df7e65622e65647aed55dbc19bd0fe853ff0a08442",
 )
@@ -423,6 +418,6 @@ PostgreSQL(
 )
 
 PostgreSQL(
-    "19rc2",
-    sha256="23a7bb862e4bac395c047305ed0084117b01e71255ce858b907cdcd78ce40351",
+    "19.0",
+    sha256="a89fd70efbad6a08c7dbed8d4872e3af30170d9e5ca9dc7906523be95b4e692d",
 )

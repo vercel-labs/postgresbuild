@@ -42,6 +42,6 @@ class Zstandard(UpdateableBundledCMakePackage):
 
 
 Zstandard(
-    "1.5.7",
-    sha256="eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3",
+    "1.6.0",
+    sha256="2ba599ae2a257976278e7e71e998433a387bfd18aa7b78678229fd5d84f5e9b8",
 )
